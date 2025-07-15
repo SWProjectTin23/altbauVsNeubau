@@ -1,1 +1,36 @@
+# Funktionale Requirements
 
+- **FR-01:**  
+  Die Software muss alle 10 Sekunden Temperatur- und Feinstaubwerte erfassen und automatisiert an die Datenplattform senden.
+
+- **FR-02:**  
+  Alle Sensordaten müssen einen Zeitstempel und eine genaue Zuordnung zum Standort (Alt- oder Neubau) haben und in einer zentralen Datenbank gespeichert sein, um Zeitreihenvergleiche zwischen den Standorten zu ermöglichen.
+
+- **FR-03:**  
+  Warnwerte (Temperatur zu hoch, Luftqualität zu schlecht) müssen definiert und berücksichtigt werden.
+
+- **FR-04:**  
+  Die Benutzeroberfläche soll es ermöglichen, die Temperatur- und Feinstaubdaten beider Standorte grafisch darzustellen.
+
+- **FR-05:**  
+  Das System muss automatisch eine Warnung generieren, wenn gemessene Umweltwerte festgelegte Grenzwerte überschreiten.  
+  Die Warnung muss im Dashboard visuell angezeigt werden und der Benutzer soll eine Push-Benachrichtigung erhalten.
+
+---
+
+# Nicht-Funktionale Requirements
+
+- **NFR-01:** Das System muss sicherstellen, dass mindestens **99,5 %** der Sensordaten pro Tag erfolgreich übertragen und gespeichert werden.  
+  Wenn ein Sensor für mehr als 10 Minuten keine Daten sendet, muss das System dies automatisch erfassen und protokollieren.
+
+- **NFR-02:** Die Weboberfläche muss eine Verfügbarkeit von mindestens **99,5 %** gewährleisten.  
+  Fehler müssen für Nutzer durch verständliche Fehlermeldungen gekennzeichnet sein.
+
+- **NFR-03:** Die Visualisierung der Raumqualitätsdaten im Dashboard muss innerhalb von **5 Sekunden** nach Benutzeranfrage vollständig geladen werden, selbst bei gleichzeitiger Nutzung durch bis zu 20 Benutzer.
+
+- **NFR-04:** Der Quellcode des Systems muss modular aufgebaut und dokumentiert sein, sodass Änderungen an einzelnen Komponenten (z. B. Sensorprotokoll, Visualisierung) ohne Auswirkungen auf andere Teile vorgenommen werden können. Zusätzlich muss für jede Hauptkomponente mindestens ein automatisierter Komponententest vorhanden sein.
+
+- **NFR-05:** Das System muss so ausgelegt sein, dass es bei Ausfall eines Sensors oder Verbindungsabbrüchen weiterhin lauffähig bleibt und automatisch einen Wiederverbindungsversuch innerhalb von **30 Sekunden** unternimmt.  
+  Fehlgeschlagene Datenübertragungen dürfen nicht zum Systemabsturz führen, sondern müssen protokolliert und ggf. in einer Warteschlange zwischengespeichert werden.
+  
+- **NFR-06:** Die Software-Komponenten müssen containerisiert (z. B. mittels Docker) bereitgestellt werden, um einen einfachen Plattformwechsel (z. B. von einem lokalen Server zu einer Cloud-VM) ohne Anpassung des Codes zu ermöglichen. Zusätzlich muss das System auf mindestens zwei unterschiedlichen Betriebssystemen (z. B. Linux und Windows) erfolgreich installiert und betrieben werden können.

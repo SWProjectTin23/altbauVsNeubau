@@ -34,3 +34,10 @@
   Fehlgeschlagene Datenübertragungen dürfen nicht zum Systemabsturz führen, sondern müssen protokolliert und ggf. in einer Warteschlange zwischengespeichert werden.
   
 - **NFR-06:** Die Software-Komponenten müssen containerisiert (z. B. mittels Docker) bereitgestellt werden, um einen einfachen Plattformwechsel (z. B. von einem lokalen Server zu einer Cloud-VM) ohne Anpassung des Codes zu ermöglichen. Zusätzlich muss das System auf mindestens zwei unterschiedlichen Betriebssystemen (z. B. Linux und Windows) erfolgreich installiert und betrieben werden können.
+
+---
+
+# Qualitätsmerkmale 
+- Zuverlässigkeit
+- Fehlertoleranz
+- Performance

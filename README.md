@@ -18,3 +18,6 @@ Dieses Projekt dient dem Vergleich der Raumluftqualität zwischen dem Altbau (Ma
 ### Testabdeckung
 Zur Sicherstellung der Funktionalität und Zuverlässigkeit des System soll eine gezielte Testabdeckung durch Unittests umgesetzt werden. 
 Bei jedem Commit sollen die Tests automatisch über GitHub Actions gestartet werden, um die Qualität und Stabilität des Codes sicherzustellen.
+
+## Architektur
+![Systemarchitektur](./ArchitekturDiagramm.svg)

@@ -20,4 +20,4 @@ Zur Sicherstellung der Funktionalität und Zuverlässigkeit des System soll eine
 Bei jedem Commit sollen die Tests automatisch über GitHub Actions gestartet werden, um die Qualität und Stabilität des Codes sicherzustellen.
 
 ## Architektur
-![Systemarchitektur](./ArchitekturDiagramm.svg)
+![Systemarchitektur](./docs/architecture/ArchitekturDiagramm.svg)

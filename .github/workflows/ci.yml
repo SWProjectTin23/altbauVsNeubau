@@ -1,0 +1,39 @@
+name: CI - Docker Build and Sanity Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  docker_check:
+    name: Build Docker Images and Perform Sanity Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Check Docker Compose Version
+      run: docker compose version
+
+    - name: Build Docker Images with Docker Compose
+      run: |
+        echo "Starting Docker Compose image build..."
+        docker compose build --no-cache --pull
+        echo "Docker images successfully built."
+
+    - name: Briefly Start Docker Compose Services (Sanity Check)
+      run: |
+        echo "Briefly starting Docker Compose services for a sanity check..."
+        docker compose up -d
+        sleep 5
+        echo "Shutting down services..."
+        docker compose down
+        echo "Sanity check complete: Services were started and shut down."
+
+    - name: Show Docker Logs if Failure
+      if: failure()
+      run: docker compose logs

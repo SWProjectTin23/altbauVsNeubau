@@ -1,0 +1,41 @@
+# .github/workflows/ci.yml
+
+name: CI - Docker Build Check
+
+# When the workflow should be executed 
+on:
+  push:
+    branches:
+    - main # triggered with every push on the 'main'-branch
+  pull_request:
+    branches:
+    - main # triggered with every pull request on the 'main'-branch
+
+# Enables the workflow to be started manually from the GitHub UI
+worfklow_dispatch:
+
+# Definition of the jobs
+jobs:
+  docker_build_check:
+    name: build and test Docker images
+    runs-on: ubuntu-latest # Uses a GitHub-hosted runner
+
+    steps:
+    - name: checkout Code
+      uses: actions/checkout@v4 #cloning repository-code to the runner
+
+    - name: execute Docker Compose Build
+    # This step starts the services briefly.
+    # ‘-d’ in the background, ‘--wait’ waits until the services are "healthy" (if defined in docker-compose.yml).
+    # ‘--timeout 60’ sets a timeout for the start.
+    # At the end, the services are shut down again to release resources.
+
+      run: |
+      echo "Start Docker Compose Services briefly for a sanity check..."
+      docker-compose up -d --wait --timeout 60
+      echo "Services started. Wait 5 seconds..."
+      sleep 5 # Short wait time to ensure that services are started up
+      echo "Shut down services agian..."
+      docker-compose down
+   
+   # --- Future area for unit tests ---

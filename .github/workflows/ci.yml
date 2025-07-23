@@ -1,41 +1,54 @@
 # .github/workflows/ci.yml
 
-name: CI - Docker Build Check
+name: CI - Docker Build and Sanity Check
 
-# When the workflow should be executed 
+# Defines when this workflow should run
 on:
   push:
     branches:
-    - main # triggered with every push on the 'main'-branch
+      - main # Triggers the workflow on every push to the 'main' branch
   pull_request:
     branches:
-    - main # triggered with every pull request on the 'main'-branch
+      - main # Triggers the workflow on every pull request targeting the 'main' branch
 
-# Enables the workflow to be started manually from the GitHub UI
-worfklow_dispatch:
+  # Enables the workflow to be started manually from the GitHub UI
+  workflow_dispatch:
 
-# Definition of the jobs
+# Definition of the jobs that will be executed in this workflow
 jobs:
-  docker_build_check:
-    name: build and test Docker images
-    runs-on: ubuntu-latest # Uses a GitHub-hosted runner
+  docker_check:
+    name: Build Docker Images and Perform Sanity Check
+    runs-on: ubuntu-latest # Uses a GitHub-hosted runner (not your internal server)
 
     steps:
-    - name: checkout Code
-      uses: actions/checkout@v4 #cloning repository-code to the runner
+    - name: Checkout Code
+      # Clones the repository code onto the GitHub-hosted runner.
+      uses: actions/checkout@v4
 
-    - name: execute Docker Compose Build
-    # This step starts the services briefly.
-    # ‘-d’ in the background, ‘--wait’ waits until the services are "healthy" (if defined in docker-compose.yml).
-    # ‘--timeout 60’ sets a timeout for the start.
-    # At the end, the services are shut down again to release resources.
-
+    - name: Build Docker Images with Docker Compose
+      # This command builds all Docker images defined in your docker-compose.yml file.
+      # '--no-cache' ensures a fresh build, ignoring previous build cache.
+      # '--pull' pulls the latest base images (e.g., node, python) from Docker Hub if newer versions are available.
+      # '--quiet-pull' suppresses verbose output during image pulling.
+      # Note: This step only builds the images; it does not start any containers yet.
       run: |
-      echo "Start Docker Compose Services briefly for a sanity check..."
-      docker-compose up -d --wait --timeout 60
-      echo "Services started. Wait 5 seconds..."
-      sleep 5 # Short wait time to ensure that services are started up
-      echo "Shut down services agian..."
-      docker-compose down
-   
-   # --- Future area for unit tests ---
+        echo "Starting Docker Compose image build..."
+        docker-compose build --no-cache --pull --quiet-pull
+        echo "Docker images successfully built."
+
+    - name: Briefly Start Docker Compose Services (Sanity Check)
+      # This step attempts to start your services briefly to check if they can boot up correctly.
+      # '-d' starts containers in detached mode (in the background).
+      # '--wait' waits until services are "healthy" (if defined in your docker-compose.yml)
+      # or at least fully started.
+      # '--timeout 60' sets a 60-second timeout for the services to start.
+      run: |
+        echo "Briefly starting Docker Compose services for a sanity check..."
+        docker-compose up -d --wait --timeout 60
+        echo "Services started. Waiting 5 seconds for stability..."
+        sleep 5 # A short pause to ensure services are fully initialized
+        echo "Shutting down services..."
+        docker-compose down # Stops and removes the containers
+        echo "Sanity check complete: Services were started and shut down."
+
+    # --- Future area for Unit Tests ---

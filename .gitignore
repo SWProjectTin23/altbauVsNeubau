@@ -29,3 +29,6 @@ venv/
 # Git
 *.patch
 *.rej
+
+# ignore db data directory
+db/data/

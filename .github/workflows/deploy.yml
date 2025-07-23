@@ -1,0 +1,33 @@
+name: Deploy Docker Compose
+
+on:
+  push:
+    branches:
+      - main # The workflow will be triggered on every push to the 'main' branch
+  pull_request:
+    branches:
+      - main # The workflow will be triggered on every pull request targeting 'main'
+
+jobs:
+  deploy:
+    runs-on: self-hosted # The job will run on a self-hosted runner
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4 # Fetches your repository's code onto the runner
+
+    - name: Stop and remove existing Docker Compose setup (optional, but recommended)
+      # Stops and removes all existing containers, networks, and volumes
+      # defined by your docker-compose.yml.
+      # '|| true' ensures the step doesn't fail if no containers are running.
+      run: docker compose down --remove-orphans || true
+
+    - name: Pull latest Docker images
+      # Pulls the latest versions of the Docker images referenced in your docker-compose.yml.
+      run: docker compose pull
+
+    - name: Start Docker Compose setup
+      # Starts your services in the background (-d for "detached mode").
+      # '--build' rebuilds the images if Dockerfiles have changed or if you want to force local builds.
+      # If you don't have local Dockerfiles and only pull pre-built images, you can omit '--build'.
+      run: docker compose up -d --build

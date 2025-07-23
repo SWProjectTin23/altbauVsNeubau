@@ -21,3 +21,9 @@ Bei jedem Commit sollen die Tests automatisch über GitHub Actions gestartet wer
 
 ## Architektur
 ![Systemarchitektur](./docs/architecture/ArchitekturDiagramm.svg)
+
+## Documentation
+
+- [Branching Strategy](docs/branchingStrategy.md)  
+- [Requirements](docs/requirements.md)  
+- [CI Workflows](docs/workflows/ci.md) 

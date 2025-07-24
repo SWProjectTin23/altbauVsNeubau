@@ -27,3 +27,4 @@ Bei jedem Commit sollen die Tests automatisch über GitHub Actions gestartet wer
 - [Branching Strategy](docs/branchingStrategy.md)  
 - [Requirements](docs/requirements.md)  
 - [CI Workflows](docs/workflows/ci.md) 
+- [Deploy Workflow](docs/workflows/deploy.md)

@@ -29,6 +29,3 @@ venv/
 # Git
 *.patch
 *.rej
-
-# TimescaleDB data
-db/data/

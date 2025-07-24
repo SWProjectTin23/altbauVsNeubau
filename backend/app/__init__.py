@@ -5,6 +5,6 @@ def create_app():
 
     @app.route('/')
     def index():
-        return "Flask backend is running from package!"
+        return "Dieser Port ist Eigentum der Gruppe 1 - AltbauVsNeubau. Jegliche Angriffe auf diesen Port werden nicht ohne Konsequenzen bleiben."
 
     return app

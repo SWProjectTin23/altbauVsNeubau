@@ -15,4 +15,8 @@ def create_app():
     api.add_resource(DeviceLatest, "/api/devices/<int:device_id>/latest")
     api.add_resource(Comparison, "/api/comparison")
 
+    app.route('/')
+    def index():
+        return "Dieser Port ist Eigentum der Gruppe 1 - AltbauVsNeubau. Jegliche Angriffe auf diesen Port werden nicht ohne Konsequenzen bleiben."
+
     return app

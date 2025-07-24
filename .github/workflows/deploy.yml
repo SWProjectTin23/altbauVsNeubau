@@ -17,41 +17,14 @@ jobs:
       # Stops and removes all existing containers, networks, and volumes
       # defined by your docker-compose.yml.
       # '|| true' ensures the step doesn't fail if no containers are running.
-      run: |
-        echo "Attempting to stop and remove existing Docker Compose setup..."
-        docker compose down --remove-orphans --verbose || { echo "No existing Docker Compose setup found or error during shutdown. Continuing..." && true; }
-        echo "Finished stopping and removing."
+      run: docker compose down --remove-orphans || true
 
     - name: Pull latest Docker images
       # Pulls the latest versions of the Docker images referenced in your docker-compose.yml.
-      run: |
-        echo "Pulling latest Docker images..."
-        docker compose pull --verbose
-        echo "Finished pulling images."
+      run: docker compose pull
 
     - name: Start Docker Compose setup
       # Starts your services in the background (-d for "detached mode").
       # '--build' rebuilds the images if Dockerfiles have changed or if you want to force local builds.
       # If you don't have local Dockerfiles and only pull pre-built images, you can omit '--build'.
-      run: |
-        echo "Starting Docker Compose setup..."
-        docker compose up -d --build --verbose
-        echo "Docker Compose setup started. Checking service status..."
-        docker compose ps # Shows the status of your services
-        echo "Done with Docker Compose setup."
-
-    - name: Display Docker system information (optional, for debugging)
-      # Provides general information about your Docker installation.
-      run: |
-        echo "Displaying Docker system information..."
-        docker info
-        echo "Finished displaying Docker system information."
-
-    - name: Display Docker logs (optional, for debugging running services)
-      # Shows logs from all your services started by Docker Compose.
-      # Use '-f' for follow mode if you want to stream logs, but for a workflow, a snapshot is often better.
-      # You might want to adjust the number of lines (e.g., --tail 100)
-      run: |
-        echo "Fetching Docker Compose service logs..."
-        docker compose logs --tail 50 # Adjust --tail to show more or fewer lines
-        echo "Finished fetching logs."
+      run: docker compose up -d --build

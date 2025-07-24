@@ -16,7 +16,7 @@ COPY . .
 EXPOSE 5000
 
 # Set environment variables
-ENV FLASK_APP=app
+ENV FLASK_APP=app:create_app
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=development
 

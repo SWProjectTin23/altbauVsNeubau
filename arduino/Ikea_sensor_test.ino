@@ -31,9 +31,9 @@ for (int i = 0; i < 20; i++) {
   sum += buffer[i];
 }
 if ((sum & 0xFF) == 0) {
-  Serial.println("✅ Paket OK – Daten korrekt!");
+  Serial.println("Paket OK – Daten korrekt!");
 } else {
-  Serial.println("❌ Prüfsummenfehler – Paket ungültig!");
+  Serial.println("Prüfsummenfehler – Paket ungültig!");
 }
 
 // Richtige PM-Werte:

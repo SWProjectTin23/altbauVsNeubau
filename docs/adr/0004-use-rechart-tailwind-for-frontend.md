@@ -24,13 +24,13 @@ Technical requirements emphasize responsive styling, seamless React integration,
 
 ### Technical Requirements
 
-- Use **Chart.js** or **Recharts** for visualizations
+- Use **Recharts** for visualizations
 - Use **Tailwind CSS** for modern, responsive UI
 - Ensure fast performance and smooth UI transitions
 
 ## Alternatives Considered
 
-- **Chart.js** – Popular and powerful, but not optimized for React. The `react-chartjs-2` wrapper adds overhead and less flexibility for real-time updates.
+- **Chart.js** – Popular and powerful, but not optimized for React.
 - **Styled Components / SCSS / plain CSS** – Offers full control but requires more setup, maintenance, and consistency enforcement.
 - **Recharts** – Built for React, supports declarative syntax, and is easy to integrate.
 - **Tailwind CSS** – Utility-first framework that fits naturally with React’s component-driven approach and ensures consistent styling.
@@ -59,10 +59,4 @@ These tools offer seamless integration with React, promote maintainability, and 
 - Declarative chart configuration makes logic easy to follow
 - Supports dynamic updates and comparisons (e.g., by building or time range)
 - Simple integration of custom highlights and threshold indicators
-
-**General:**
-
-- Team members must be familiar with Tailwind and Recharts (low learning curve)
-- Tailwind requires minimal PostCSS configuration and tree-shaking for production
-- Recharts may have limitations for highly complex or custom visualizations (D3 could be explored later if needed)
 

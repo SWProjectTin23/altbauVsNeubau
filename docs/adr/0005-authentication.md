@@ -15,27 +15,17 @@ Implementing authentication would require significant effort (backend logic, tok
 
 - **Implement authentication via OAuth or custom login system** – Secure, but adds complexity, infrastructure overhead, and unnecessary friction for the user.
 - **Anonymous access with optional settings stored locally** – Simple, fast, and meets current functional needs.
-- **API key-based access** – More suited for programmatic usage, but not appropriate for a public web interface.
 
 ## Decision
 
 We will **not implement any authentication mechanism** in the frontend application at this stage.
 
-All data access will remain anonymous and unrestricted. Local settings (e.g., custom thresholds or selected views) will be stored in the browser using `localStorage`.
+All data access will remain anonymous and unrestricted. Local settings (e.g., custom thresholds or selected views) will be stored in the database.
 
 ## Consequences
 
 - **Simplified development** – No need for user account handling, token management, session expiration, or login UI.
 - **Faster user access** – Users can access the application instantly without sign-in barriers.
-- **Limited personalization** – Only basic preferences are supported (e.g., via `localStorage`), which are device-specific.
+- **Limited personalization** – Only basic preferences are supported.
 - **Potential future requirement** – If more advanced user-specific functionality (e.g., saving settings to a backend, sharing views) is introduced, authentication may need to be revisited in a future ADR.
 
-## Summary
-
-Given that the app:
-
-- Only displays non-sensitive, public data,
-- Allows minimal user customization (no critical settings),
-- And would require disproportionate effort to secure user accounts,
-
-...we will proceed without implementing authentication for now.

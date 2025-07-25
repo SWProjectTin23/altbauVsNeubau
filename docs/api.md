@@ -52,7 +52,7 @@ The endpoints are still under development and may change according to the need.
 - `end` *(optional)*: end timestamp in UNIX format
 
 #### Example:
-`http://localhost:5001/api/api/devices/1/data?start=1721736000&end=1721745660`
+`http://localhost:5001/api/devices/1/data?start=1721736000&end=1721745660`
 
 #### Response Format:
 ```json

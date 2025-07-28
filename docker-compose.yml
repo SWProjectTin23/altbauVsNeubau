@@ -47,11 +47,12 @@ services:
     networks:
       - pg-network
     healthcheck:
-      test: ["CMD", "sh", "-c", "curl -v -f http://localhost:3000 2>&1"]
+      # IMPORTANT: Health check inside the container must use the internal port (3000)
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 15s
       timeout: 10s
-      retries: 8
-      start_period: 45s
+      retries: 5
+      start_period: 30s
 
   db:
     image: timescale/timescaledb:latest-pg14

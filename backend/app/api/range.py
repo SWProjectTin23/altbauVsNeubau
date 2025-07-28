@@ -1,22 +1,27 @@
 from flask_restful import Resource
 from flask import jsonify
+import psycopg2 # Import psycopg2 for specific error handling
 
-# query: MIN(timestamp), MAX(timestamp)
-MOCK_RANGE = {
-    1: {
-        "start": 1721736000,  # 2025-07-23 12:00:00 UTC
-        "end":   1721745000   # 2025-07-23 14:30:00 UTC
-    },
-    2: {
-        "start": 1721736300,  # 2025-07-23 12:05:00 UTC
-        "end":   1721744700   # 2025-07-23 14:25:00 UTC
-    }
-}
+# Import the new database function
+from .database.db_operations import get_all_device_time_ranges_from_db
 
 class TimeRange(Resource):
     def get(self):
-        # later can use altbau, neubau to replace device_1, device_2
-        return jsonify({
-            f"device_{device_id}": time_range
-            for device_id, time_range in MOCK_RANGE.items()
-        })
+        try:
+            # Fetch all device time ranges from the database
+            time_ranges = get_all_device_time_ranges_from_db()
+            
+            # If no data is found in the database, return an empty object or an error
+            if not time_ranges:
+                return jsonify({"message": "No device data found in the database."}), 200 # Or 404 if no devices at all
+            
+            return jsonify(time_ranges)
+
+        except psycopg2.Error as e:
+            # Catch specific PostgreSQL errors.
+            print(f"A database error occurred in TimeRange: {e}")
+            return {"error": "An internal database error occurred. Please try again later."}, 500
+        except Exception as e:
+            # Catch all other unexpected errors.
+            print(f"An unexpected error occurred in TimeRange: {e}")
+            return {"error": "An unexpected error occurred."}, 400

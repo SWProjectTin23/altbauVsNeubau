@@ -1,30 +1,37 @@
 from flask_restful import Resource
 from flask import request, jsonify
-from app.mock_data import get_mock_data
+import psycopg2 # Importiere psycopg2 für die spezifische Fehlerbehandlung
 
-MOCK_DATA = get_mock_data()
+# Import database operation functions
+from .database.db_operations import get_device_data_from_db, device_exists
 
 class DeviceData(Resource):
     def get(self, device_id):
-        start = request.args.get("start", type=int)
-        end = request.args.get("end", type=int)
+        try:
+            # Extract query parameters
+            start = request.args.get("start", type=int)
+            end = request.args.get("end", type=int)
 
-        device_data = MOCK_DATA.get(device_id)
-        if device_data is None:
-            return {"error": f"Device {device_id} not found"}, 404
+            # Validate that the device exists
+            if not device_exists(device_id):
+                return {"error": f"Device {device_id} not found."}, 404
 
-        # print(f"\n Fetching data for device {device_id}")
-        # print(f"Start = {start}, End = {end}")
+            # Get all device data for the specified device
+            device_data = get_device_data_from_db(device_id, start, end)
 
-        result = []
+            # If no data is found, return a 404 error
+            if not device_data:
+                return {"error": f"No data found for device {device_id} within the specified range, or device does not exist."}, 404
 
-        for entry in device_data:
-            ts = entry.get("timestamp")
-            if ts is None:
-                continue
+            # Return the device data as JSON
+            return jsonify(device_data)
 
-            # if time range (start/end) is given，return filtered results, otherwise return all results.
-            if (start is None or ts >= start) and (end is None or ts <= end):
-                result.append(entry)
-
-        return jsonify(result)
+        # Catch specific PostgreSQL errors.
+        except psycopg2.Error as e:
+            print(f"A database error occurred in DeviceData: {e}")
+            return {"error": "An internal database error occurred. Please try again later."}, 500
+        
+        # Catch all other unexpected errors.
+        except Exception as e:
+            print(f"An unexpected error occurred in DeviceData: {e}")
+            return {"error": "An unexpected error occurred."}, 400

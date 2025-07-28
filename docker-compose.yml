@@ -24,25 +24,14 @@ services:
   db:
     image: timescale/timescaledb:latest-pg14
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=altbau_vs_neubau
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db_data:/var/lib/postgresql/data
-
-  github-runner:
-    image: myoung34/docker-github-actions-runner
-    restart: always
-    environment:
-      - REPO_URL=${GITHUB_REPO_URL:-https://github.com/SWProjectTin23/altbauVsNeubau}
-      - RUNNER_NAME=${GITHUB_RUNNER_NAME:-github-runner-altbau-vs-neubau}
-      - GITHUB_TOKEN=${GITHUB_ACCESS_TOKEN}
-      - RUNNER_LABELS=${GITHUB_RUNNER_LABELS:-self-hosted,docker,linux,altbau_vs_neubau}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   db_data:

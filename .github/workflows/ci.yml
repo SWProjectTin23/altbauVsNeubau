@@ -1,8 +1,6 @@
-name: Docker Compose Application Startup Test
+# .github/workflows/test-docker-compose.yml
 
-# This workflow builds Docker images and performs a sanity check by starting the services briefly.
-# It is triggered on pushes and pull requests to the main branch.
-# It also allows manual triggering via the GitHub UI.
+name: Docker Compose Service Test
 
 on:
   push:
@@ -11,119 +9,56 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
-  test-application-services:
-    # This job runs on a GitHub-hosted Ubuntu runner, which comes with Docker and Docker Compose pre-installed.
-    runs-on: ubuntu-latest
+  test-services:
+    runs-on: ubuntu-latest # Verwende einen GitHub-gehosteten Runner
+
+    # Define environment variables for database credentials
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4 # Fetches your repository's code onto the runner
+      - name: Checkout Code
+        uses: actions/checkout@v4 # Fetch code from the repository
 
       - name: Set up Docker Buildx
-        # This action sets up Docker Buildx, which provides enhanced build capabilities.
-        uses: docker/setup-buildx-action@v3
-
-      - name: Set up Docker # <-- DIESE AKTION ERSETZT 'crazy-max/ghaction-docker-compose'
-        # This action ensures the Docker environment is properly configured,
-        # which also makes 'docker compose' available.
-        uses: docker/setup-docker@v3
-
+        uses: docker/setup-buildx-action@v3 # Set up Docker Buildx (for more efficient builds)
 
       - name: Build and Start Services (excluding github-runner)
+        # Start services in the background and wait for their health checks to succeed.
+        # The 'github-runner' service is explicitly not started here.
         run: |
-          echo "Starting Docker Compose services (backend, frontend, db)..."
-          # IMPORTANT: Using 'docker compose' (with a space) for Docker Compose V2 CLI syntax.
-          # --build ensures images are built if they don't exist or are outdated.
-          # --exclude-service github-runner prevents attempting to start the runner service,
-          # which is only relevant for self-hosted deployment and not for this testing workflow.
-          docker compose -f docker-compose.yml up -d --build --exclude-service github-runner
-          echo "Services started. Waiting for them to become healthy..."
+          echo "Starting backend, frontend, and db services..."
+          docker-compose up -d backend frontend db --wait
 
-          # Give all services, especially the database, ample time to start and pass health checks.
-          # This duration should be generous. Healthchecks defined in docker-compose.yml are crucial here.
-          # A decent initial sleep helps avoid immediate failures before health checks can pass.
-          sleep 60 # Adjust based on your service startup times.
+          # Optional: Output the status of the services to verify they are running
+          echo "Services status after startup:"
+          docker-compose ps
 
-      - name: Check Service Health with Retries
+      - name: Test Backend Service
+        # Perform a curl test on the backend health check endpoint.
+        # The backend container is mapped to port 5001 of the host.
         run: |
-          echo "Checking health status of backend, frontend, and database..."
+          echo "Testing backend health endpoint: http://localhost:5001/health"
+          curl -f http://localhost:5001/health
+          echo "Backend health check successful!"
 
-          # Define an array of services to check along with their respective health check commands.
-          # Ensure the ports and paths match your application's configuration in docker-compose.yml.
-          declare -a SERVICES_TO_CHECK=(
-            "db:pg_isready -h localhost -p 5432 -U ${DB_USER} -d ${DB_NAME}"
-            "backend:curl -f http://localhost:5001/health" # Adjust port and path if different
-            "frontend:curl -f http://localhost:3000"       # Adjust port and path if different, checks for successful HTTP response
-          )
-
-          ALL_SERVICES_HEALTHY=true
-
-          for SERVICE_CHECK in "${SERVICES_TO_CHECK[@]}"; do
-            # Split the string into SERVICE_NAME and CHECK_COMMAND
-            IFS=':' read -r SERVICE_NAME CHECK_COMMAND <<< "$SERVICE_CHECK"
-            echo "--- Checking health for service: $SERVICE_NAME ---"
-
-            MAX_ATTEMPTS=15 # Total attempts to check the service (15 * 5 seconds = 75 seconds max wait per service)
-            ATTEMPT=0
-            SERVICE_READY=false
-
-            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-              if [ "$SERVICE_NAME" == "db" ]; then
-                # For PostgreSQL, pg_isready requires the password via PGPASSWORD environment variable.
-                # It's crucial that DB_PASSWORD is provided as a GitHub Secret.
-                PGPASSWORD="${DB_PASSWORD}" $CHECK_COMMAND
-              else
-                $CHECK_COMMAND # Execute the curl command for backend/frontend
-              fi
-
-              if [ $? -eq 0 ]; then # Check if the command exited successfully (status code 0)
-                echo "Service '$SERVICE_NAME' is healthy!"
-                SERVICE_READY=true
-                break # Exit the while loop if service is healthy
-              else
-                echo "Service '$SERVICE_NAME' not healthy yet. Retrying in 5 seconds... (Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS)"
-                sleep 5 # Wait before the next retry
-              fi
-              ATTEMPT=$((ATTEMPT + 1))
-            done
-
-            if [ "$SERVICE_READY" = false ]; then
-              echo "Error: Service '$SERVICE_NAME' did not become healthy within the expected time."
-              ALL_SERVICES_HEALTHY=false
-              # Display logs for the specific service that failed to help debugging
-              # IMPORTANT: Using 'docker compose' (with a space)
-              docker compose -f docker-compose.yml logs "$SERVICE_NAME"
-              break # Exit the loop if any service fails, no need to check others
-            fi
-          done
-
-          if [ "$ALL_SERVICES_HEALTHY" = false ]; then
-            echo "One or more services failed their health checks. Displaying all Docker Compose logs and exiting with error."
-            # IMPORTANT: Using 'docker compose' (with a space)
-            docker compose -f docker-compose.yml logs # Display all logs if any service failed
-            exit 1 # Fail the job
-          else
-            echo "All specified services passed their health checks successfully!"
-          fi
-        env:
-          # These environment variables are passed to the 'run' command.
-          # Ensure these secrets are configured in your GitHub repository's settings.
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Used by PGPASSWORD for pg_isready
-          DB_NAME: ${{ secrets.DB_NAME }}
-
-      - name: Stop and remove services (Cleanup)
-        # This step will always run, regardless of the success or failure of previous steps,
-        # ensuring resources are cleaned up.
-        if: always()
+      - name: Test Frontend Service
+        # Perform a curl test on the frontend endpoint.
+        # The frontend container is mapped to port 3000 of the host.
         run: |
-          echo "Stopping and removing Docker Compose services..."
-          # IMPORTANT: Using 'docker compose' (with a space)
-          # --volumes removes named volumes declared in the compose file.
-          # --remove-orphans removes containers for services not defined in the compose file.
-          # '|| true' ensures this step doesn't fail the workflow if the services are already down.
-          docker compose -f docker-compose.yml down --volumes --remove-orphans || true
-          echo "Cleanup complete."
+          echo "Testing frontend endpoint: http://localhost:3000"
+          curl -f http://localhost:3000
+          echo "Frontend service reachable!"
+
+      - name: Clean up Docker Compose Services
+        # Stop all services and remove networks and volumes.
+        # This is important to free up resources.
+        if: always() # Always run this step, even if previous steps fail
+        run: |
+          echo "Shutting down Docker Compose services..."
+          docker-compose down -v --remove-orphans
+          echo "Services shut down."

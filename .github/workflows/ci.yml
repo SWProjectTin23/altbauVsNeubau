@@ -31,11 +31,10 @@ jobs:
         # The 'github-runner' service is explicitly excluded as it's not part of the application under test
         # and would not be present in this testing context.
         run: |
-          # Ensure /usr/local/bin is in PATH for docker-compose
           export PATH=$PATH:/usr/local/bin
 
           echo "Starting Docker Compose services (backend, frontend, db)..."
-          docker-compose -f docker-compose.yml up -d --build --exclude-service github-runner
+          docker compose -f docker-compose.yml up -d --build --exclude-service github-runner
           echo "Services started. Waiting for them to become healthy..."
 
       - name: Check Service Health with Retries
@@ -85,14 +84,14 @@ jobs:
               echo "Error: Service '$SERVICE_NAME' did not become healthy within the expected time."
               ALL_SERVICES_HEALTHY=false
               # Display logs for the specific service that failed to help debugging
-              docker-compose -f docker-compose.yml logs "$SERVICE_NAME"
+              docker compose -f docker-compose.yml logs "$SERVICE_NAME"
               break # Exit the loop if any service fails, no need to check others
             fi
           done
 
           if [ "$ALL_SERVICES_HEALTHY" = false ]; then
             echo "One or more services failed their health checks. Displaying all Docker Compose logs and exiting with error."
-            docker-compose -f docker-compose.yml logs # Display all logs if any service failed
+            docker compose -f docker-compose.yml logs # Display all logs if any service failed
             exit 1 # Fail the job
           else
             echo "All specified services passed their health checks successfully!"
@@ -114,5 +113,5 @@ jobs:
           # --volumes removes named volumes declared in the compose file.
           # --remove-orphans removes containers for services not defined in the compose file.
           # '|| true' ensures this step doesn't fail the workflow if the services are already down.
-          docker-compose -f docker-compose.yml down --volumes --remove-orphans || true
+          docker compose -f docker-compose.yml down --volumes --remove-orphans || true
           echo "Cleanup complete."

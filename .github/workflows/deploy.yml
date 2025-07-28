@@ -1,30 +1,36 @@
-name: Deploy Docker Compose
+name: CI/CD Deployment to Self-Hosted Runner
+# This GitHub Actions workflow deploys your application to a self-hosted runner using Docker Compose
+# It is triggered on every push to the 'main' branch.
 
 on:
   push:
     branches:
       - main # The workflow will be triggered on every push to the 'main' branch
+  workflow_dispatch: # Allows manual triggering of the workflow from the GitHub Actions tab
 
 jobs:
   deploy:
-    runs-on: self-hosted # The job will run on a self-hosted runner
+    runs-on: [self-hosted, linux, altbau_vs_neubau] # Specifies that the job should run on a self-hosted Linux runner
 
     steps:
-    - name: Checkout Repository
+    - name: Checkout Code
       uses: actions/checkout@v4 # Fetches your repository's code onto the runner
 
-    - name: Stop and remove existing Docker Compose setup (optional, but recommended)
-      # Stops and removes all existing containers, networks, and volumes
-      # defined by your docker-compose.yml.
-      # '|| true' ensures the step doesn't fail if no containers are running.
-      run: docker compose down --remove-orphans || true
+    - name: Set up Docker Compose and Deploy
+      run: |
+        echo "Deploying application using Docker Compose..."
+        docker-compose -f docker-compose.yml down # Stops and removes containers, networks, images, and volumes defined in the docker-compose.yml file
+        
+        # Build and start the containers defined in the docker-compose.yml file
+        echo "Pulling latest Docker images..."
+        docker-compose pull # Pulls the latest images for the services defined in the docker-compose.yml file
 
-    - name: Pull latest Docker images
-      # Pulls the latest versions of the Docker images referenced in your docker-compose.yml.
-      run: docker compose pull
+        # Build and start the containers
+        echo "Building Docker images..."
+        docker-compose build
 
-    - name: Start Docker Compose setup
-      # Starts your services in the background (-d for "detached mode").
-      # '--build' rebuilds the images if Dockerfiles have changed or if you want to force local builds.
-      # If you don't have local Dockerfiles and only pull pre-built images, you can omit '--build'.
-      run: docker compose up -d --build
+        echo "Starting new containers..."
+        # Start the containers in detached mode
+        docker-compose up -d
+
+        echo "Application deployed successfully!"

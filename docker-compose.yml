@@ -34,15 +34,18 @@ services:
       - db_data:/var/lib/postgresql/data
 
   github-runner:
-    image: myoung34/docker-github-actions-runner
+    build:
+      context: ./github-runner-docker # <-- Wichtig: Docker wird hier dein Dockerfile finden
+      dockerfile: Dockerfile          # <-- Zeigt auf das Dockerfile im neuen Ordner
     restart: always
     environment:
-      - REPO_URL=${GITHUB_REPO_URL:-https://github.com/SWProjectTin23/altbauVsNeubau}
-      - RUNNER_NAME=${GITHUB_RUNNER_NAME:-github-runner-altbau-vs-neubau}
-      - GITHUB_TOKEN=${GITHUB_ACCESS_TOKEN}
-      - RUNNER_LABELS=${GITHUB_RUNNER_LABELS:-self-hosted,docker,linux,altbau_vs_neubau}
+      - REPO_URL=${GITHUB_REPO_URL}              # Liest GITHUB_REPO_URL aus .env, stellt es im Container als REPO_URL bereit
+      - RUNNER_NAME=${GITHUB_RUNNER_NAME}        # Liest GITHUB_RUNNER_NAME aus .env, stellt es im Container als RUNNER_NAME bereit
+      - ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}      # Liest GITHUB_ACCESS_TOKEN aus .env, stellt es im Container als ACCESS_TOKEN bereit
+      - RUNNER_LABELS=${GITHUB_RUNNER_LABELS} 
+      - REGISTRATION_TOKEN=${GITHUB_REGISTRATION_TOKEN}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/run/docker.sock:/var/run/docker.sock 
 
 volumes:
   db_data:

@@ -1,42 +1,108 @@
-name: CI - Docker Build and Sanity Check
+name: Docker Compose Application Startup Test
+# This workflow builds Docker images and performs a sanity check by starting the services briefly.
+# It is triggered on pushes and pull requests to the main branch.
+# It also allows manual triggering via the GitHub UI.
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  docker_check:
-    name: Build Docker Images and Perform Sanity Check
+  test-application-services:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Check Docker Compose Version
-      run: docker compose version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Build Docker Images with Docker Compose
-      run: |
-        echo "Starting Docker Compose image build..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml build --no-cache --pull
-        echo "Docker images successfully built."
+      - name: Build and Start Services (excluding github-runner)
+        # We start the services in detached mode and build them if necessary.
+        # The 'github-runner' service is explicitly excluded as it's not part of the application under test.
+        run: |
+          echo "Starting Docker Compose services (backend, frontend, db)..."
+          docker-compose -f docker-compose.yml up -d --build --exclude-service github-runner
+          echo "Services started. Waiting for them to become healthy..."
 
-    - name: Briefly Start Docker Compose Services (Sanity Check)
-      run: |
-        echo "Briefly starting Docker Compose services for a sanity check..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml up -d
-        sleep 5
-        echo "Shutting down services..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml down
-        echo "Sanity check complete: Services were started and shut down."
+          # Give all services, especially the database, ample time to start and pass health checks.
+          # This duration should be generous. Healthchecks defined in docker-compose.yml are best,
+          # but a decent initial sleep helps avoid immediate failures.
+          sleep 60 # Increased sleep time for better reliability. Adjust as needed.
 
-    - name: Show Docker Logs if Failure
-      if: failure()
-      run: docker compose -f docker-compose.ci.yml logs
+      - name: Check Service Health with Retries
+        run: |
+          echo "Checking health status of backend, frontend, and database..."
+
+          declare -a SERVICES_TO_CHECK=(
+            "db:pg_isready -h localhost -p 5432 -U ${DB_USER} -d ${DB_NAME}"
+            "backend:curl -f http://localhost:5001/health" # Assuming /health endpoint
+            "frontend:curl -f http://localhost:3000"       # Assuming root path is sufficient for frontend health
+          )
+
+          ALL_SERVICES_HEALTHY=true
+
+          for SERVICE_CHECK in "${SERVICES_TO_CHECK[@]}"; do
+            IFS=':' read -r SERVICE_NAME CHECK_COMMAND <<< "$SERVICE_CHECK"
+            echo "--- Checking health for service: $SERVICE_NAME ---"
+            
+            MAX_ATTEMPTS=15 # Total attempts
+            ATTEMPT=0
+            SERVICE_READY=false
+
+            while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+              if [ "$SERVICE_NAME" == "db" ]; then
+                # For DB, we need to pass the password via PGPASSWORD env var.
+                # It's better to use an explicit secret for the password for pg_isready.
+                # If your DB_PASSWORD secret contains the password directly:
+                PGPASSWORD=${DB_PASSWORD} $CHECK_COMMAND
+              else
+                $CHECK_COMMAND
+              fi
+
+              if [ $? -eq 0 ]; then # Check if the command exited successfully (status code 0)
+                echo "Service '$SERVICE_NAME' is healthy!"
+                SERVICE_READY=true
+                break
+              else
+                echo "Service '$SERVICE_NAME' not healthy yet. Retrying in 5 seconds... (Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS)"
+                sleep 5
+              fi
+              ATTEMPT=$((ATTEMPT + 1))
+            done
+
+            if [ "$SERVICE_READY" = false ]; then
+              echo "Error: Service '$SERVICE_NAME' did not become healthy within the expected time."
+              ALL_SERVICES_HEALTHY=false
+              # Optionally, display logs for the specific service that failed
+              # docker-compose -f docker-compose.yml logs "$SERVICE_NAME"
+            fi
+          done
+
+          if [ "$ALL_SERVICES_HEALTHY" = false ]; then
+            echo "One or more services failed their health checks. Exiting with error."
+            docker-compose -f docker-compose.yml logs # Display all logs if any service failed
+            exit 1
+          else
+            echo "All specified services passed their health checks!"
+          fi
+        env:
+          # Make sure these secrets are available if your database requires them
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Used for PGPASSWORD
+          DB_NAME: ${{ secrets.DB_NAME }}
+
+      # This step will always run, regardless of the success or failure of previous steps.
+      # This ensures cleanup even if a health check fails.
+      - name: Stop and remove services (Cleanup)
+        if: always() # This ensures the cleanup step always runs
+        run: |
+          echo "Stopping and removing Docker Compose services..."
+          # 'down' will only affect services started by 'up' command in this workflow run.
+          docker-compose -f docker-compose.yml down --volumes --remove-orphans || true
+          echo "Cleanup complete."

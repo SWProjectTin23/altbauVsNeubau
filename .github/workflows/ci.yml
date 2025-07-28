@@ -22,18 +22,21 @@ jobs:
     - name: Build Docker Images with Docker Compose
       run: |
         echo "Starting Docker Compose image build..."
-        docker compose build --no-cache --pull
+        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
+        docker compose -f docker-compose.ci.yml build --no-cache --pull
         echo "Docker images successfully built."
 
     - name: Briefly Start Docker Compose Services (Sanity Check)
       run: |
         echo "Briefly starting Docker Compose services for a sanity check..."
-        docker compose up -d
+        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
+        docker compose -f docker-compose.ci.yml up -d
         sleep 5
         echo "Shutting down services..."
-        docker compose down
+        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
+        docker compose -f docker-compose.ci.yml down
         echo "Sanity check complete: Services were started and shut down."
 
     - name: Show Docker Logs if Failure
       if: failure()
-      run: docker compose logs
+      run: docker compose -f docker-compose.ci.yml logs

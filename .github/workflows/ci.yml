@@ -26,23 +26,34 @@ jobs:
         # This action sets up Docker Buildx, which provides enhanced build capabilities.
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Start Services (excluding github-runner)
-        # We start the services in detached mode and build them if necessary.
-        # The 'github-runner' service is explicitly excluded as it's not part of the application under test
-        # and would not be present in this testing context.
-        run: |
-          export PATH=$PATH:/usr/local/bin
+      # This action ensures Docker Compose is correctly set up and available in the PATH.
+      # It's a robust way to handle Docker Compose versions and ensures compatibility.
+      - name: Set up Docker Compose
+        uses: crazy-max/ghaction-docker-compose@v3
+        with:
+          version: latest # Ensures the latest stable version of Docker Compose is used
 
+      - name: Build and Start Services (excluding github-runner)
+        run: |
           echo "Starting Docker Compose services (backend, frontend, db)..."
+          # IMPORTANT: Using 'docker compose' (with a space) for Docker Compose V2 CLI syntax.
+          # --build ensures images are built if they don't exist or are outdated.
+          # --exclude-service github-runner prevents attempting to start the runner service,
+          # which is only relevant for self-hosted deployment and not for this testing workflow.
           docker compose -f docker-compose.yml up -d --build --exclude-service github-runner
           echo "Services started. Waiting for them to become healthy..."
+
+          # Give all services, especially the database, ample time to start and pass health checks.
+          # This duration should be generous. Healthchecks defined in docker-compose.yml are crucial here.
+          # A decent initial sleep helps avoid immediate failures before health checks can pass.
+          sleep 60 # Adjust based on your service startup times.
 
       - name: Check Service Health with Retries
         run: |
           echo "Checking health status of backend, frontend, and database..."
 
           # Define an array of services to check along with their respective health check commands.
-          # Make sure the ports and paths match your application's configuration.
+          # Ensure the ports and paths match your application's configuration in docker-compose.yml.
           declare -a SERVICES_TO_CHECK=(
             "db:pg_isready -h localhost -p 5432 -U ${DB_USER} -d ${DB_NAME}"
             "backend:curl -f http://localhost:5001/health" # Adjust port and path if different
@@ -84,6 +95,7 @@ jobs:
               echo "Error: Service '$SERVICE_NAME' did not become healthy within the expected time."
               ALL_SERVICES_HEALTHY=false
               # Display logs for the specific service that failed to help debugging
+              # IMPORTANT: Using 'docker compose' (with a space)
               docker compose -f docker-compose.yml logs "$SERVICE_NAME"
               break # Exit the loop if any service fails, no need to check others
             fi
@@ -91,6 +103,7 @@ jobs:
 
           if [ "$ALL_SERVICES_HEALTHY" = false ]; then
             echo "One or more services failed their health checks. Displaying all Docker Compose logs and exiting with error."
+            # IMPORTANT: Using 'docker compose' (with a space)
             docker compose -f docker-compose.yml logs # Display all logs if any service failed
             exit 1 # Fail the job
           else
@@ -109,7 +122,7 @@ jobs:
         if: always()
         run: |
           echo "Stopping and removing Docker Compose services..."
-          # 'down' will only affect services started by the 'up' command in this workflow run.
+          # IMPORTANT: Using 'docker compose' (with a space)
           # --volumes removes named volumes declared in the compose file.
           # --remove-orphans removes containers for services not defined in the compose file.
           # '|| true' ensures this step doesn't fail the workflow if the services are already down.

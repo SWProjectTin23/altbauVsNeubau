@@ -14,10 +14,10 @@ services:
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (5000)
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
   
   frontend:
     build:
@@ -30,10 +30,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
 
   db:
     image: timescale/timescaledb:latest-pg14

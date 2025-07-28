@@ -32,11 +32,11 @@ jobs:
         # The 'github-runner' service is explicitly not started here.
         run: |
           echo "Starting backend, frontend, and db services..."
-          docker-compose up -d backend frontend db --wait
+          docker compose up -d backend frontend db --wait
 
           # Optional: Output the status of the services to verify they are running
           echo "Services status after startup:"
-          docker-compose ps
+          docker compose ps
 
       - name: Test Backend Service
         # Perform a curl test on the backend health check endpoint.
@@ -60,5 +60,5 @@ jobs:
         if: always() # Always run this step, even if previous steps fail
         run: |
           echo "Shutting down Docker Compose services..."
-          docker-compose down -v --remove-orphans
+          docker compose down -v --remove-orphans
           echo "Services shut down."

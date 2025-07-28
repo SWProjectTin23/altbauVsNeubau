@@ -1,4 +1,5 @@
 name: Docker Compose Application Startup Test
+
 # This workflow builds Docker images and performs a sanity check by starting the services briefly.
 # It is triggered on pushes and pull requests to the main branch.
 # It also allows manual triggering via the GitHub UI.
@@ -10,68 +11,78 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
   test-application-services:
+    # This job runs on a GitHub-hosted Ubuntu runner, which comes with Docker and Docker Compose pre-installed.
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # Fetches your repository's code onto the runner
 
       - name: Set up Docker Buildx
+        # This action sets up Docker Buildx, which provides enhanced build capabilities.
         uses: docker/setup-buildx-action@v3
 
       - name: Build and Start Services (excluding github-runner)
         # We start the services in detached mode and build them if necessary.
-        # The 'github-runner' service is explicitly excluded as it's not part of the application under test.
+        # The 'github-runner' service is explicitly excluded as it's not part of the application under test
+        # and would not be present in this testing context.
         run: |
           echo "Starting Docker Compose services (backend, frontend, db)..."
+          # The -f docker-compose.yml flag explicitly specifies the compose file.
+          # --build ensures images are built if they don't exist or are outdated.
+          # --exclude-service github-runner prevents attempting to start the runner service,
+          # which is only relevant for self-hosted deployment.
           docker-compose -f docker-compose.yml up -d --build --exclude-service github-runner
           echo "Services started. Waiting for them to become healthy..."
 
           # Give all services, especially the database, ample time to start and pass health checks.
-          # This duration should be generous. Healthchecks defined in docker-compose.yml are best,
-          # but a decent initial sleep helps avoid immediate failures.
-          sleep 60 # Increased sleep time for better reliability. Adjust as needed.
+          # This duration should be generous. Healthchecks defined in docker-compose.yml are crucial here.
+          # A decent initial sleep helps avoid immediate failures before health checks can pass.
+          sleep 60 # Increased sleep time for better reliability. Adjust based on your service startup times.
 
       - name: Check Service Health with Retries
         run: |
           echo "Checking health status of backend, frontend, and database..."
 
+          # Define an array of services to check along with their respective health check commands.
+          # Make sure the ports and paths match your application's configuration.
           declare -a SERVICES_TO_CHECK=(
             "db:pg_isready -h localhost -p 5432 -U ${DB_USER} -d ${DB_NAME}"
-            "backend:curl -f http://localhost:5001/health" # Assuming /health endpoint
-            "frontend:curl -f http://localhost:3000"       # Assuming root path is sufficient for frontend health
+            "backend:curl -f http://localhost:5001/health" # Adjust port and path if different
+            "frontend:curl -f http://localhost:3000"       # Adjust port and path if different, checks for successful HTTP response
           )
 
           ALL_SERVICES_HEALTHY=true
 
           for SERVICE_CHECK in "${SERVICES_TO_CHECK[@]}"; do
+            # Split the string into SERVICE_NAME and CHECK_COMMAND
             IFS=':' read -r SERVICE_NAME CHECK_COMMAND <<< "$SERVICE_CHECK"
             echo "--- Checking health for service: $SERVICE_NAME ---"
-            
-            MAX_ATTEMPTS=15 # Total attempts
+
+            MAX_ATTEMPTS=15 # Total attempts to check the service (15 * 5 seconds = 75 seconds max wait per service)
             ATTEMPT=0
             SERVICE_READY=false
 
             while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
               if [ "$SERVICE_NAME" == "db" ]; then
-                # For DB, we need to pass the password via PGPASSWORD env var.
-                # It's better to use an explicit secret for the password for pg_isready.
-                # If your DB_PASSWORD secret contains the password directly:
-                PGPASSWORD=${DB_PASSWORD} $CHECK_COMMAND
+                # For PostgreSQL, pg_isready requires the password via PGPASSWORD environment variable.
+                # It's crucial that DB_PASSWORD is provided as a GitHub Secret.
+                PGPASSWORD="${DB_PASSWORD}" $CHECK_COMMAND
               else
-                $CHECK_COMMAND
+                $CHECK_COMMAND # Execute the curl command for backend/frontend
               fi
 
               if [ $? -eq 0 ]; then # Check if the command exited successfully (status code 0)
                 echo "Service '$SERVICE_NAME' is healthy!"
                 SERVICE_READY=true
-                break
+                break # Exit the while loop if service is healthy
               else
                 echo "Service '$SERVICE_NAME' not healthy yet. Retrying in 5 seconds... (Attempt $((ATTEMPT + 1))/$MAX_ATTEMPTS)"
-                sleep 5
+                sleep 5 # Wait before the next retry
               fi
               ATTEMPT=$((ATTEMPT + 1))
             done
@@ -79,30 +90,35 @@ jobs:
             if [ "$SERVICE_READY" = false ]; then
               echo "Error: Service '$SERVICE_NAME' did not become healthy within the expected time."
               ALL_SERVICES_HEALTHY=false
-              # Optionally, display logs for the specific service that failed
-              # docker-compose -f docker-compose.yml logs "$SERVICE_NAME"
+              # Display logs for the specific service that failed to help debugging
+              docker-compose -f docker-compose.yml logs "$SERVICE_NAME"
+              break # Exit the loop if any service fails, no need to check others
             fi
           done
 
           if [ "$ALL_SERVICES_HEALTHY" = false ]; then
-            echo "One or more services failed their health checks. Exiting with error."
+            echo "One or more services failed their health checks. Displaying all Docker Compose logs and exiting with error."
             docker-compose -f docker-compose.yml logs # Display all logs if any service failed
-            exit 1
+            exit 1 # Fail the job
           else
-            echo "All specified services passed their health checks!"
+            echo "All specified services passed their health checks successfully!"
           fi
         env:
-          # Make sure these secrets are available if your database requires them
+          # These environment variables are passed to the 'run' command.
+          # Ensure these secrets are configured in your GitHub repository's settings.
           DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Used for PGPASSWORD
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }} # Used by PGPASSWORD for pg_isready
           DB_NAME: ${{ secrets.DB_NAME }}
 
-      # This step will always run, regardless of the success or failure of previous steps.
-      # This ensures cleanup even if a health check fails.
       - name: Stop and remove services (Cleanup)
-        if: always() # This ensures the cleanup step always runs
+        # This step will always run, regardless of the success or failure of previous steps,
+        # ensuring resources are cleaned up.
+        if: always()
         run: |
           echo "Stopping and removing Docker Compose services..."
-          # 'down' will only affect services started by 'up' command in this workflow run.
+          # 'down' will only affect services started by the 'up' command in this workflow run.
+          # --volumes removes named volumes declared in the compose file.
+          # --remove-orphans removes containers for services not defined in the compose file.
+          # '|| true' ensures this step doesn't fail the workflow if the services are already down.
           docker-compose -f docker-compose.yml down --volumes --remove-orphans || true
           echo "Cleanup complete."

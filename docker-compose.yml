@@ -34,14 +34,13 @@ services:
       - db_data:/var/lib/postgresql/data
 
   github-runner:
-    context: ./github-runner-docker
-    dockerfile: Dockerfile
+    image: myoung34/docker-github-actions-runner
     restart: always
     environment:
       - REPO_URL=${GITHUB_REPO_URL:-https://github.com/SWProjectTin23/altbauVsNeubau}
       - RUNNER_NAME=${GITHUB_RUNNER_NAME:-github-runner-altbau-vs-neubau}
-      - ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
-      - RUNNER_LABELS=self-hosted,docker,linux,altbau_vs_neubau
+      - GITHUB_TOKEN=${GITHUB_ACCESS_TOKEN}
+      - RUNNER_LABELS=${GITHUB_RUNNER_LABELS:-self-hosted,docker,linux,altbau_vs_neubau}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 

@@ -34,7 +34,7 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - && \
 # https://github.com/actions/runner/releases
 # Lade und installiere den GitHub Actions Runner
 ENV RUNNER_VERSION="2.327.1"
-ENV RUNNER_ARCH="arm64"
+ENV RUNNER_ARCH="x64"
 ENV RUNNER_OS="linux"
 ENV RUNNER_TEMP=/tmp/runner-temp
 

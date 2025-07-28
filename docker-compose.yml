@@ -7,6 +7,7 @@ services:
     ports:
         - "5001:5000" # Host port 5001 mapped to container port 5000
     environment:
+      - FLASK_APP=app:create_app
       - FLASK_APP=app # This is sufficient if run.py calls create_app()
       - FLASK_RUN_HOST=0.0.0.0
       - DB_HOST=${DB_HOST}

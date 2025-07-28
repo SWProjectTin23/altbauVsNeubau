@@ -4,13 +4,20 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "5001:5000"
+      - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
     environment:
-      - FLASK_APP=app:create_app
-      - FLASK_APP=app
+      - FLASK_APP=app # This is sufficient if run.py calls create_app()
       - FLASK_RUN_HOST=0.0.0.0
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      # IMPORTANT: Health check inside the container must use the internal port (5000)
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
   
   frontend:
     build:
@@ -19,33 +26,48 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   db:
     image: timescale/timescaledb:latest-pg14
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=altbau_vs_neubau
+      - POSTGRES_USER=${DB_USER}          
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1;' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s # Longer start period for the database
 
   github-runner:
     build:
-      context: ./github-runner-docker # <-- Wichtig: Docker wird hier dein Dockerfile finden
-      dockerfile: Dockerfile          # <-- Zeigt auf das Dockerfile im neuen Ordner
+      context: ./github-runner-docker
+      dockerfile: Dockerfile
     restart: always
     environment:
-      - REPO_URL=${GITHUB_REPO_URL}              # Liest GITHUB_REPO_URL aus .env, stellt es im Container als REPO_URL bereit
-      - RUNNER_NAME=${GITHUB_RUNNER_NAME}        # Liest GITHUB_RUNNER_NAME aus .env, stellt es im Container als RUNNER_NAME bereit
-      - ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}      # Liest GITHUB_ACCESS_TOKEN aus .env, stellt es im Container als ACCESS_TOKEN bereit
+      - REPO_URL=${GITHUB_REPO_URL}
+      - RUNNER_NAME=${GITHUB_RUNNER_NAME}
+      - ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
       - RUNNER_LABELS=${GITHUB_RUNNER_LABELS} 
       - REGISTRATION_TOKEN=${GITHUB_REGISTRATION_TOKEN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock 
+      - github_runner_data:/home/runner/actions-runner/_work
 
-volumes:
+volumes: # This section must be at the same level as 'services'
   db_data:
+  github_runner_data:

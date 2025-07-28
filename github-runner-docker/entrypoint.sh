@@ -29,7 +29,7 @@ echo "Configuring GitHub Actions runner..."
 # WICHTIG: Hier verwenden wir REGISTRATION_TOKEN für die Registrierung.
 gosu github-runner ./config.sh \
     --url "$REPO_URL" \
-    --token "$REGISTRATION_TOKEN" \ # <--- HIER MUSS DAS KURZLEBIGE TOKEN REIN!
+    --token "$REGISTRATION_TOKEN" \
     --name "$RUNNER_NAME" \
     --labels "$RUNNER_LABELS" \
     --unattended \

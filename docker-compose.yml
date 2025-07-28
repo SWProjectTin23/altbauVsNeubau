@@ -7,7 +7,7 @@ services:
     ports:
         - "5001:5000" # Host port 5001 mapped to container port 5000
     environment:
-      - FLASK_APP=app.app:create_app
+      - FLASK_APP=app # This is sufficient if run.py calls create_app()
       - FLASK_RUN_HOST=0.0.0.0
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -16,10 +16,18 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - PYTHONUNBUFFERED=1
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
-    - pg-network
-
+      - pg-network
+    healthcheck:
+      # IMPORTANT: Health check inside the container must use the internal port (5000)
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+  
   frontend:
     container_name: altbau_vs_neubau_frontend # a fixed name for the container
     build:
@@ -34,15 +42,22 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
-      - backend
-    networks: # Connects the container to the same internal network as the DB
+      backend:
+        condition: service_healthy
+    networks:
       - pg-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   db:
     image: timescale/timescaledb:latest-pg14
     container_name: altbau_vs_neubau_db # a fixed name for the container
     environment:
-      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_USER=${DB_USER}          
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
@@ -52,6 +67,12 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - pg-network
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1;' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s # Longer start period for the database
     
 
   pgadmin: # The name of your pgAdmin service
@@ -68,7 +89,7 @@ services:
       - pg-network
     restart: unless-stopped
 
-volumes:
+volumes: # This section must be at the same level as 'services'
   db_data:
 
 networks: # Definition of networks

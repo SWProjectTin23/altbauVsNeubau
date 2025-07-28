@@ -31,18 +31,12 @@ jobs:
         # The 'github-runner' service is explicitly excluded as it's not part of the application under test
         # and would not be present in this testing context.
         run: |
+          # Ensure /usr/local/bin is in PATH for docker-compose
+          export PATH=$PATH:/usr/local/bin
+
           echo "Starting Docker Compose services (backend, frontend, db)..."
-          # The -f docker-compose.yml flag explicitly specifies the compose file.
-          # --build ensures images are built if they don't exist or are outdated.
-          # --exclude-service github-runner prevents attempting to start the runner service,
-          # which is only relevant for self-hosted deployment.
           docker-compose -f docker-compose.yml up -d --build --exclude-service github-runner
           echo "Services started. Waiting for them to become healthy..."
-
-          # Give all services, especially the database, ample time to start and pass health checks.
-          # This duration should be generous. Healthchecks defined in docker-compose.yml are crucial here.
-          # A decent initial sleep helps avoid immediate failures before health checks can pass.
-          sleep 60 # Increased sleep time for better reliability. Adjust based on your service startup times.
 
       - name: Check Service Health with Retries
         run: |

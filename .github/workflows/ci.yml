@@ -26,12 +26,11 @@ jobs:
         # This action sets up Docker Buildx, which provides enhanced build capabilities.
         uses: docker/setup-buildx-action@v3
 
-      # This action ensures Docker Compose is correctly set up and available in the PATH.
-      # It's a robust way to handle Docker Compose versions and ensures compatibility.
-      - name: Set up Docker Compose
-        uses: crazy-max/ghaction-docker-compose@v3
-        with:
-          version: latest # Ensures the latest stable version of Docker Compose is used
+      - name: Set up Docker # <-- DIESE AKTION ERSETZT 'crazy-max/ghaction-docker-compose'
+        # This action ensures the Docker environment is properly configured,
+        # which also makes 'docker compose' available.
+        uses: docker/setup-docker@v3
+
 
       - name: Build and Start Services (excluding github-runner)
         run: |

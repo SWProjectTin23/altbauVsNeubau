@@ -1,25 +1,39 @@
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5000"
-    environment:
-      - FLASK_APP=app:create_app
-      - FLASK_APP=app
-      - FLASK_RUN_HOST=0.0.0.0
-    depends_on:
-      - db
-  
+      build:
+        context: ./backend
+        dockerfile: Dockerfile
+      ports:
+        - "5001:5000" # Host-Port 5001 wird auf Container-Port 5000 geleitet
+      environment:
+        # FLASK_APP und FLASK_RUN_HOST werden jetzt von run.py gehandhabt
+        - DB_HOST=${DB_HOST}
+        - DB_PORT=${DB_PORT}
+        - DB_NAME=${DB_NAME}
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - PYTHONUNBUFFERED=1 # Beibehalten für ungepufferte Python-Ausgabe
+      depends_on:
+        - db
+      networks:
+        - pg-network
+        
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - backend
+    networks: # Verbindet den Container mit demselben internen Netzwerk wie die DB
+      - pg-network
 
   db:
     image: timescale/timescaledb:latest-pg14
@@ -32,6 +46,27 @@ services:
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db_data:/var/lib/postgresql/data
+    networks:
+      - pg-network
+    
+
+  pgadmin: # Der Name deines pgAdmin-Dienstes
+    image: dpage/pgadmin4 # Das Docker-Image für pgAdmin
+    container_name: pgadmin4 # Ein fester Name für den Container
+    environment: # Umgebungsvariablen für pgAdmin
+      PGADMIN_DEFAULT_EMAIL: admin@example.com # Login-E-Mail für pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: adminpassword # Login-Passwort für pgAdmin
+    ports: # Port-Mapping vom Host zum Container
+      - "5480:80" # pgAdmin ist über http://localhost:5480 erreichbar
+    depends_on: # Stellt sicher, dass die DB vor pgAdmin startet
+      - db
+    networks: # Verbindet den Container mit demselben internen Netzwerk wie die DB
+      - pg-network
+    restart: unless-stopped
 
 volumes:
   db_data:
+
+networks: # Definition der Netzwerke
+  pg-network:
+    driver: bridge # Standard-Bridge-Netzwerk

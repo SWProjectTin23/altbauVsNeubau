@@ -2,8 +2,8 @@ services:
   backend:
     container_name: altbau_vs_neubau_backend # A fixed name for the container
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+        context: ./backend
+        dockerfile: Dockerfile
     ports:
         - "5001:5000" # Host port 5001 mapped to container port 5000
     environment:
@@ -28,6 +28,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
   
   frontend:
     container_name: altbau_vs_neubau_frontend # a fixed name for the container

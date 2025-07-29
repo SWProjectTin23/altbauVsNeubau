@@ -24,15 +24,27 @@ def test_time_range(client):
     response = client.get("/api/devices/range")
     assert response.status_code == 200
     data = response.get_json()
+
+    # Assert that data is a list and not empty
+    assert isinstance(data, list)
     assert len(data) > 0
-    assert "device_1" in data
-    assert "device_2" in data
-    #dict[str, dict[str, int]]
+
+    # We need to find the device data within the list
+    # Let's create a dictionary for easier lookup by device_id
+    devices_by_id = {device['device_id']: device for device in data}
+
+    # Check for device_1 (device_id: 1)
+    assert 1 in devices_by_id, "Device with ID 1 not found in the response"
+    device_1_data = devices_by_id[1]
+    assert isinstance(device_1_data, dict)
     required_keys = {"start", "end"}
-    for device_id in ["device_1", "device_2"]:
-        device_data = data[device_id]
-        assert isinstance(device_data, dict)
-        assert required_keys.issubset(device_data.keys())
+    assert required_keys.issubset(device_1_data.keys()), f"Device 1 data missing required keys: {required_keys - device_1_data.keys()}"
+
+    # Check for device_2 (device_id: 2)
+    assert 2 in devices_by_id, "Device with ID 2 not found in the response"
+    device_2_data = devices_by_id[2]
+    assert isinstance(device_2_data, dict)
+    assert required_keys.issubset(device_2_data.keys()), f"Device 2 data missing required keys: {required_keys - device_2_data.keys()}"
         
 def test_device_latest(client):
     response = client.get("/api/devices/1/latest")

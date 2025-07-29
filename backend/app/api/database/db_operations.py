@@ -16,8 +16,13 @@ DB_CONFIG = {
 }
 
 # Check if all required database configuration parameters are set
-if not all([DB_CONFIG["host"], DB_CONFIG["database"], DB_CONFIG["user"], DB_CONFIG["password"]]):
-    raise ValueError("One or more essential database configuration parameters (HOST, NAME, USER, PASSWORD) are missing. Please check your .env file or environment variables.")
+def check_db_config():
+    missing = [k for k in ["host", "database", "user", "password"] if not DB_CONFIG[k]]
+    if missing:
+        msg = f"Missing DB config values: {', '.join(missing)}. Please check your .env file or environment variables."
+        print(msg)
+        raise ValueError(msg)
+
 
 # Function to get a database connection
 def get_db_connection():
@@ -26,6 +31,7 @@ def get_db_connection():
     Returns a Connection object.
     Raises psycopg2.Error on connection errors.
     """
+    check_db_config()
     try:
         conn = psycopg2.connect(
             host=DB_CONFIG["host"],
@@ -40,238 +46,254 @@ def get_db_connection():
         print(f"Error while connecting to the database: {e}")
         raise
 
-# Function to fetch device data from the database
-def get_device_data_from_db(device_id: int, metric: str, start: int = None, end: int = None) -> list:
-    """
-    Fetches device data for a specific device and metric from the PostgreSQL database.
-
-    Args:
-        device_id (int): The ID of the device.
-        metric (str): The metric, e.g., 'temperature', 'humidity'. (Validated in the API).
-        start (int, optional): Optional start Unix timestamp.
-        end (int, optional): Optional end Unix timestamp.
-
-    Returns:
-        list: A list of dictionaries, where each dictionary contains 'timestamp' and 'value'.
-              Example: [{'timestamp': 1678886400, 'value': 22.5}]
-
-    Raises:
-        psycopg2.Error: On database errors, which can be handled by the calling function.
-    """
-    conn = None
-    try:
-        conn = get_db_connection()
-        # Use RealDictCursor to get results as dictionaries (column_name: value)
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor) 
-
-        # The query is securely constructed. The metric name is inserted directly
-        # because it's validated in the API logic and psycopg2 doesn't parameterize column names.
-        query = f"SELECT timestamp, {metric} FROM device_data WHERE device_id = %s"
-        params = [device_id]
-
-        if start is not None:
-            query += " AND timestamp >= %s"
-            params.append(start)
-        if end is not None:
-            query += " AND timestamp <= %s"
-            params.append(end)
-
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-
-        result = []
-        for row in data:
-            result.append({
-                "timestamp": row["timestamp"],
-                "value": row[metric] # Access via dynamic column name
-            })
-        return result
-
-    except psycopg2.Error as e:
-        # Re-raise the database error for further handling by the calling function.
-        raise
-    finally:
-        # Ensure the database connection is always closed.
-        if conn:
-            conn.close()
-
-# Function to fetch all data entries for a specific device
-def get_all_device_data_from_db(device_id: int, start: int = None, end: int = None) -> list:
-    """
-    Fetches all data entries for a specific device within a given timestamp range
-    from the PostgreSQL database.
-
-    Args:
-        device_id (int): The ID of the device.
-        start (int, optional): Optional start Unix timestamp.
-        end (int, optional): Optional end Unix timestamp.
-
-    Returns:
-        list: A list of dictionaries, where each dictionary represents a full data entry
-              for the device (including timestamp, temperature, humidity, etc.).
-              Example: [{'timestamp': 1678886400, 'temperature': 22.5, 'humidity': 55.0, ...}]
-
-    Raises:
-        psycopg2.Error: On database errors, which can be handled by the calling function.
-    """
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-
-        # Select all relevant columns. Exclude 'id' if it's just an internal primary key.
-        # Adjust column names if they differ in your actual DB schema.
-        query = "SELECT timestamp, temperature, humidity, pollen, particulate_matter FROM device_data WHERE device_id = %s"
-        params = [device_id]
-
-        if start is not None:
-            query += " AND timestamp >= %s"
-            params.append(start)
-        if end is not None:
-            query += " AND timestamp <= %s"
-            params.append(end)
-        
-        # Optional: Order by timestamp
-        query += " ORDER BY timestamp ASC"
-
-        cursor.execute(query, params)
-        data = cursor.fetchall()
-
-        # fetchall() with RealDictCursor already returns a list of dictionaries,
-        # so we can return it directly.
-        return data
-
-    except psycopg2.Error as e:
-        raise
-    finally:
-        if conn:
-            conn.close()
-
-# Function to fetch the latest data entry for a specific device
-def get_latest_device_data_from_db(device_id: int) -> dict | None:
-    """
-    Fetches the latest data entry for a specific device from the PostgreSQL database.
-
-    Args:
-        device_id (int): The ID of the device.
-
-    Returns:
-        dict | None: A dictionary representing the latest full data entry for the device,
-                     or None if no data is found for the device.
-                     Example: {'timestamp': 1678886400, 'temperature': 22.5, ...}
-
-    Raises:
-        psycopg2.Error: On database errors, which can be handled by the calling function.
-    """
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-
-        # Select all relevant columns, order by timestamp descending, and limit to 1
-        query = """
-            SELECT timestamp, temperature, humidity, pollen, particulate_matter
-            FROM device_data
-            WHERE device_id = %s
-            ORDER BY timestamp DESC
-            LIMIT 1
-        """
-        params = [device_id]
-
-        cursor.execute(query, params)
-        latest_data = cursor.fetchone() # Use fetchone() to get a single row
-
-        return latest_data # Will be a dict or None
-
-    except psycopg2.Error as e:
-        raise
-    finally:
-        if conn:
-            conn.close()
-
-# Function to check if a device exists in the database
-def device_exists(device_id: int) -> bool:
+# Check if a device exists in the database
+def device_exists(device_id):
     """
     Checks if a device with the given ID exists in the database.
-    This assumes device_data table implies device existence.
-    If you have a separate 'devices' table, it's better to check there.
+    Returns True if the device exists, False otherwise.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = "SELECT EXISTS(SELECT 1 FROM sensor_data WHERE device_id = %s);"
+    cursor.execute(query, (device_id,))
+    exists = cursor.fetchone()[0]
+
+    cursor.close()
+    conn.close()
+
+    return exists
+
+
+# Get available time ranges for all devices from the database
+# returns the earliest and latest timestamps for each device
+# Response format: [{device_id, start, end}, ...]
+def get_all_device_time_ranges_from_db():
+    """
+    Fetches the available time ranges for all devices from the database.
+    Returns a list of dictionaries with device_id, start, and end timestamps.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
+
+    query = """
+        SELECT 
+        device_id, 
+        MIN(timestamp) AS start, 
+        MAX(timestamp) AS end,
+        EXTRACT(EPOCH FROM MIN(timestamp))::BIGINT AS start_unix_seconds,
+        EXTRACT(EPOCH FROM MAX(timestamp))::BIGINT AS end_unix_seconds
+        FROM sensor_data
+        GROUP BY device_id;
+    """
+
+    cursor.execute(query)
+    time_ranges = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return [dict(row) for row in time_ranges]  # Convert rows to dictionaries
+
+def validate_timestamps_and_range(device_id1, device_id2, start_str, end_str):
+    """
+    Validates if the provided start and end Unix timestamps are valid
+    and within the available data range for the given devices.
 
     Args:
-        device_id (int): The ID of the device to check.
+        device_id1 (int): First device ID.
+        device_id2 (int): Second device ID.
+        start_str (str): Start timestamp as Unix string.
+        end_str (str): End timestamp as Unix string.
 
     Returns:
-        bool: True if the device exists, False otherwise.
-
-    Raises:
-        psycopg2.Error: On database errors.
+        tuple: (bool, str) where bool is True for valid, False otherwise.
+               str is an error message if invalid.
     """
-    conn = None
+    # Check if device IDs are valid
+    if not device_exists(device_id1):
+        return False, f"Device {device_id1} does not exist."
+    if not device_exists(device_id2):
+        return False, f"Device {device_id2} does not exist."
+
+    # Convert start and end to integers, if provided
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        start = int(start_str) if start_str else None
+        end = int(end_str) if end_str else None
+    except ValueError:
+        return False, "Invalid timestamp format. Start and end must be integers."
 
-        # Optimierte Abfrage: Prüft, ob ein beliebiger Eintrag für diese device_id existiert
-        # Alternativ: SELECT 1 FROM devices WHERE id = %s LIMIT 1; if you have a devices table.
-        query = "SELECT EXISTS(SELECT 1 FROM device_data WHERE device_id = %s LIMIT 1)"
-        params = [device_id]
+    # Check if start is before end
+    if start is not None and end is not None and start >= end:
+        return False, "Start timestamp must be before end timestamp."
 
-        cursor.execute(query, params)
-        exists = cursor.fetchone()[0] # fetchone() returns a tuple, get the first element
+    # Get data ranges for all devices
+    all_ranges = get_all_device_time_ranges_from_db()
 
-        return exists
+    # If no ranges are found, return an error
+    if not all_ranges:
+        return False, "Could not retrieve available time ranges from the database. Database might be empty or unreachable."
 
-    except psycopg2.Error as e:
-        print(f"Error checking device existence: {e}")
-        raise
-    finally:
-        if conn:
-            conn.close()
+    # Find the ranges for the specified devices
+    range1 = next((r for r in all_ranges if r['device_id'] == device_id1), None)
+    range2 = next((r for r in all_ranges if r['device_id'] == device_id2), None)
 
-# Function to get the time range for all devices
-def get_all_device_time_ranges_from_db() -> dict:
+    # If either device does not have data, return an error
+    if not range1:
+        return False, f"No data found for device {device_id1} to validate time range."
+    if not range2:
+        return False, f"No data found for device {device_id2} to validate time range."
+
+    # Determine the actual data range for both devices
+    # Use the earliest start and latest end from both devices
+    # This ensures we only consider the overlapping data range
+    actual_data_start = max(range1['start_unix_seconds'], range2['start_unix_seconds'])
+    actual_data_end = min(range1['end_unix_seconds'], range2['end_unix_seconds'])
+
+
+    effective_start = start if start is not None else actual_data_start
+    effective_end = end if end is not None else actual_data_end
+
+    # Check if the requested range is within the actual data range
+    if effective_start < actual_data_start or effective_end > actual_data_end:
+        return False, (f"Requested time range [{start_str}, {end_str}] is out of bounds for devices. "
+                      f"Available data for device {device_id1}: [{range1['start_unix_seconds']}, {range1['end_unix_seconds']}]. "
+                      f"Available data for device {device_id2}: [{range2['start_unix_seconds']}, {range2['end_unix_seconds']}]. "
+                      f"Common available range: [{actual_data_start}, {actual_data_end}]."
+                      )
+    # If all checks pass, return valid
+    return True, None # Gültig, kein Fehler
+
+
+# Get sensor data by device ID and time range
+# Returns all available data (by default) for a specific device
+# Response format: [{device_id, humidity, temperature, pollen, particulate_matter, timestamp}, ...]
+def get_device_data_from_db(device_id, metric=None, start=None, end=None):
     """
-    Fetches the minimum and maximum timestamp for all device_ids present in the database.
-
-    Returns:
-        dict: A dictionary where keys are 'device_X' (e.g., 'device_1') and values
-              are dictionaries containing 'start' (MIN timestamp) and 'end' (MAX timestamp).
-              Example: {'device_1': {'start': 1721736000, 'end': 1721745000}}
-
-    Raises:
-        psycopg2.Error: On database errors.
+    Fetches sensor data for a specific device within an optional time range.
+    If metric is provided, filters by that metric.
+    Returns a list of dictionaries with device data.
     """
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
-        # SQL query to get MIN and MAX timestamp for each device_id
-        query = """
-            SELECT
-                device_id,
-                MIN(timestamp) AS start,
-                MAX(timestamp) AS end
-            FROM
-                device_data
-            GROUP BY
-                device_id
-            ORDER BY
-                device_id ASC;
+    query = """
+        SELECT
+            device_id,
+            timestamp,
+            EXTRACT(EPOCH FROM timestamp)::BIGINT AS unix_timestamp_seconds,
+            temperature,
+            humidity,
+            pollen,
+            particulate_matter
+            FROM sensor_data
+            WHERE device_id = %s
         """
-        cursor.execute(query)
-        data = cursor.fetchall()
+    params = [device_id]
 
-        result = {}
-        for row in data:
-            result[f"device_{row['device_id']}"] = {
-                "start": row["start"],
-                "end": row["end"]
-            }
-        return result
+    if start:
+            query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+            params.append(start)
 
-    except psycopg2.Error as e:
-        print(f"Error fetching device time ranges: {e}")
-        raise
-    finally:
-        if conn:
-            conn.close()
+    if end:
+        query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+        params.append(end)
+
+    cursor.execute(query, tuple(params))
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return [dict(row) for row in data]  # Convert rows to dictionaries
+
+# Get latest data for a device
+# Response format: {device_id, humidity, temperature, pollen, particulate_matter, timestamp}
+def get_latest_device_data_from_db(device_id):
+    """
+    Fetches the latest sensor data for a specific device.
+    Returns a dictionary with the latest data or None if no data is found.
+    """
+    print(f"Fetching latest data for device ID: {device_id}")
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
+
+    query = """
+    SELECT
+        device_id,
+        timestamp,
+        -- Convert timestamp to UNIX seconds for compatibility
+        EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
+        temperature,
+        humidity,
+        pollen,
+        particulate_matter
+    FROM sensor_data
+    WHERE device_id = %s
+    ORDER BY timestamp DESC
+    LIMIT 1;
+    """
+    
+    print(f"Executing query: {query} with params: {device_id}")
+
+    cursor.execute(query, (device_id,))
+    latest_data = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return dict(latest_data) if latest_data else None  # Convert row to dictionary or return None if no data
+
+# Comparison Between Devices over Time Range
+# Returns the selected metric of two devices over a given time range (by default all)
+# http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660
+# Parameters:
+# - device_1: ID of the first device
+# - device_2: ID of the second device
+# - metric: Metric to compare (optional, defaults to all metrics)
+# - start: Start timestamp (optional)
+# - end: End timestamp (optional)
+def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, end=None):
+    """
+    Compares the selected metric of two devices over a given time range.
+    Returns a list of dictionaries with the comparison data.
+    """
+    if metric not in ['humidity', 'temperature', 'pollen', 'particulate_matter']:
+        raise ValueError("Invalid metric. Must be one of: 'humidity', 'temperature', 'pollen', 'particulate_matter'.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
+
+    query = f"""
+        SELECT device_id, 
+        timestamp,
+        EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
+        {metric}
+        FROM sensor_data
+        WHERE (device_id = %s OR device_id = %s)
+    """
+    params = [device_id1, device_id2]
+
+    if start:
+        query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+        params.append(start)
+
+    if end:
+        query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+        params.append(end)
+
+    query += " ORDER BY timestamp;"
+
+    cursor.execute(query, tuple(params))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    result = {f"device_{row['device_id']}": [] for row in rows}
+    for row in rows:
+        result[f"device_{row['device_id']}"].append({
+            "timestamp": row["timestamp"],
+            "value": row[metric]
+        })
+
+    return result

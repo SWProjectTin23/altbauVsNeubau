@@ -1,0 +1,9 @@
+{
+  "timestamp": "1753098733",
+  "value": 21,
+  "sequence": 123,
+  "meta": {
+    "firmware": "v1.2.3",
+    "startup": "1753098730"
+  }
+}

@@ -19,18 +19,18 @@ jobs:
     - name: Set up Docker Compose and Deploy
       run: |
         echo "Deploying application using Docker Compose..."
-        docker-compose -f docker-compose.yml down # Stops and removes containers, networks, images, and volumes defined in the docker-compose.yml file
+        docker compose -f docker-compose.yml down # Stops and removes containers, networks, images, and volumes defined in the docker-compose.yml file
         
         # Build and start the containers defined in the docker-compose.yml file
         echo "Pulling latest Docker images..."
-        docker-compose pull # Pulls the latest images for the services defined in the docker-compose.yml file
+        docker compose pull # Pulls the latest images for the services defined in the docker-compose.yml file
 
         # Build and start the containers
         echo "Building Docker images..."
-        docker-compose build
+        docker compose build
 
         echo "Starting new containers..."
         # Start the containers in detached mode
-        docker-compose up -d
+        docker compose up -d
 
         echo "Application deployed successfully!"

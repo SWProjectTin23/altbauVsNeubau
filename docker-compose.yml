@@ -54,21 +54,5 @@ services:
       retries: 10
       start_period: 60s # Longer start period for the database
 
-  github-runner:
-    build:
-      context: ./github-runner-docker
-      dockerfile: Dockerfile
-    restart: always
-    environment:
-      - REPO_URL=${REPO_URL}
-      - RUNNER_NAME=${RUNNER_NAME}
-      - ACCESS_TOKEN=${ACCESS_TOKEN}
-      - RUNNER_LABELS=${RUNNER_LABELS}
-      - REGISTRATION_TOKEN=${REGISTRATION_TOKEN}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock 
-      - github_runner_data:/home/runner/actions-runner/_work
-
 volumes: # This section must be at the same level as 'services'
   db_data:
-  github_runner_data:

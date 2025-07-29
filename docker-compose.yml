@@ -60,11 +60,11 @@ services:
       dockerfile: Dockerfile
     restart: always
     environment:
-      - REPO_URL=${GITHUB_REPO_URL}
-      - RUNNER_NAME=${GITHUB_RUNNER_NAME}
-      - ACCESS_TOKEN=${GITHUB_ACCESS_TOKEN}
-      - RUNNER_LABELS=${GITHUB_RUNNER_LABELS} 
-      - REGISTRATION_TOKEN=${GITHUB_REGISTRATION_TOKEN}
+      - REPO_URL=${REPO_URL}
+      - RUNNER_NAME=${RUNNER_NAME}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+      - RUNNER_LABELS=${RUNNER_LABELS}
+      - REGISTRATION_TOKEN=${REGISTRATION_TOKEN}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock 
       - github_runner_data:/home/runner/actions-runner/_work

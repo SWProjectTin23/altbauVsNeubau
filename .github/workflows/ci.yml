@@ -1,42 +1,82 @@
-name: CI - Docker Build and Sanity Check
+# .github/workflows/test-docker-compose.yml
+
+name: Docker Compose Service Test
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
-  docker_check:
-    name: Build Docker Images and Perform Sanity Check
-    runs-on: ubuntu-latest
+  test-services:
+    runs-on: ubuntu-latest # Verwende einen GitHub-gehosteten Runner
+
+    # Define environment variables for database credentials
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4 # Fetch code from the repository
 
-    - name: Check Docker Compose Version
-      run: docker compose version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3 # Set up Docker Buildx (for more efficient builds)
 
-    - name: Build Docker Images with Docker Compose
-      run: |
-        echo "Starting Docker Compose image build..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml build --no-cache --pull
-        echo "Docker images successfully built."
+      - name: Build and Start Services (excluding github-runner)
+        # Start services in the background and wait for their health checks to succeed.
+        # The 'github-runner' service is explicitly not started here.
+        run: |
+          echo "Starting backend, frontend, and db services..."
+          docker compose up -d backend frontend db --wait
 
-    - name: Briefly Start Docker Compose Services (Sanity Check)
-      run: |
-        echo "Briefly starting Docker Compose services for a sanity check..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml up -d
-        sleep 5
-        echo "Shutting down services..."
-        # Verwende -f, um die spezifische CI-Compose-Datei anzugeben
-        docker compose -f docker-compose.ci.yml down
-        echo "Sanity check complete: Services were started and shut down."
+          # Optional: Output the status of the services to verify they are running
+          echo "Services status after startup:"
+          docker compose ps
 
-    - name: Show Docker Logs if Failure
-      if: failure()
-      run: docker compose -f docker-compose.ci.yml logs
+      - name: Test Backend Service
+        # Perform a curl test on the backend health check endpoint.
+        # The backend container is mapped to port 5001 of the host.
+        run: |
+          echo "Testing backend health endpoint: http://localhost:5001/health"
+          curl -f http://localhost:5001/health
+          echo "Backend health check successful!"
+
+      - name: Test Frontend Service
+        # Perform a curl test on the frontend endpoint.
+        # The frontend container is mapped to port 3000 of the host.
+        run: |
+          echo "Testing frontend endpoint: http://localhost:3000"
+          curl -f http://localhost:3000
+          echo "Frontend service reachable!"
+
+      - name: Get Backend Logs (on failure or success for debugging)
+        # Ruft die Logs des Backend-Containers ab, um den Health Check zu debuggen.
+        # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
+        if: always()
+        run: |
+          echo "--- Backend Container Logs ---"
+          docker compose logs backend
+          echo "--- End Backend Container Logs ---"
+
+      - name: Get Frontend Logs (on failure or success for debugging)
+        # Ruft die Logs des Frontend-Containers ab, um den Health Check zu debuggen.
+        # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
+        if: always()
+        run: |
+          echo "--- Frontend Container Logs ---"
+          docker compose logs frontend
+          echo "--- End Frontend Container Logs ---"
+
+      - name: Clean up Docker Compose Services
+        # Stop all services and remove networks and volumes.
+        # This is important to free up resources.
+        if: always() # Always run this step, even if previous steps fail
+        run: |
+          echo "Shutting down Docker Compose services..."
+          docker compose down -v --remove-orphans
+          echo "Services shut down."

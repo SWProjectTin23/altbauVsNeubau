@@ -48,6 +48,19 @@ RUN mkdir /actions-runner && \
 RUN useradd -m github-runner && \
     chown -R github-runner:github-runner /actions-runner
 
+# Setze Umgebungsvariablen für den Runner    
+ARG DOCKER_GID=998
+
+# Erstelle eine Gruppe im Container mit der gleichen GID wie die Docker-Gruppe auf dem Host
+# und füge den GitHub Actions Runner-Benutzer zu dieser Gruppe hinzu.
+# Der Benutzername 'github-runner' wird hier verwendet, da du ihn oben erstellt hast.
+RUN GROUP_NAME=$(getent group $DOCKER_GID | cut -d: -f1); \
+    if [ -z "$GROUP_NAME" ]; then \
+        GROUP_NAME="docker_host"; \
+        groupadd -g $DOCKER_GID $GROUP_NAME; \
+    fi && \
+    usermod -aG $GROUP_NAME github-runner
+
 # Setze das Arbeitsverzeichnis im Container
 WORKDIR /actions-runner
 

@@ -17,20 +17,40 @@ jobs:
       uses: actions/checkout@v4 # Fetches your repository's code onto the runner
 
     - name: Set up Docker Compose and Deploy
-      run: |
-        echo "Deploying application using Docker Compose..."
-        docker compose -f docker-compose.yml down # Stops and removes containers, networks, images, and volumes defined in the docker-compose.yml file
+      # Hier werden die Umgebungsvariablen aus den GitHub Secrets an diesen Schritt übergeben.
+      # Docker Compose in diesem Schritt wird diese Variablen dann finden.
+      env:
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_PORT: ${{ secrets.DB_PORT }} # Falls DB_PORT auch als ENV erwartet wird
         
-        # Build and start the containers defined in the docker-compose.yml file
-        echo "Pulling latest Docker images..."
-        docker compose pull # Pulls the latest images for the services defined in the docker-compose.yml file
+        # Diese GITHUB_ Variablen werden von Docker Compose im Workflow nicht direkt benötigt,
+        # da sie für den Runner-Start selbst relevant sind. Aber wenn deine docker-compose.yml
+        # sie in anderen Diensten referenziert, sollten sie hier auch übergeben werden.
+        # Wenn nur der github-runner Dienst sie braucht, und der schon läuft, sind sie hier nicht zwingend.
+        # Ich lasse sie hier zur Vollständigkeit, falls andere Dienste sie nutzen.
+        REPO_URL: ${{ secrets.REPO_URL }}
+        RUNNER_NAME: ${{ secrets.RUNNER_NAME }}
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        RUNNER_LABELS: ${{ secrets.RUNNER_LABELS }}
 
-        # Build and start the containers
+      run: |
+        echo "Verifying Docker installation..."
+        docker info # Überprüft die Docker-Installation und -Verbindung
+        docker compose version # Überprüft die Docker Compose Plugin-Version
+
+        echo "Deploying application using Docker Compose..."
+        # Verwende 'docker compose' (ohne Bindestrich)
+        docker compose -f docker-compose.yml down || true # Stoppt und entfernt Container, Netzwerke, Images und Volumes. '|| true' verhindert, dass der Schritt fehlschlägt, wenn die Container nicht existieren.
+        
+        echo "Pulling latest Docker images..."
+        docker compose pull # Zieht die neuesten Images für die Dienste
+
         echo "Building Docker images..."
         docker compose build
 
         echo "Starting new containers..."
-        # Start the containers in detached mode
         docker compose up -d
 
         echo "Application deployed successfully!"

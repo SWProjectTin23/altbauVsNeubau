@@ -1,24 +1,27 @@
 services:
   backend:
-      build:
-        context: ./backend
-        dockerfile: Dockerfile
-      ports:
-        - "5001:5000" # Host-Port 5001 wird auf Container-Port 5000 geleitet
-      environment:
-        # FLASK_APP und FLASK_RUN_HOST werden jetzt von run.py gehandhabt
-        - DB_HOST=${DB_HOST}
-        - DB_PORT=${DB_PORT}
-        - DB_NAME=${DB_NAME}
-        - DB_USER=${DB_USER}
-        - DB_PASSWORD=${DB_PASSWORD}
-        - PYTHONUNBUFFERED=1 # Beibehalten für ungepufferte Python-Ausgabe
-      depends_on:
-        - db
-      networks:
-        - pg-network
-        
+    container_name: altbau_vs_neubau_backend # A fixed name for the container
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+        - "5001:5000" # Host port 5001 mapped to container port 5000
+    environment:
+      - FLASK_APP=app.app:create_app
+      - FLASK_RUN_HOST=0.0.0.0
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+    networks:
+    - pg-network
+
   frontend:
+    container_name: altbau_vs_neubau_frontend # a fixed name for the container
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -32,11 +35,12 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       - backend
-    networks: # Verbindet den Container mit demselben internen Netzwerk wie die DB
+    networks: # Connects the container to the same internal network as the DB
       - pg-network
 
   db:
     image: timescale/timescaledb:latest-pg14
+    container_name: altbau_vs_neubau_db # a fixed name for the container
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -50,23 +54,23 @@ services:
       - pg-network
     
 
-  pgadmin: # Der Name deines pgAdmin-Dienstes
-    image: dpage/pgadmin4 # Das Docker-Image für pgAdmin
-    container_name: pgadmin4 # Ein fester Name für den Container
-    environment: # Umgebungsvariablen für pgAdmin
-      PGADMIN_DEFAULT_EMAIL: admin@example.com # Login-E-Mail für pgAdmin
-      PGADMIN_DEFAULT_PASSWORD: adminpassword # Login-Passwort für pgAdmin
-    ports: # Port-Mapping vom Host zum Container
-      - "5480:80" # pgAdmin ist über http://localhost:5480 erreichbar
-    depends_on: # Stellt sicher, dass die DB vor pgAdmin startet
+  pgadmin: # The name of your pgAdmin service
+    image: dpage/pgadmin4 # The Docker image for pgAdmin
+    container_name: altbau_vs_neubau_pgadmin # a fixed name for the container
+    environment: # Environment variables for pgAdmin
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL} # Login email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD} # Login password for pgAdmin
+    ports: # Port mapping from host to container
+      - "5480:80" # pgAdmin is accessible at http://localhost:5480
+    depends_on: # Ensures that the DB starts before pgAdmin
       - db
-    networks: # Verbindet den Container mit demselben internen Netzwerk wie die DB
+    networks: # Connects the container to the same internal network as the DB
       - pg-network
     restart: unless-stopped
 
 volumes:
   db_data:
 
-networks: # Definition der Netzwerke
+networks: # Definition of networks
   pg-network:
-    driver: bridge # Standard-Bridge-Netzwerk
+    driver: bridge # Standard bridge network

@@ -1,7 +1,8 @@
+
 # API Overview
 This document describes the available REST API endpoints for the sensor backend.
 
-The endpoints are still under development and may change according to the need.
+Endpoints are under development and may change as needed.
 
 ## Base URL
 `http://localhost:5001/api/`
@@ -14,66 +15,117 @@ The endpoints are still under development and may change according to the need.
 
 **GET** `/devices/range`
 
-- Returns the earliest and latest available timestamps across **all devices**.
+- Returns the earliest and latest available timestamps for all devices.
 
-#### Example: 
+#### Example:
 `http://localhost:5001/api/devices/range`
 
-#### Response Format:
+#### Success Response:
 ```json
-[
+{
+  "status": "success",
+  "data": [
     {
-        "device_1":
-            {
-                "end":1721745000,
-                "start":1721736000
-            },
-        "device_2":
-            {
-                "end":1721744700,
-                "start":1721736300
-            }
+      "device_id": 1,
+      "start": 1721736000,
+      "end": 1721745000
+    },
+    {
+      "device_id": 2,
+      "start": 1721736300,
+      "end": 1721744700
     }
-]
+  ]
+}
 ```
+#### No Data Response:
+```json
+{
+  "status": "success",
+  "message": "No time ranges found for any devices.",
+  "data": []
+}
+```
+#### Error Response:
+```json
+{
+  "status": "error",
+  "message": "A database error occurred while processing your request."
+}
+```
+
 
 ### 2. Get sensor data by device ID and time range
 
 **GET** `/devices/<int:device_id>/data`
 
-- Returns all available data (by default) for a specific device. 
-- Also accepts time filters.
+- Returns all available data for a specific device.
+- Optional: time filters via query parameters.
 
 #### Path Parameter:
 - `device_id`: integer ID of the sensor device
 
 #### Query Parameters:
-- `start` *(optional)*: start timestamp in  UNIX format
+- `start` *(optional)*: start timestamp in UNIX format
 - `end` *(optional)*: end timestamp in UNIX format
 
 #### Example:
 `http://localhost:5001/api/devices/1/data?start=1721736000&end=1721745660`
 
-#### Response Format:
+#### Success Response:
 ```json
-[
-  [
+{
+  "device_id": 1,
+  "start": 1721736000,
+  "end": 1721745660,
+  "status": "success",
+  "data": [
     {
-        "device_id":1,
-        "humidity":45.2,"particulate_matter":28,
-        "pollen":10,
-        "temperature":22.1,"timestamp":1721745600
+      "device_id": 1,
+      "humidity": 45.2,
+      "particulate_matter": 28,
+      "pollen": 10,
+      "temperature": 22.1,
+      "timestamp": 1721745600
     },
     {
-        "device_id":1,
-        "humidity":45.5,"particulate_matter":30,
-        "pollen":11,
-        "temperature":22.3,"timestamp":1721745660
-    },
-    ...
-  ]
-]
+      "device_id": 1,
+      "humidity": 45.5,
+      "particulate_matter": 30,
+      "pollen": 11,
+      "temperature": 22.3,
+      "timestamp": 1721745660
+    }
+  ],
+  "message": null
+}
 ```
+#### No Data Response:
+```json
+{
+  "device_id": 1,
+  "start": 1721736000,
+  "end": 1721745660,
+  "status": "success",
+  "data": [],
+  "message": "No data available for device 1 in the specified range."
+}
+```
+#### Device Not Found Response:
+```json
+{
+  "status": "error",
+  "message": "Device with ID 999 does not exist."
+}
+```
+#### Error Response:
+```json
+{
+  "status": "error",
+  "message": "A database error occurred while processing your request."
+}
+```
+
 
 ### 3. Get Latest Data for a Device
 
@@ -87,60 +139,115 @@ The endpoints are still under development and may change according to the need.
 #### Example:
 `http://localhost:5001/api/devices/1/latest`
 
-#### Response Format:
+#### Success Response:
 ```json
 {
-    "device_id":1,
-    "humidity":45.5,
-    "particulate_matter":30,
-    "pollen":11,
-    "temperature":22.3,"timestamp":1721745660
+  "status": "success",
+  "data": {
+    "device_id": 1,
+    "humidity": 45.5,
+    "particulate_matter": 30,
+    "pollen": 11,
+    "temperature": 22.3,
+    "timestamp": 1721745660
+  },
+  "message": null
 }
 ```
+#### No Data Response:
+```json
+{
+  "status": "success",
+  "data": [],
+  "message": "No data available for device 1."
+}
+```
+#### Device Not Found Response:
+```json
+{
+  "status": "error",
+  "message": "Device with ID 999 does not exist."
+}
+```
+#### Error Response:
+```json
+{
+  "status": "error",
+  "message": "A database error occurred while processing your request."
+}
+```
+
 
 ### 4. Comparison Between Devices over Time Range
 
 **GET** `/comparison`
 
-- Returns the selected metric of two devices over a given time range (by default all).
+- Returns the selected metric of two devices over a given time range.
 
 #### Query Parameters
-**Parameters (query):**
-
-- `device_1`: ID of first device (e.g., `1`)  
-- `device_2`: ID of second device (e.g., `2`) 
+- `device_1`: ID of first device (e.g., `1`)
+- `device_2`: ID of second device (e.g., `2`)
 - `metric`: one of `temperature`, `humidity`, `pollen`, `particulate_matter`
 - `start`: Unix timestamp (optional)
 - `end`: Unix timestamp (optional)
 
-#### Example: 
+#### Example:
 `http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660`
 
-#### Response Format:
+#### Success Response:
 ```json
 {
-    "device_1":
-        [
-            {
-                "timestamp":1721745600,
-                "value":10
-            },
-            {
-                "timestamp":1721745660,
-                "value":11
-            }
-        ],
-    "device_2":
-        [
-            {
-                "timestamp":1721745600,
-                "value":8
-            },
-            {
-                "timestamp":1721745660,
-                "value":9
-            }
-            ]
+  "device_1": [
+    { "timestamp": 1721745600, "value": 10 },
+    { "timestamp": 1721745660, "value": 11 }
+  ],
+  "device_2": [
+    { "timestamp": 1721745600, "value": 8 },
+    { "timestamp": 1721745660, "value": 9 }
+  ],
+  "metric": "pollen",
+  "start": 1721745600,
+  "end": 1721745660,
+  "status": "success",
+  "message": null
 }
+```
+#### No Data Response:
+```json
+{
+  "device_1": [],
+  "device_2": [],
+  "metric": "pollen",
+  "start": 1721745600,
+  "end": 1721745660,
+  "status": "success",
+  "message": "No data found for the specified devices and metric."
+}
+```
+#### Error Responses:
+```json
+{
+  "status": "error",
+  "message": "Metric must be specified."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Both device IDs must be provided."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Invalid time range: <error description>"
+}
+```
+```json
+{
+  "status": "error",
+  "message": "An unexpected error occurred while processing your request."
+}
+```
 
 

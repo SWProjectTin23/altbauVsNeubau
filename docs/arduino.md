@@ -42,3 +42,14 @@ Die Arduino-Skripte dienen dazu, Sensordaten zu erfassen und per MQTT-Protokoll 
 - Für die Integration neuer Sensoren bitte die bestehenden Strukturen und das Nachrichtenformat beachten.
 
 
+secrets:
+```
+#ifndef SECRETS_H
+#define SECRETS_H
+
+#define WIFI_SSID "{Wifi-Name}"
+#define WIFI_PASS "{Wifi-PW}"
+#define MQTT_SERVER "{MQTT_Server}" 
+#define MQTT_PORT {MQTT_Port} //standart: 1883
+#endif
+```

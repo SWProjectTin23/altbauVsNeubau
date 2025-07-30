@@ -16,10 +16,12 @@ def on_message(client, userdata, msg):
     Payload = msg.payload.decode()
     try:
         payload_dict = json.loads(Payload)
-        value = payload_dict["value"]
-        timestamp = payload_dict["timestamp"]
+        
     except (json.JSONDecodeError, KeyError) as e:
         print(f"Fehler beim Verarbeiten der Nachricht: {e}")
+
+    value = payload_dict["value"]
+    timestamp = payload_dict["timestamp"]
 
     print(f"Nachricht empfangen: Topic: {msg.topic}, value: {value}, timestamp: {timestamp}")
 
@@ -31,3 +33,4 @@ mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
 if __name__ == '__main__':
     mqtt_client.loop_start()
     app.run(debug=False)
+

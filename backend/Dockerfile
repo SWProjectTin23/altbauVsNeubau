@@ -21,4 +21,4 @@ ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=development
 
 # Start Flask API and MQTT-Ingest
-CMD ["sh", "-c", "flask run & python app/mqtt_ingest.py"]
+CMD ["sh", "-c", "flask run & python app/mqtt_get_data.py"]

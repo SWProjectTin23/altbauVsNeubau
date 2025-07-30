@@ -13,7 +13,7 @@ def create_app():
 
     # register routes
     api.add_resource(DeviceData, "/api/devices/<int:device_id>/data")
-    api.add_resource(TimeRange, "/api/devices/range")
+    api.add_resource(TimeRange, "/api/range")
     api.add_resource(DeviceLatest, "/api/devices/<int:device_id>/latest")
     api.add_resource(Comparison, "/api/comparison")
 

@@ -1,5 +1,5 @@
 # Node.js Basis-Image
-FROM node:18-alpine
+FROM node:20-alpine
 
 # load working directory
 WORKDIR /app

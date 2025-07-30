@@ -1,0 +1,92 @@
+.warnings-wrapper {
+  background-color: #F9F9FE;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.warnings-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Titel */
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+/* Grid für 2x2 Anordnung */
+.warnings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.warning-card {
+  background-color: #FFFFFF;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  text-align: center; 
+}
+
+.warning-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.warning-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center; 
+}
+
+.input-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+
+.input-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.input-field {
+  width: 100%;
+  max-width: 150px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center; 
+}
+
+.button-group {
+  grid-column: span 2;
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.btn {
+  background-color: white;
+  color: black;
+  border: 1px solid #ccc;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn:hover {
+  background-color: #D3D4FB;
+}

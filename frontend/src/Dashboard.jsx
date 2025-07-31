@@ -92,6 +92,21 @@ const mockData = {
   },
 };
 
+const warningThresholds = {
+  Temperatur: { redLow: 15, yellowLow: 18, yellowHigh: 25, redHigh: 30 },
+  Luftfeuchtigkeit: { redLow: 30, yellowLow: 40, yellowHigh: 60, redHigh: 70 },
+  Pollen: { redLow: 0, yellowLow: 30, yellowHigh: 100, redHigh: 150 },
+  Feinpartikel: { redLow: 0, yellowLow: 10, yellowHigh: 20, redHigh: 30 },
+};
+
+const getWarningClass = (metric, value) => {
+  const thresholds = warningThresholds[metric];
+  if (value < thresholds.redLow || value > thresholds.redHigh) return "warn-red";
+  if (value < thresholds.yellowLow || value > thresholds.yellowHigh) return "warn-yellow";
+  return "";
+};
+
+
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
 const intervals = ["3h", "1d", "1w", "1m"];
 
@@ -114,15 +129,19 @@ export default function Dashboard() {
                   <th>Neubau</th>
                 </tr>
               </thead>
-              <tbody>
-                {metrics.map((metric) => (
-                  <tr key={metric}>
-                    <td>{metric}</td>
-                    <td>{data.current.Altbau[metric]}</td>
-                    <td>{data.current.Neubau[metric]}</td>
-                  </tr>
-                ))}
-              </tbody>
+                <tbody>
+                  {metrics.map((metric) => (
+                    <tr key={metric}>
+                      <td>{metric}</td>
+                      <td className={getWarningClass(metric, data.current.Altbau[metric])}>
+                        {data.current.Altbau[metric]}
+                      </td>
+                      <td className={getWarningClass(metric, data.current.Neubau[metric])}>
+                        {data.current.Neubau[metric]}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
             </table>
           </div>
           <div className="button-container">

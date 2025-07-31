@@ -3,7 +3,7 @@ from flask import jsonify, request
 import psycopg2 # Import psycopg2 for specific error handling
 
 # Import database operation functions
-from .database.db_operations import get_thresholds_from_db, update_thresholds_in_db
+from .db_operations import get_thresholds_from_db, update_thresholds_in_db
 
 class Thresholds(Resource):
     def get(self):

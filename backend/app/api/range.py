@@ -3,7 +3,7 @@ from flask import jsonify
 import psycopg2 # Import psycopg2 for specific error handling
 
 # Import database operation functions
-from .database.db_operations import get_all_device_time_ranges_from_db, device_exists
+from .db_operations import get_all_device_time_ranges_from_db, device_exists
 
 class TimeRange(Resource):
     def get(self):

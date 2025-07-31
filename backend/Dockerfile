@@ -21,5 +21,10 @@ COPY . .
 # Expose port (default Flask port, as defined in run.py)
 EXPOSE 5000
 
-# Start Flask app using run.py
-CMD ["python", "run.py"]
+# Set environment variables
+ENV FLASK_APP=app:create_app
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_ENV=development
+
+# Start Flask app
+CMD ["flask", "run"]

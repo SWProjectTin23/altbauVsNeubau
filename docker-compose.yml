@@ -5,7 +5,7 @@ services:
         context: ./backend
         dockerfile: Dockerfile
     ports:
-        - "5001:5000" # Host port 5001 mapped to container port 5000
+      - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
     environment:
       - FLASK_APP=app:create_app
       - FLASK_APP=app # This is sufficient if run.py calls create_app()
@@ -60,6 +60,9 @@ services:
     image: timescale/timescaledb:latest-pg14
     container_name: altbau_vs_neubau_db # a fixed name for the container
     environment:
+      - POSTGRES_USER=${DB_USER}          
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}          
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}

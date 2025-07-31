@@ -2,29 +2,28 @@
 DHBW Heidenheim INF2023 Semester 4
 
 ## Use Case
-Dieses Projekt dient dem Vergleich der Raumluftqualität zwischen dem Altbau (Marienstraße) und dem Neubau (Hanns Voith Campus) der dualen Hochschule Heidenheim. Hierzu werden Temperatur und Luftqualität kontinuierlich in beiden Gebäuden gemessen, zentral gesammelt und ausgewertet.
+This project compares indoor air quality between the old building (Marienstraße) and the new building (Hanns Voith Campus) of the Duale Hochschule Heidenheim. For this purpose, temperature and air quality are continuously measured in both buildings, centrally collected, and evaluated.
 
 ### Zielsetzung
-* Messung von Temperatur und Luftqualität in zwei unterschiedlichen Gebäudeteilen
-* Vergleich der erfassten Daten über eine zentrale Anwendung
-* Visualisierung der Daten zur Bewertung der Raumqualität
+* Measurement of temperature and air quality in two different building sections
+* Comparison of collected data via a central application
+* Visualization of data for assessing room quality
 
-### Technischer Ablauf
-1. Zwei Arduino-Boards (jeweils im Altbau und Neubau) erfassen regelmäßig Sensordaten.
-2. Die Daten werden per MQTT an einen zentralen MQTT-Broker gesendet.
-3. Eine Serveranwendung empfängt die Daten, validiert sie und speichert sie in einer Datenbank.
-4. Eine Weboberfläche oder ein Dashboard zeigt die Messreihen grafisch im Vergleich an.
+### Technical Workflow
+1. Two Arduino boards (one in the old building and one in the new building) regularly collect sensor data.
+2. The data is sent via MQTT to a central MQTT broker.
+3. A server application receives the data, validates it, and stores it in a database.
+4. A web interface or dashboard graphically displays the measurement series for comparison.
 
-### Testabdeckung
-Zur Sicherstellung der Funktionalität und Zuverlässigkeit des System soll eine gezielte Testabdeckung durch Unittests umgesetzt werden. 
-Bei jedem Commit sollen die Tests automatisch über GitHub Actions gestartet werden, um die Qualität und Stabilität des Codes sicherzustellen.
+### Test Coverage
+To ensure the functionality and reliability of the system, targeted test coverage through unit tests will be implemented.
+Tests will be automatically initiated via GitHub Actions with each commit to ensure code quality and stability.
 
-## Architektur
-![Systemarchitektur](./docs/architecture/ArchitekturDiagramm.svg)
+## Architecture
+![Systemarchitektur](./docs/images/ArchitecturDiagramm.svg)
 
 ## Documentation
 
 - [Branching Strategy](docs/branchingStrategy.md)  
 - [Requirements](docs/requirements.md)  
 - [CI Workflows](docs/workflows/ci.md) 
-- [Deploy Workflow](docs/workflows/deploy.md)

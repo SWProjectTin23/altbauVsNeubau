@@ -250,4 +250,166 @@ Endpoints are under development and may change as needed.
 }
 ```
 
+### 5. Manage Thresholds
+This endpoint allows you to retrieve and update the soft and hard thresholds for different sensor metrics (temperature, humidity, pollen, particulate matter).
 
+**GET `/thresholds` - Returns the currently configured thresholds.**
+
+#### Example
+`http://localhost:5001/api/thresholds`
+
+#### Success Response:
+```json
+{
+  "status": "success",
+  "data": {
+    "temperature_min_soft": 12.0,
+    "temperature_max_soft": 25.0,
+    "temperature_min_hard": 15.0,
+    "temperature_max_hard": 30.0,
+    "humidity_min_soft": 10.0,
+    "humidity_max_soft": 70.0,
+    "humidity_min_hard": 20.0,
+    "humidity_max_hard": 80.0,
+    "pollen_min_soft": 5,
+    "pollen_max_soft": 50,
+    "pollen_min_hard": 10,
+    "pollen_max_hard": 100,
+    "particulate_matter_min_soft": 1,
+    "particulate_matter_max_soft": 50,
+    "particulate_matter_min_hard": 5,
+    "particulate_matter_max_hard": 100
+  },
+  "message": "Thresholds retrieved successfully."
+}
+```
+
+#### No Data Response:
+```json
+{
+  "status": "success",
+  "data": [],
+  "message": "No thresholds available."
+}
+```
+
+### Error Response:
+```json
+{
+  "status": "error",
+  "message": "A database error occurred while processing your request."
+}
+```json
+{
+  "status": "error",
+  "message": "An unexpected error occurred while processing your request."
+}
+```
+**POST `/thresholds`
+
+#### The request body should be an JSON object containing the threshold values. All keys are required.
+* `temperature_min_soft` (float): Soft minimum temperature threshold.
+* `temperature_max_soft` (float): Soft maximum temperature threshold.
+* `temperature_min_hard` (float): Hard minimum temperature threshold.
+* `temperature_max_hard` (float): Hard maximum temperature threshold.
+* `humidity_min_soft` (float): Soft minimum humidity threshold.
+* `humidity_max_soft` (float): Soft maximum humidity threshold.
+* `humidity_min_hard` (float): Hard minimum humidity threshold.
+* `humidity_max_hard` (float): Hard maximum humidity threshold.
+* `pollen_min_soft` (int): Soft minimum pollen threshold.
+* `pollen_max_soft` (int): Soft maximum pollen threshold.
+* `pollen_min_hard` (int): Hard minimum pollen threshold.
+* `pollen_max_hard` (int): Hard maximum pollen threshold.
+* `particulate_matter_min_soft` (int): Soft minimum particulate matter threshold.
+* `particulate_matter_max_soft` (int): Soft maximum particulate matter threshold.
+* `particulate_matter_min_hard` (int): Hard minimum particulate matter threshold.
+* `particulate_matter_max_hard` (int): Hard maximum particulate matter threshold.
+
+##### Validation Rules:
+* For each metric, the `min_soft` value must be less than `max_soft`.
+* For each metric, the `min_hard` value must be less than `max_hard`.
+* For each metric, the `min_hard` value must be less than or equal to `min_soft`.
+* For each metric, the `max_hard` value must be greater than or equal to `max_soft`.
+
+#### Example Request Body:
+
+```json
+{
+  "temperature_min_soft": 12.0,
+  "temperature_max_soft": 25.0,
+  "temperature_min_hard": 10.0,
+  "temperature_max_hard": 28.0,
+  "humidity_min_soft": 30.0,
+  "humidity_max_soft": 60.0,
+  "humidity_min_hard": 25.0,
+  "humidity_max_hard": 65.0,
+  "pollen_min_soft": 10,
+  "pollen_max_soft": 70,
+  "pollen_min_hard": 5,
+  "pollen_max_hard": 80,
+  "particulate_matter_min_soft": 5,
+  "particulate_matter_max_soft": 40,
+  "particulate_matter_min_hard": 2,
+  "particulate_matter_max_hard": 50
+}
+```
+
+#### Success Response:
+
+```json
+{
+  "status": "success",
+  "message": "Thresholds updated successfully."
+}
+```
+
+#### Error Responses:
+
+```json
+{
+  "status": "error",
+  "message": "Invalid input data. Expecting a Dictionary."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Missing required key: 'temperature_min_soft'."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Value for 'temperature_min_soft' cannot be None."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Invalid value for 'temperature_min_soft': 'abc'. Expected type float."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Minimum value for 'temperature_min_soft' must be less than maximum value for 'temperature_max_soft'."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "Hard threshold 'temperature_max_hard' must be greater than soft threshold 'temperature_max_soft'."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "A database error occurred while processing your request."
+}
+```
+```json
+{
+  "status": "error",
+  "message": "An unexpected error occurred while processing your request."
+}
+```

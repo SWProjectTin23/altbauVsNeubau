@@ -1,22 +1,24 @@
 from flask_restful import Resource
 from flask import jsonify
+from sqlalchemy import func
+from models.sensor_data import SensorData, db
 
-# query: MIN(timestamp), MAX(timestamp)
-MOCK_RANGE = {
-    1: {
-        "start": 1721736000,  # 2025-07-23 12:00:00 UTC
-        "end":   1721745000   # 2025-07-23 14:30:00 UTC
-    },
-    2: {
-        "start": 1721736300,  # 2025-07-23 12:05:00 UTC
-        "end":   1721744700   # 2025-07-23 14:25:00 UTC
-    }
-}
 
 class TimeRange(Resource):
     def get(self):
-        # later can use altbau, neubau to replace device_1, device_2
-        return jsonify({
-            f"device_{device_id}": time_range
-            for device_id, time_range in MOCK_RANGE.items()
-        })
+        results = db.session.query(
+            SensorData.device_id,
+            func.min(SensorData.timestamp),
+            func.max(SensorData.timestamp)
+        ).group_by(SensorData.device_id).order_by(SensorData.device_id.asc()).all()
+
+        response = []
+        for device_id, start_time, end_time in results:
+            response.append({
+                f"Device ID {device_id}": {
+                    "start": start_time.isoformat(),
+                    "end": end_time.isoformat()
+                }
+            })
+        
+        return jsonify(response)

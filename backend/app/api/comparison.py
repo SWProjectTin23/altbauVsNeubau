@@ -1,8 +1,7 @@
 from flask_restful import Resource
 from flask import request, jsonify
-from app.mock_data import get_mock_data
-
-MOCK_DATA = get_mock_data()
+from models.sensor_data import SensorData, db
+from dateutil.parser import isoparse
 
 class Comparison(Resource):
     def get(self):
@@ -10,28 +9,35 @@ class Comparison(Resource):
             device_1 = request.args.get("device_1", type=int)
             device_2 = request.args.get("device_2", type=int)
             metric = request.args.get("metric")
-            start = request.args.get("start", type=int)
-            end = request.args.get("end", type=int)
+            start_str = request.args.get("start")
+            end_str = request.args.get("end")
 
             if metric not in ["temperature", "humidity", "pollen", "particulate_matter"]:
                 return {"error": "Invalid metric"}, 400
-
-            def extract_metric(device_id):
-                data = MOCK_DATA.get(device_id, [])
-                result = []
-                for entry in data:
-                    ts = entry["timestamp"]
-                    if (start is None or ts >= start) and (end is None or ts <= end):
-                        result.append({
-                            "timestamp": ts,
-                            "value": entry[metric]
-                        })
-                return result
-            
-            return jsonify({
-                f"device_{device_1}": extract_metric(device_1),
-                f"device_{device_2}": extract_metric(device_2)
-            })
-
         except Exception as e:
             return {"error": str(e)}, 400
+        
+        if not start_str or not end_str:
+            return jsonify([])
+        try:
+            start = isoparse(start_str)
+            end = isoparse(end_str)
+        except (ValueError, TypeError):
+            return {"error": "Invalid time format. Use ISO 8601."}, 400
+        
+            
+        def fetch_metric_data(device_id, metric_name):
+                metric_col = getattr(SensorData, metric_name)
+                result = db.session.query(SensorData.timestamp, metric_col).filter(SensorData.device_id == device_id).filter(SensorData.timestamp >= start, SensorData.timestamp <= end).order_by(SensorData.timestamp).all()
+                return [
+                    {
+                        "timestamp": r[0].isoformat(),
+                        "value": float(r[1]) if r[1] is not None else None
+                    }
+                    for r in result
+                ]
+        
+        return jsonify({
+            "device_1": fetch_metric_data(device_1, metric),
+            "device_2": fetch_metric_data(device_2, metric)
+        })

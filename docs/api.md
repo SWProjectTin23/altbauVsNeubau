@@ -3,6 +3,8 @@ This document describes the available REST API endpoints for the sensor backend.
 
 The endpoints are still under development and may change according to the need.
 
+Timestampes are displayed in ISO 8601 date format.
+
 ## Base URL
 `http://localhost:5001/api/`
 
@@ -22,19 +24,21 @@ The endpoints are still under development and may change according to the need.
 #### Response Format:
 ```json
 [
-    {
-        "device_1":
-            {
-                "end":1721745000,
-                "start":1721736000
-            },
-        "device_2":
-            {
-                "end":1721744700,
-                "start":1721736300
-            }
+  {
+    "Device ID 1": {
+      "end": "2025-07-27T23:00:00+00:00",
+      "start": "2025-07-21T00:00:00+00:00"
     }
+  },
+  {
+    "Device ID 2": {
+      "end": "2025-07-27T23:00:00+00:00",
+      "start": "2025-07-21T00:00:00+00:00"
+    }
+  }
 ]
+
+
 ```
 
 ### 2. Get sensor data by device ID and time range
@@ -52,27 +56,30 @@ The endpoints are still under development and may change according to the need.
 - `end` *(optional)*: end timestamp in UNIX format
 
 #### Example:
-`http://localhost:5001/api/devices/1/data?start=1721736000&end=1721745660`
+`http://localhost:5001/api/devices/1/data?start=2025-07-22T08:00:00Z&end=2025-07-23T08:00:00Z`
 
 #### Response Format:
 ```json
-[
-  [
+{
+  "data": [
     {
-        "device_id":1,
-        "humidity":45.2,"particulate_matter":28,
-        "pollen":10,
-        "temperature":22.1,"timestamp":1721745600
+      "humidity": 31.93,
+      "particulate_matter": 20,
+      "pollen": 54,
+      "temperature": 21.04,
+      "timestamp": "2025-07-22T08:00:00+00:00"
     },
     {
-        "device_id":1,
-        "humidity":45.5,"particulate_matter":30,
-        "pollen":11,
-        "temperature":22.3,"timestamp":1721745660
+      "humidity": 34.9,
+      "particulate_matter": 16,
+      "pollen": 87,
+      "temperature": 24.76,
+      "timestamp": "2025-07-22T09:00:00+00:00"
     },
     ...
-  ]
-]
+  ],
+  "device_id": 1
+}
 ```
 
 ### 3. Get Latest Data for a Device
@@ -90,12 +97,18 @@ The endpoints are still under development and may change according to the need.
 #### Response Format:
 ```json
 {
-    "device_id":1,
-    "humidity":45.5,
-    "particulate_matter":30,
-    "pollen":11,
-    "temperature":22.3,"timestamp":1721745660
+    "device_id": 1,
+    "data": [
+        {
+            "timestamp": "2025-07-27T23:00:00+00:00",
+            "temperature": 24.79,
+            "humidity": 38.64,
+            "pollen": 124,
+            "particulate_matter": 19
+        }
+    ]
 }
+
 ```
 
 ### 4. Comparison Between Devices over Time Range
@@ -114,33 +127,33 @@ The endpoints are still under development and may change according to the need.
 - `end`: Unix timestamp (optional)
 
 #### Example: 
-`http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660`
+`http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=2025-07-22T08:00:00Z&end=2025-07-23T08:00:00Z`
 
 #### Response Format:
 ```json
 {
-    "device_1":
-        [
-            {
-                "timestamp":1721745600,
-                "value":10
-            },
-            {
-                "timestamp":1721745660,
-                "value":11
-            }
-        ],
-    "device_2":
-        [
-            {
-                "timestamp":1721745600,
-                "value":8
-            },
-            {
-                "timestamp":1721745660,
-                "value":9
-            }
-            ]
+  "device_1": [
+    {
+      "timestamp": "2025-07-22T08:00:00+00:00",
+      "value": 54.0
+    },
+    {
+      "timestamp": "2025-07-22T09:00:00+00:00",
+      "value": 87.0
+    },
+    ...
+  ],
+  "device_2": [
+    {
+      "timestamp": "2025-07-22T08:00:00+00:00",
+      "value": 131.0
+    },
+    {
+      "timestamp": "2025-07-22T09:00:00+00:00",
+      "value": 179.0
+    },
+    ...
+  ]
 }
 
 

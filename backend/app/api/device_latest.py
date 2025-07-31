@@ -1,15 +1,23 @@
 from flask_restful import Resource
 from flask import jsonify
-from app.mock_data import get_mock_data
+from models.sensor_data import SensorData, db
 
-MOCK_DATA = get_mock_data()
 
 class DeviceLatest(Resource):
     def get(self, device_id):
-        data = MOCK_DATA.get(device_id, [])
-
-        if not data:
+        result = db.session.query(SensorData).filter_by(device_id=device_id).order_by(SensorData.timestamp.desc()).first()
+        if not result:
             return jsonify({"error": "No data found for this device"}), 404
 
-        latest = max(data, key=lambda d: d["timestamp"])
-        return jsonify(latest)
+        return {
+            "device_id": result.device_id,
+            "data": [
+                {
+                    "timestamp": str(result.timestamp.isoformat()),
+                    "temperature": float(result.temperature),
+                    "humidity": float(result.humidity),
+                    "pollen": result.pollen,
+                    "particulate_matter": result.particulate_matter
+                }
+            ]
+        }

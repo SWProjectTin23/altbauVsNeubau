@@ -31,3 +31,20 @@ CREATE TABLE IF NOT EXISTS thresholds (
     particulate_matter_max_hard INT,
     last_updated TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- DEVICE 1
+INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter) VALUES
+(1, NOW() - INTERVAL '5 hours', 22.5, 45.0, 50, 12),
+(1, NOW() - INTERVAL '4 hours', 23.0, 47.5, 55, 14),
+(1, NOW() - INTERVAL '3 hours', 24.1, 50.0, 60, 15),
+(1, NOW() - INTERVAL '2 hours', 25.2, 52.0, 70, 18),
+(1, NOW() - INTERVAL '1 hour', 26.5, 55.5, 80, 20);
+
+-- DEVICE 2
+INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter) VALUES
+(2, NOW() - INTERVAL '5 hours', 19.0, 35.0, 20, 5),
+(2, NOW() - INTERVAL '4 hours', 20.2, 37.5, 25, 7),
+(2, NOW() - INTERVAL '3 hours', 21.3, 40.0, 30, 9),
+(2, NOW() - INTERVAL '2 hours', 22.0, 42.0, 40, 11),
+(2, NOW() - INTERVAL '1 hour', 23.1, 44.5, 45, 13);

@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+# backend/Dockerfile
+FROM python:3.13-slim
 
 # Set working directory
 WORKDIR /app
@@ -14,14 +15,14 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code (including your 'app' folder and 'run.py')
 COPY . .
 
-# Expose port (default Flask port)
+# Expose port (default Flask port, as defined in run.py)
 EXPOSE 5000
 
 # Set environment variables
-ENV FLASK_APP=app.app:create_app
+ENV FLASK_APP=app:create_app
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=development
 

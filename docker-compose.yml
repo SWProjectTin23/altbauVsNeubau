@@ -1,16 +1,26 @@
 services:
   backend:
+    container_name: altbau_vs_neubau_backend # A fixed name for the container
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+        context: ./backend
+        dockerfile: Dockerfile
     ports:
       - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
     environment:
+      - FLASK_APP=app:create_app
       - FLASK_APP=app # This is sufficient if run.py calls create_app()
       - FLASK_RUN_HOST=0.0.0.0
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PYTHONUNBUFFERED=1
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (5000)
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
@@ -18,16 +28,26 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
   
   frontend:
+    container_name: altbau_vs_neubau_frontend # a fixed name for the container
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (3000)
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
@@ -38,7 +58,11 @@ services:
 
   db:
     image: timescale/timescaledb:latest-pg14
+    container_name: altbau_vs_neubau_db # a fixed name for the container
     environment:
+      - POSTGRES_USER=${DB_USER}          
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}          
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
@@ -47,12 +71,33 @@ services:
     volumes:
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
       - db_data:/var/lib/postgresql/data
+    networks:
+      - pg-network
     healthcheck:
       test: ["CMD-SHELL", "psql -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1;' || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 60s # Longer start period for the database
+    
+
+  pgadmin: # The name of your pgAdmin service
+    image: dpage/pgadmin4 # The Docker image for pgAdmin
+    container_name: altbau_vs_neubau_pgadmin # a fixed name for the container
+    environment: # Environment variables for pgAdmin
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL} # Login email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD} # Login password for pgAdmin
+    ports: # Port mapping from host to container
+      - "5480:80" # pgAdmin is accessible at http://localhost:5480
+    depends_on: # Ensures that the DB starts before pgAdmin
+      - db
+    networks: # Connects the container to the same internal network as the DB
+      - pg-network
+    restart: unless-stopped
 
 volumes: # This section must be at the same level as 'services'
   db_data:
+
+networks: # Definition of networks
+  pg-network:
+    driver: bridge # Standard bridge network

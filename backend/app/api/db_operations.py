@@ -1,10 +1,10 @@
 import psycopg2
 from psycopg2 import extras
 import os
+import datetime
+from dotenv import load_dotenv
 
 from decimal import Decimal
-
-from dotenv import load_dotenv
 from decimal import Decimal
 
 # Load environment variables from the .env file
@@ -21,11 +21,16 @@ DB_CONFIG = {
 
 
 def serialize_row(row: dict) -> dict:
-    """Konvertiert Decimal in float für JSON-Kompatibilität."""
-    return {
-        k: float(v) if isinstance(v, Decimal) else v
-        for k, v in row.items()
-    }
+    """Converts Decimal and datetime for JSON compatibility."""
+    result = {}
+    for k, v in row.items():
+        if isinstance(v, Decimal):
+            result[k] = float(v)
+        elif isinstance(v, (datetime.datetime, datetime.date)):
+            result[k] = v.isoformat()
+        else:
+            result[k] = v
+    return result
 
 
 # Check if all required database configuration parameters are set
@@ -293,3 +298,80 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     print(rows) 
 
     return result
+
+# Get thresholds from the database
+# Returns a dict of thresholds
+def get_thresholds_from_db():
+    """
+    Fetches the thresholds for devices from the database.
+    Returns a list of dictionaries with threshold data.
+    """
+
+    conn = None
+
+    try:
+
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=extras.DictCursor)
+
+        query = """
+            SELECT * FROM thresholds LIMIT 1;  -- Assuming only one row of thresholds exists
+        """
+        
+        cursor.execute(query)
+        rows = cursor.fetchall()
+    
+        cursor.close()
+        return [serialize_row(dict(row)) for row in rows]  # Convert rows to dictionaries
+
+    except psycopg2.Error as e:
+        print(f"Database error in get_thresholds_from_db: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
+# Update thresholds in the database
+# Deletes existing thresholds and inserts new ones
+def update_thresholds_in_db(threshold_data):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Delete existing thresholds to ensure only one row remains
+        cur.execute("DELETE FROM thresholds;")
+
+        # Insert the new thresholds
+        insert_query = """
+        INSERT INTO thresholds (
+            temperature_min_soft, temperature_max_soft, temperature_min_hard, temperature_max_hard,
+            humidity_min_soft, humidity_max_soft, humidity_min_hard, humidity_max_hard,
+            pollen_min_soft, pollen_max_soft, pollen_min_hard, pollen_max_hard,
+            particulate_matter_min_soft, particulate_matter_max_soft, particulate_matter_min_hard, particulate_matter_max_hard
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+        );
+        """
+        cur.execute(insert_query, (
+            threshold_data['temperature_min_soft'], threshold_data['temperature_max_soft'],
+            threshold_data['temperature_min_hard'], threshold_data['temperature_max_hard'],
+            threshold_data['humidity_min_soft'], threshold_data['humidity_max_soft'],
+            threshold_data['humidity_min_hard'], threshold_data['humidity_max_hard'],
+            threshold_data['pollen_min_soft'], threshold_data['pollen_max_soft'],
+            threshold_data['pollen_min_hard'], threshold_data['pollen_max_hard'],
+            threshold_data['particulate_matter_min_soft'], threshold_data['particulate_matter_max_soft'],
+            threshold_data['particulate_matter_min_hard'], threshold_data['particulate_matter_max_hard']
+        ))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        if conn:
+            conn.rollback() # Rollback in case of an error
+        print(f"Database error in update_thresholds_in_db: {e}")
+        raise # Re-raise the exception to be caught by the API endpoint
+    finally:
+        if conn:
+            conn.close()

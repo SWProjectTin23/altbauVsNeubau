@@ -20,20 +20,65 @@
 
 # Nicht-Funktionale Requirements
 
-- **NFR-01:** Das System muss sicherstellen, dass mindestens **99,5 %** der Sensordaten pro Tag erfolgreich übertragen und gespeichert werden.  
+- **NFR-01:** Das System muss sicherstellen, dass mindestens **70,00 %** der Sensordaten pro Tag erfolgreich übertragen und gespeichert werden.  
   Wenn ein Sensor für mehr als 10 Minuten keine Daten sendet, muss das System dies automatisch erfassen und protokollieren.
 
-- **NFR-02:** Die Weboberfläche muss eine Verfügbarkeit von mindestens **99,5 %** gewährleisten.  
+  ### Messmethode:
+  - **Log-Analyse:**
+      - Hochrechnen, wie viele Messwerte pro Sensor pro Tag erwartet werden (Soll-Werte).
+      - Tatsächlich gespeicherte Werte in TimescaleDB abfragen (Ist-Werte).
+      - `Verfügbarkeit = Ìst/Soll`
+  - **Timeout-Überwachung:**
+      - Backend protokolliert, wenn ein Sensor >10 Minuten keine Daten sendet.
+
+- **NFR-02:** Die Weboberfläche muss eine Verfügbarkeit von mindestens **95 %** gewährleisten.  
   Fehler müssen für Nutzer durch verständliche Fehlermeldungen gekennzeichnet sein.
 
-- **NFR-03:** Die Visualisierung der Raumqualitätsdaten im Dashboard muss innerhalb von **5 Sekunden** nach Benutzeranfrage vollständig geladen werden, selbst bei gleichzeitiger Nutzung durch bis zu 20 Benutzer.
+  ### Messmethode:
+  - **Monitoring:**
+    - Externes Monitoring-Tool (ggf. selbst gehostet)
+  
+- **NFR-03:** Die Visualisierung der Raumqualitätsdaten im Dashboard muss innerhalb von **2 Sekunden** nach Benutzeranfrage vollständig geladen werden, selbst bei gleichzeitiger Nutzung durch bis zu 20 Benutzer.
+
+  ### Messmethode:
+  - **Monitoring:**
+    - Externes Monitoring-Tool (ggf. selbst gehostet)
+    - Lasttest mit 20 parallelen Nutzern
 
 - **NFR-04:** Der Quellcode des Systems muss modular aufgebaut und dokumentiert sein, sodass Änderungen an einzelnen Komponenten (z. B. Sensorprotokoll, Visualisierung) ohne Auswirkungen auf andere Teile vorgenommen werden können. Zusätzlich muss für jede Hauptkomponente mindestens ein automatisierter Komponententest vorhanden sein.
 
-- **NFR-05:** Das System muss so ausgelegt sein, dass es bei Ausfall eines Sensors oder Verbindungsabbrüchen weiterhin lauffähig bleibt und automatisch einen Wiederverbindungsversuch innerhalb von **30 Sekunden** unternimmt.  
+  ### Messmethode:
+  - **Backend-Struktur in Flask**
+      -`mqtt/` (MQTT-Handler)
+      -`storage/`(DB-Zugriff)
+      -`api/`(REST-Endpunkte)
+      -`test/`(Unit- und Integrationstests)
+  - **GitHub Actions CI/CD**
+      - Automatischer Testlauf bei jedem Pull Request auf `main`
+
+  - **Dokumentation**
+      - OpenAPI-Schema für REST
+      - README + kurze Entwicklerdoku
+        
+- **NFR-05:** Das System muss so ausgelegt sein, dass es bei Ausfall eines Sensors oder Verbindungsabbrüchen weiterhin lauffähig bleibt und automatisch einen Wiederverbindungsversuch innerhalb von **5 Sekunden** unternimmt.  
   Fehlgeschlagene Datenübertragungen dürfen nicht zum Systemabsturz führen, sondern müssen protokolliert und ggf. in einer Warteschlange zwischengespeichert werden.
-  
+
+  ### Messmethode:
+  - **MQTT-Client in Flask**
+    - Reconnect-Logik alle 5 Sekunden bei Brokerverlust
+  - **System bleibt lauffähig** auch ohne alle Sensoren --> Frontend zeigt "Sensor offline"
+ 
 - **NFR-06:** Die Software-Komponenten müssen containerisiert (z. B. mittels Docker) bereitgestellt werden, um einen einfachen Plattformwechsel (z. B. von einem lokalen Server zu einer Cloud-VM) ohne Anpassung des Codes zu ermöglichen. Zusätzlich muss das System auf mindestens zwei unterschiedlichen Betriebssystemen (z. B. Linux und Windows) erfolgreich installiert und betrieben werden können.
+
+  ### Messmethode:
+  - Docker-Setup mit:
+      -`flask-backend`
+      -`react-frontend`
+      -`timescaledb`
+  - Docker Compose für lokale Entwicklung + Deployment
+  - CI/CD-Test auf Linux + Windows via Github Actions
+  - Environment Variables für alle Pfade und Secrets statt Hardcoding
+
 
 ---
 | **Systemelement**        | **Funktion**                                | **Fehlermöglichkeit**                       | **Ursache**                                | **Auswirkung**                             |

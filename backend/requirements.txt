@@ -12,6 +12,7 @@ pluggy==1.6.0
 Pygments==2.19.2
 pytest==8.4.1
 pytest-mock==3.10.0
+pytest-cov==4.1.0
 pytz==2025.2
 six==1.17.0
 Werkzeug==3.1.3

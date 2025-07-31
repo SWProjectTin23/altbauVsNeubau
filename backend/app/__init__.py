@@ -7,6 +7,7 @@ from app.api.device_data import DeviceData
 from app.api.range import TimeRange
 from app.api.device_latest import DeviceLatest
 from app.api.comparison import Comparison
+from app.api.thresholds import Thresholds
 
 def create_app():
     app = Flask(__name__)
@@ -18,6 +19,7 @@ def create_app():
     api.add_resource(TimeRange, "/api/range")
     api.add_resource(DeviceLatest, "/api/devices/<int:device_id>/latest")
     api.add_resource(Comparison, "/api/comparison")
+    api.add_resource(Thresholds, "/api/thresholds")
 
     # Health Endpoint
     @app.route('/health', methods=['GET'])

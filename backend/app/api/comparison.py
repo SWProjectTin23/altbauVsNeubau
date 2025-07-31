@@ -1,7 +1,7 @@
 from flask_restful import Resource
 from flask import request, jsonify
 import psycopg2
-from .database.db_operations import compare_devices_over_time, validate_timestamps_and_range
+from .db_operations import compare_devices_over_time, validate_timestamps_and_range
 
 class Comparison(Resource):
     def get(self):

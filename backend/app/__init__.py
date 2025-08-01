@@ -8,6 +8,7 @@ from app.api.range import TimeRange
 from app.api.device_latest import DeviceLatest
 from app.api.comparison import Comparison
 from app.api.thresholds import Thresholds
+from app.exceptions import APIException
 
 def create_app():
     app = Flask(__name__)
@@ -33,5 +34,14 @@ def create_app():
     @app.route('/')
     def index():
         return "Dieser Port ist Eigentum der Gruppe 1 - AltbauVsNeubau. Jegliche Angriffe auf diesen Port werden nicht ohne Konsequenzen bleiben."
+
+    @app.errorhandler(APIException)
+    def handle_api_exception(error):
+        response = jsonify({
+            "status": "error",
+            "message": error.description
+        })
+        response.status_code = error.code
+        return response
 
     return app

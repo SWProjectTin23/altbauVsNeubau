@@ -8,8 +8,10 @@ from .db_operations import get_thresholds_from_db, update_thresholds_in_db
 class Thresholds(Resource):
     def get(self):
         try:
+            # Get the thresholds from the database
             thresholds = get_thresholds_from_db()
 
+            # If no thresholds are found, return an empty list with a success status
             if not thresholds:
                 return {
                     "status": "success",
@@ -17,6 +19,7 @@ class Thresholds(Resource):
                     "message": "No thresholds available."
                 }, 200
 
+            # Return the thresholds in JSON format
             return {
                 "status": "success",
                 "data": thresholds,
@@ -39,14 +42,17 @@ class Thresholds(Resource):
 
     def post(self):
         try:
+            # Get the JSON data from the request
             threshold_data_raw = request.get_json()
 
+            # Validate the input data
             if not threshold_data_raw or not isinstance(threshold_data_raw, dict):
                 return {
                     "status": "error",
                     "message": "Invalid input data. Expecting a Dictionary."
                 }, 400
 
+            # Define expected keys
             expected_keys_and_types = {
                 "temperature_min_soft": float, "temperature_max_soft": float,
                 "temperature_min_hard": float, "temperature_max_hard": float,
@@ -84,7 +90,7 @@ class Thresholds(Resource):
                         "message": f"Invalid value for '{key}': {value}. Expected type {expected_type.__name__}."
                     }, 400
 
-            # Validate min < max for soft and hard
+            # Validate that min values are less than max values
             validation_pairs = [
                 ("temperature_min_soft", "temperature_max_soft"),
                 ("temperature_min_hard", "temperature_max_hard"),
@@ -104,6 +110,7 @@ class Thresholds(Resource):
                         "message": f"Minimum value for '{min_key}' must be less than maximum value for '{max_key}'."
                     }, 400
 
+            # Validate that hard thresholds are greater than soft thresholds
             hard_soft_pairs = [
                 ("temperature_min_hard", "temperature_min_soft"),
                 ("temperature_max_hard", "temperature_max_soft"),
@@ -132,6 +139,7 @@ class Thresholds(Resource):
                             "message": f"Hard max threshold '{hard_key}' must be greater than soft threshold '{soft_key}'."
                         }, 400
 
+            # Update the thresholds in the database
             update_thresholds_in_db(validated_threshold_data)
 
             return {

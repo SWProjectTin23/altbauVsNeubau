@@ -63,7 +63,7 @@ def test_post_thresholds_success(client, mocker):
     threshold_data = {
         "temperature_min_soft": 12.0,
         "temperature_max_soft": 25.0,
-        "temperature_min_hard": 15.0,
+        "temperature_min_hard": 11.0,
         "temperature_max_hard": 30.0,
         "humidity_min_soft": 10.0,
         "humidity_max_soft": 70.0,

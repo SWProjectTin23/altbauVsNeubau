@@ -11,6 +11,11 @@ import {
 } from "recharts";
 import './Dashboard.css';
 
+const API_BASE = "http://localhost:5001/api";
+
+const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+const intervals = ["3h", "1d", "1w", "1m"];
+
 const mockData = {
   history: {
     "3h": {
@@ -88,45 +93,74 @@ const mockData = {
   },
 };
 
-const warningThresholds = {
-  Temperatur: { redLow: 15, yellowLow: 18, yellowHigh: 25, redHigh: 30 },
-  Luftfeuchtigkeit: { redLow: 30, yellowLow: 40, yellowHigh: 60, redHigh: 70 },
-  Pollen: { redLow: 0, yellowLow: 30, yellowHigh: 100, redHigh: 150 },
-  Feinpartikel: { redLow: 0, yellowLow: 10, yellowHigh: 20, redHigh: 30 },
-};
+const mapApiToUi = (data) => ({
+  Temperatur: {
+    redLow: data.temperature_min_hard,
+    yellowLow: data.temperature_min_soft,
+    yellowHigh: data.temperature_max_soft,
+    redHigh: data.temperature_max_hard,
+  },
+  Luftfeuchtigkeit: {
+    redLow: data.humidity_min_hard,
+    yellowLow: data.humidity_min_soft,
+    yellowHigh: data.humidity_max_soft,
+    redHigh: data.humidity_max_hard,
+  },
+  Pollen: {
+    redLow: data.pollen_min_hard,
+    yellowLow: data.pollen_min_soft,
+    yellowHigh: data.pollen_max_soft,
+    redHigh: data.pollen_max_hard,
+  },
+  Feinpartikel: {
+    redLow: data.particulate_matter_min_hard,
+    yellowLow: data.particulate_matter_min_soft,
+    yellowHigh: data.particulate_matter_max_soft,
+    redHigh: data.particulate_matter_max_hard,
+  },
+});
 
-const getWarningClass = (metric, value) => {
-  const thresholds = warningThresholds[metric];
-  if (value < thresholds.redLow || value > thresholds.redHigh) return "warn-red";
-  if (value < thresholds.yellowLow || value > thresholds.yellowHigh) return "warn-yellow";
+const getWarningClass = (thresholds, metric, value) => {
+  if (!thresholds || !thresholds[metric]) return "";
+  const t = thresholds[metric];
+  if (value < t.redLow || value > t.redHigh) return "warn-red";
+  if (value < t.yellowLow || value > t.yellowHigh) return "warn-yellow";
   return "";
 };
-
-const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
-const intervals = ["3h", "1d", "1w", "1m"];
 
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
-  const [apiRawResponse, setApiRawResponse] = useState(null);
-  const [data] = useState(mockData);
+  const [warningThresholds, setWarningThresholds] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/thresholds`);
+        const json = await res.json();
+        if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
+          setWarningThresholds(mapApiToUi(json.data[0]));
+        } else {
+          console.error("Keine Warnwerte verfügbar.");
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Warnwerte:", err);
+      }
+    };
+    fetchThresholds();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [altbauRes, neubauRes] = await Promise.all([
-          fetch("http://localhost:5001/api/devices/1/latest"),
-          fetch("http://localhost:5001/api/devices/2/latest"),
+          fetch(`${API_BASE}/devices/1/latest`),
+          fetch(`${API_BASE}/devices/2/latest`),
         ]);
 
         const altbauJson = await altbauRes.json();
         const neubauJson = await neubauRes.json();
-
-        setApiRawResponse({
-          altbau: altbauJson,
-          neubau: neubauJson,
-        });
 
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           console.error("API status error");
@@ -162,7 +196,7 @@ export default function Dashboard() {
       <div className="dashboard-container">
         <section className="current-values">
           <h2 className="section-title">Aktuelle Messwerte</h2>
-          {!currentData ? (
+          {!currentData || !warningThresholds ? (
             <p>Lade aktuelle Messwerte...</p>
           ) : (
             <div className="table-wrapper">
@@ -178,10 +212,10 @@ export default function Dashboard() {
                   {metrics.map((metric) => (
                     <tr key={metric}>
                       <td>{metric}</td>
-                      <td className={getWarningClass(metric, currentData.Altbau[metric])}>
+                      <td className={getWarningClass(warningThresholds, metric, currentData.Altbau[metric])}>
                         {currentData.Altbau[metric]}
                       </td>
-                      <td className={getWarningClass(metric, currentData.Neubau[metric])}>
+                      <td className={getWarningClass(warningThresholds, metric, currentData.Neubau[metric])}>
                         {currentData.Neubau[metric]}
                       </td>
                     </tr>
@@ -190,8 +224,6 @@ export default function Dashboard() {
               </table>
             </div>
           )}
-
-
 
           <div className="button-container">
             <button onClick={() => navigate("/warnwerte")} className="btn">
@@ -219,7 +251,7 @@ export default function Dashboard() {
               <div key={metric} className="chart-card">
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={data.history[selectedInterval][metric]}>
+                  <LineChart data={mockData.history[selectedInterval][metric]}>
                     <XAxis dataKey="time" />
                     <YAxis />
                     <Tooltip />

@@ -65,17 +65,17 @@ def test_post_thresholds_success(client, mocker):
         "temperature_max_soft": 25.0,
         "temperature_min_hard": 11.0,
         "temperature_max_hard": 30.0,
-        "humidity_min_soft": 10.0,
+        "humidity_min_soft": 20.0,
         "humidity_max_soft": 70.0,
-        "humidity_min_hard": 20.0,
+        "humidity_min_hard": 10.0,
         "humidity_max_hard": 80.0,
-        "pollen_min_soft": 5,
+        "pollen_min_soft": 10,
         "pollen_max_soft": 50,
-        "pollen_min_hard": 10,
+        "pollen_min_hard": 5,
         "pollen_max_hard": 100,
-        "particulate_matter_min_soft": 1,
+        "particulate_matter_min_soft": 5,
         "particulate_matter_max_soft": 50,
-        "particulate_matter_min_hard": 5,
+        "particulate_matter_min_hard": 1,
         "particulate_matter_max_hard": 100
     }
     

@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import jsonify, request
-import psycopg2  # Import psycopg2 for specific error handling
+import psycopg2 # Import psycopg2 for specific error handling
 
 # Import database operation functions
 from .db_operations import get_thresholds_from_db, update_thresholds_in_db
@@ -18,21 +18,21 @@ class Thresholds(Resource):
                     "data": [],
                     "message": "No thresholds available."
                 }, 200
-
+            
             # Return the thresholds in JSON format
             return {
                 "status": "success",
                 "data": thresholds,
                 "message": "Thresholds retrieved successfully."
             }, 200
-
+        
         except psycopg2.Error as e:
             print(f"Database error in Thresholds: {e}")
             return {
                 "status": "error",
                 "message": "A database error occurred while processing your request."
             }, 500
-
+        
         except Exception as e:
             print(f"An unexpected error occurred in Thresholds API: {e}")
             return {
@@ -51,7 +51,7 @@ class Thresholds(Resource):
                     "status": "error",
                     "message": "Invalid input data. Expecting a Dictionary."
                 }, 400
-
+            
             # Define expected keys
             expected_keys_and_types = {
                 "temperature_min_soft": float, "temperature_max_soft": float,
@@ -71,25 +71,27 @@ class Thresholds(Resource):
                         "status": "error",
                         "message": f"Missing required key: '{key}'."
                     }, 400
-
                 value = threshold_data_raw[key]
                 if value is None:
                     return {
                         "status": "error",
                         "message": f"Value for '{key}' cannot be None."
                     }, 400
+                validated_threshold_data[key] = value
 
-                try:
-                    if expected_type == float:
-                        validated_threshold_data[key] = float(value)
-                    elif expected_type == int:
-                        validated_threshold_data[key] = int(value)
-                except (ValueError, TypeError):
-                    return {
-                        "status": "error",
-                        "message": f"Invalid value for '{key}': {value}. Expected type {expected_type.__name__}."
-                    }, 400
-
+            try:
+                if expected_type == float:
+                    validated_threshold_data[key] = float(value)
+                elif expected_type == int:
+                    validated_threshold_data[key] = int(value)
+                else:
+                    validated_threshold_data
+            except (ValueError, TypeError) as e:
+                return {
+                    "status": "error",
+                    "message": f"Invalid value for '{key}': {value}. Expected type {expected_type.__name__}."
+                }, 400
+            
             # Validate that min values are less than max values
             validation_pairs = [
                 ("temperature_min_soft", "temperature_max_soft"),
@@ -104,12 +106,13 @@ class Thresholds(Resource):
             for min_key, max_key in validation_pairs:
                 min_value = validated_threshold_data[min_key]
                 max_value = validated_threshold_data[max_key]
-                if min_value >= max_value:
+
+                if min_value is not None and max_value is not None and min_value >= max_value:
                     return {
                         "status": "error",
                         "message": f"Minimum value for '{min_key}' must be less than maximum value for '{max_key}'."
                     }, 400
-
+            
             # Validate that hard thresholds are greater than soft thresholds
             hard_soft_pairs = [
                 ("temperature_min_hard", "temperature_min_soft"),
@@ -126,18 +129,31 @@ class Thresholds(Resource):
                 hard_value = validated_threshold_data[hard_key]
                 soft_value = validated_threshold_data[soft_key]
 
-                if "min" in hard_key:
-                    if hard_value >= soft_value:
-                        return {
-                            "status": "error",
-                            "message": f"Hard min threshold '{hard_key}' must be less than soft threshold '{soft_key}'."
-                        }, 400
-                elif "max" in hard_key:
-                    if hard_value <= soft_value:
-                        return {
-                            "status": "error",
-                            "message": f"Hard max threshold '{hard_key}' must be greater than soft threshold '{soft_key}'."
-                        }, 400
+                if hard_value is not None and soft_value is not None and hard_value <= soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"Hard threshold '{hard_key}' must be greater than soft threshold '{soft_key}'."
+                    }, 400
+                
+                        # Validate that min_hard is less than max_soft
+            minhard_maxsoft_pairs = [
+                ("temperature_min_hard", "temperature_max_soft"),
+                ("humidity_min_hard", "humidity_max_soft"),
+                ("pollen_min_hard", "pollen_max_soft"),
+                ("particulate_matter_min_hard", "particulate_matter_max_soft"),
+            ]
+
+            for min_hard_key, max_soft_key in minhard_maxsoft_pairs:
+                min_hard_value = validated_threshold_data[min_hard_key]
+                max_soft_value = validated_threshold_data[max_soft_key]
+
+                if min_hard_value is not None and max_soft_value is not None and min_hard_value >= max_soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{min_hard_key}' must be less than '{max_soft_key}'."
+                    }, 400
+
+
 
             # Update the thresholds in the database
             update_thresholds_in_db(validated_threshold_data)
@@ -146,17 +162,20 @@ class Thresholds(Resource):
                 "status": "success",
                 "message": "Thresholds updated successfully."
             }, 200
-
+       
         except psycopg2.Error as e:
             print(f"Database error in Thresholds POST: {e}")
             return {
                 "status": "error",
                 "message": "A database error occurred while processing your request."
             }, 500
-
+       
         except Exception as e:
             print(f"An unexpected error occurred in Thresholds POST: {e}")
             return {
                 "status": "error",
                 "message": "An unexpected error occurred while processing your request."
             }, 500
+
+
+            

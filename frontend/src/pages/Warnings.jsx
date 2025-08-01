@@ -17,53 +17,54 @@ export default function Warnings() {
   const navigate = useNavigate();
 
   const mapApiToUi = (data) => ({
-    Temperatur: {
-      redLow: data.temperature_min_hard,
-      yellowLow: data.temperature_min_soft,
-      yellowHigh: data.temperature_max_soft,
-      redHigh: data.temperature_max_hard,
-    },
-    Luftfeuchtigkeit: {
-      redLow: data.humidity_min_hard,
-      yellowLow: data.humidity_min_soft,
-      yellowHigh: data.humidity_max_soft,
-      redHigh: data.humidity_max_hard,
-    },
-    Pollen: {
-      redLow: data.pollen_min_hard,
-      yellowLow: data.pollen_min_soft,
-      yellowHigh: data.pollen_max_soft,
-      redHigh: data.pollen_max_hard,
-    },
-    Feinpartikel: {
-      redLow: data.particulate_matter_min_hard,
-      yellowLow: data.particulate_matter_min_soft,
-      yellowHigh: data.particulate_matter_max_soft,
-      redHigh: data.particulate_matter_max_hard,
-    },
-  });
+  Temperatur: {
+    redLow: data.temperature_min_soft,
+    yellowLow: data.temperature_min_hard,
+    yellowHigh: data.temperature_max_soft,
+    redHigh: data.temperature_max_hard,
+  },
+  Luftfeuchtigkeit: {
+    redLow: data.humidity_min_soft,
+    yellowLow: data.humidity_min_hard,
+    yellowHigh: data.humidity_max_soft,
+    redHigh: data.humidity_max_hard,
+  },
+  Pollen: {
+    redLow: data.pollen_min_soft,
+    yellowLow: data.pollen_min_hard,
+    yellowHigh: data.pollen_max_soft,
+    redHigh: data.pollen_max_hard,
+  },
+  Feinpartikel: {
+    redLow: data.particulate_matter_min_soft,
+    yellowLow: data.particulate_matter_min_hard,
+    yellowHigh: data.particulate_matter_max_soft,
+    redHigh: data.particulate_matter_max_hard,
+  },
+});
 
-  const mapUiToApi = (uiData) => ({
-    temperature_min_hard: uiData.Temperatur.redLow,
-    temperature_min_soft: uiData.Temperatur.yellowLow,
-    temperature_max_soft: uiData.Temperatur.yellowHigh,
-    temperature_max_hard: uiData.Temperatur.redHigh,
+const mapUiToApi = (uiData) => ({
+  temperature_min_soft: uiData.Temperatur.redLow,
+  temperature_min_hard: uiData.Temperatur.yellowLow,
+  temperature_max_soft: uiData.Temperatur.yellowHigh,
+  temperature_max_hard: uiData.Temperatur.redHigh,
 
-    humidity_min_hard: uiData.Luftfeuchtigkeit.redLow,
-    humidity_min_soft: uiData.Luftfeuchtigkeit.yellowLow,
-    humidity_max_soft: uiData.Luftfeuchtigkeit.yellowHigh,
-    humidity_max_hard: uiData.Luftfeuchtigkeit.redHigh,
+  humidity_min_soft: uiData.Luftfeuchtigkeit.redLow,
+  humidity_min_hard: uiData.Luftfeuchtigkeit.yellowLow,
+  humidity_max_soft: uiData.Luftfeuchtigkeit.yellowHigh,
+  humidity_max_hard: uiData.Luftfeuchtigkeit.redHigh,
 
-    pollen_min_hard: uiData.Pollen.redLow,
-    pollen_min_soft: uiData.Pollen.yellowLow,
-    pollen_max_soft: uiData.Pollen.yellowHigh,
-    pollen_max_hard: uiData.Pollen.redHigh,
+  pollen_min_soft: uiData.Pollen.redLow,
+  pollen_min_hard: uiData.Pollen.yellowLow,
+  pollen_max_soft: uiData.Pollen.yellowHigh,
+  pollen_max_hard: uiData.Pollen.redHigh,
 
-    particulate_matter_min_hard: uiData.Feinpartikel.redLow,
-    particulate_matter_min_soft: uiData.Feinpartikel.yellowLow,
-    particulate_matter_max_soft: uiData.Feinpartikel.yellowHigh,
-    particulate_matter_max_hard: uiData.Feinpartikel.redHigh,
-  });
+  particulate_matter_min_soft: uiData.Feinpartikel.redLow,
+  particulate_matter_min_hard: uiData.Feinpartikel.yellowLow,
+  particulate_matter_max_soft: uiData.Feinpartikel.yellowHigh,
+  particulate_matter_max_hard: uiData.Feinpartikel.redHigh,
+});
+
 
   useEffect(() => {
     const fetchThresholds = async () => {

@@ -95,30 +95,31 @@ const mockData = {
 
 const mapApiToUi = (data) => ({
   Temperatur: {
-    redLow: data.temperature_min_hard,
-    yellowLow: data.temperature_min_soft,
+    redLow: data.temperature_min_soft,
+    yellowLow: data.temperature_min_hard,
     yellowHigh: data.temperature_max_soft,
     redHigh: data.temperature_max_hard,
   },
   Luftfeuchtigkeit: {
-    redLow: data.humidity_min_hard,
-    yellowLow: data.humidity_min_soft,
+    redLow: data.humidity_min_soft,
+    yellowLow: data.humidity_min_hard,
     yellowHigh: data.humidity_max_soft,
     redHigh: data.humidity_max_hard,
   },
   Pollen: {
-    redLow: data.pollen_min_hard,
-    yellowLow: data.pollen_min_soft,
+    redLow: data.pollen_min_soft,
+    yellowLow: data.pollen_min_hard,
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
   Feinpartikel: {
-    redLow: data.particulate_matter_min_hard,
-    yellowLow: data.particulate_matter_min_soft,
+    redLow: data.particulate_matter_min_soft,
+    yellowLow: data.particulate_matter_min_hard,
     yellowHigh: data.particulate_matter_max_soft,
     redHigh: data.particulate_matter_max_hard,
   },
 });
+
 
 const getWarningClass = (thresholds, metric, value) => {
   if (!thresholds || !thresholds[metric]) return "";

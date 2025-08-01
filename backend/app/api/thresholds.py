@@ -134,6 +134,25 @@ class Thresholds(Resource):
                         "status": "error",
                         "message": f"Hard threshold '{hard_key}' must be greater than soft threshold '{soft_key}'."
                     }, 400
+                
+                        # Validate that min_hard is less than max_soft
+            minhard_maxsoft_pairs = [
+                ("temperature_min_hard", "temperature_max_soft"),
+                ("humidity_min_hard", "humidity_max_soft"),
+                ("pollen_min_hard", "pollen_max_soft"),
+                ("particulate_matter_min_hard", "particulate_matter_max_soft"),
+            ]
+
+            for min_hard_key, max_soft_key in minhard_maxsoft_pairs:
+                min_hard_value = validated_threshold_data[min_hard_key]
+                max_soft_value = validated_threshold_data[max_soft_key]
+
+                if min_hard_value is not None and max_soft_value is not None and min_hard_value >= max_soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{min_hard_key}' must be less than '{max_soft_key}'."
+                    }, 400
+
 
 
             # Update the thresholds in the database

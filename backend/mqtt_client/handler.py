@@ -13,7 +13,7 @@ def parse_payload(payload: dict):
         device_id = int(1)
 
 
-
+        # Check valid
         if device_id is None or timestamp_str is None or value is None:
             raise ValueError("Missing required fields in payload.")
 
@@ -26,7 +26,7 @@ def parse_payload(payload: dict):
 
 def handle_metric(metric_name: str, topic: str, payload_dict: dict, db_conn):
     """
-    通用 handler，根据 metric_name 写入对应字段。
+    Write the metric value in db
     """
     device_id, timestamp, value = parse_payload(payload_dict)
     if device_id is None:

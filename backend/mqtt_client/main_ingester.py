@@ -1,15 +1,15 @@
-# main_ingester.py
-
 import paho.mqtt.client as mqtt
 import json
 from mqtt_config import MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS
-from handlers.handler import handle_metric
+from handler import handle_metric
 
 # Metric mapping from topic suffix to database column
 metric_map = {
     '01': 'pollen',
     '02': 'particulate_matter',
     # future mappings
+    # 'temperature': 'temperature',
+    # 'humidity': '?',
 }
 
 # MQTT connect callback
@@ -59,7 +59,7 @@ def connect_db():
         print(f"[DB ERROR] Could not connect: {e}")
         return None
 
-# --- Main entry point ---
+# Main entry point
 if __name__ == "__main__":
     print("[START] Launching MQTT ingester...")
     db_connection = connect_db()

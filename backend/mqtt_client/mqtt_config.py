@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+env_path = Path(__file__).resolve().parents[2] / ".env"
+load_dotenv(dotenv_path=env_path)
 
 def required(key: str) -> str:
     value = os.getenv(key)
@@ -11,7 +13,7 @@ def required(key: str) -> str:
 
 MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
 MQTT_PORT = int(required("MQTT_PORT"))
-MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC")
+MQTT_BASE_TOPIC="dhbw/ai/si2023/01"
 QOS = 1
 
 DB_HOST = os.getenv("DB_HOST")

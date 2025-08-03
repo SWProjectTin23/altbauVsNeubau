@@ -1,5 +1,5 @@
 def insert_sensor_data(conn, device_id, timestamp, *, temperature=None, humidity=None,
-                       pollen=None, particulate_matter=None):
+pollen=None, particulate_matter=None):
     """
     Insert a row into the sensor_data table. Default to None.
     """

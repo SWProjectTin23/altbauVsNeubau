@@ -1,10 +1,17 @@
 
 
 .custom-header {
-  background-color: #312e81; /* dark indigo */
-  color: white;
+  background-color: #ffffff; /* white */
+  color: #e2001a; /* red */
   padding: 1rem 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-family: GenerisSansW01-Regular,sans-serif;
+}
+
+.header-logo {
+  width: 50px; /* equivalent to w-12 */
+  height: 50px; /* equivalent to h-12 */
+  object-fit: contain;
 }
 
 .header-container {
@@ -15,6 +22,14 @@
   gap: 1rem;
   justify-content: space-between;
   align-items: center;
+}
+
+main {
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
+  min-height: 100vh;
 }
 
 @media (min-width: 768px) {

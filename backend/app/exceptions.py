@@ -19,7 +19,7 @@ class InvalidParameter(APIException):
     code = 400
     description = "The provided parameter is invalid or missing."
 
-# Error with Database operations (HTTP 503 Service Unavailable
+# Error with Database operations (HTTP 503 Service Unavailable)
 class DatabaseError(APIException):
     code = 503
     description = "A database error occurred while processing your request."

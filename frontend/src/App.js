@@ -12,6 +12,11 @@ function App() {
             <header className="custom-header">
               <div className="header-container">
                 <h1 className="header-title">Dashboard – Altbau vs Neubau</h1>
+                <img
+                  src="/logo.webp"
+                  alt="Logo"
+                  className="header-logo"
+                />
               </div>
             </header>
 

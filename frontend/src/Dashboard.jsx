@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LineChart,
@@ -11,11 +11,12 @@ import {
 } from "recharts";
 import './Dashboard.css';
 
+const API_BASE = "http://localhost:5001/api";
+
+const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+const intervals = ["3h", "1d", "1w", "1m"];
+
 const mockData = {
-  current: {
-    Altbau: { Temperatur: 20, Luftfeuchtigkeit: 55, Pollen: 50, Feinpartikel: 15 },
-    Neubau: { Temperatur: 22, Luftfeuchtigkeit: 65, Pollen: 200, Feinpartikel: 8 },
-  },
   history: {
     "3h": {
       Temperatur: [
@@ -79,71 +80,152 @@ const mockData = {
         { time: "Sat", Altbau: 20.5, Neubau: 22.5 },
         { time: "Sun", Altbau: 21.5, Neubau: 23 },
       ],
-      Luftfeuchtigkeit: [...Array(7)].map((_, i) => ({ time: `Day ${i+1}`, Altbau: 50 + i, Neubau: 60 + i })),
-      Pollen: [...Array(7)].map((_, i) => ({ time: `Day ${i+1}`, Altbau: 40 + i*2, Neubau: 180 + i*5 })),
-      Feinpartikel: [...Array(7)].map((_, i) => ({ time: `Day ${i+1}`, Altbau: 13 + i*0.5, Neubau: 7 + i*0.3 })),
+      Luftfeuchtigkeit: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 50 + i, Neubau: 60 + i })),
+      Pollen: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 40 + i * 2, Neubau: 180 + i * 5 })),
+      Feinpartikel: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 13 + i * 0.5, Neubau: 7 + i * 0.3 })),
     },
     "1m": {
-      Temperatur: [...Array(30)].map((_, i) => ({ time: `Tag ${i+1}`, Altbau: 18 + (i % 5), Neubau: 21 + (i % 3) })),
-      Luftfeuchtigkeit: [...Array(30)].map((_, i) => ({ time: `Tag ${i+1}`, Altbau: 50 + (i % 10), Neubau: 60 + (i % 8) })),
-      Pollen: [...Array(30)].map((_, i) => ({ time: `Tag ${i+1}`, Altbau: 40 + i, Neubau: 180 + i * 2 })),
-      Feinpartikel: [...Array(30)].map((_, i) => ({ time: `Tag ${i+1}`, Altbau: 13 + (i % 4), Neubau: 7 + (i % 3) })),
+      Temperatur: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 18 + (i % 5), Neubau: 21 + (i % 3) })),
+      Luftfeuchtigkeit: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 50 + (i % 10), Neubau: 60 + (i % 8) })),
+      Pollen: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 40 + i, Neubau: 180 + i * 2 })),
+      Feinpartikel: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 13 + (i % 4), Neubau: 7 + (i % 3) })),
     },
   },
 };
 
-const warningThresholds = {
-  Temperatur: { redLow: 15, yellowLow: 18, yellowHigh: 25, redHigh: 30 },
-  Luftfeuchtigkeit: { redLow: 30, yellowLow: 40, yellowHigh: 60, redHigh: 70 },
-  Pollen: { redLow: 0, yellowLow: 30, yellowHigh: 100, redHigh: 150 },
-  Feinpartikel: { redLow: 0, yellowLow: 10, yellowHigh: 20, redHigh: 30 },
-};
+const mapApiToUi = (data) => ({
+  Temperatur: {
+    redLow: data.temperature_min_soft,
+    yellowLow: data.temperature_min_hard,
+    yellowHigh: data.temperature_max_soft,
+    redHigh: data.temperature_max_hard,
+  },
+  Luftfeuchtigkeit: {
+    redLow: data.humidity_min_soft,
+    yellowLow: data.humidity_min_hard,
+    yellowHigh: data.humidity_max_soft,
+    redHigh: data.humidity_max_hard,
+  },
+  Pollen: {
+    redLow: data.pollen_min_soft,
+    yellowLow: data.pollen_min_hard,
+    yellowHigh: data.pollen_max_soft,
+    redHigh: data.pollen_max_hard,
+  },
+  Feinpartikel: {
+    redLow: data.particulate_matter_min_soft,
+    yellowLow: data.particulate_matter_min_hard,
+    yellowHigh: data.particulate_matter_max_soft,
+    redHigh: data.particulate_matter_max_hard,
+  },
+});
 
-const getWarningClass = (metric, value) => {
-  const thresholds = warningThresholds[metric];
-  if (value < thresholds.redLow || value > thresholds.redHigh) return "warn-red";
-  if (value < thresholds.yellowLow || value > thresholds.yellowHigh) return "warn-yellow";
+
+const getWarningClass = (thresholds, metric, value) => {
+  if (!thresholds || !thresholds[metric]) return "";
+  const t = thresholds[metric];
+  if (value < t.redLow || value > t.redHigh) return "warn-red";
+  if (value < t.yellowLow || value > t.yellowHigh) return "warn-yellow";
   return "";
 };
 
-
-const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
-const intervals = ["3h", "1d", "1w", "1m"];
-
 export default function Dashboard() {
-  const [data] = useState(mockData);
   const [selectedInterval, setSelectedInterval] = useState("3h");
+  const [currentData, setCurrentData] = useState(null);
+  const [warningThresholds, setWarningThresholds] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchThresholds = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/thresholds`);
+        const json = await res.json();
+        if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
+          setWarningThresholds(mapApiToUi(json.data[0]));
+        } else {
+          console.error("Keine Warnwerte verfügbar.");
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Warnwerte:", err);
+      }
+    };
+    fetchThresholds();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [altbauRes, neubauRes] = await Promise.all([
+          fetch(`${API_BASE}/devices/1/latest`),
+          fetch(`${API_BASE}/devices/2/latest`),
+        ]);
+
+        const altbauJson = await altbauRes.json();
+        const neubauJson = await neubauRes.json();
+
+        if (altbauJson.status !== "success" || neubauJson.status !== "success") {
+          console.error("API status error");
+          return;
+        }
+
+        const mapped = {
+          Altbau: {
+            Temperatur: altbauJson.data.temperature,
+            Luftfeuchtigkeit: altbauJson.data.humidity,
+            Pollen: altbauJson.data.pollen,
+            Feinpartikel: altbauJson.data.particulate_matter,
+          },
+          Neubau: {
+            Temperatur: neubauJson.data.temperature,
+            Luftfeuchtigkeit: neubauJson.data.humidity,
+            Pollen: neubauJson.data.pollen,
+            Feinpartikel: neubauJson.data.particulate_matter,
+          },
+        };
+
+        setCurrentData(mapped);
+      } catch (err) {
+        console.error("Fehler beim Laden der aktuellen Daten:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
         <section className="current-values">
           <h2 className="section-title">Aktuelle Messwerte</h2>
-          <div className="table-wrapper">
-            <table className="metrics-table">
-              <thead>
-                <tr>
-                  <th>Metrik</th>
-                  <th>Altbau</th>
-                  <th>Neubau</th>
-                </tr>
-              </thead>
+          {!currentData || !warningThresholds ? (
+            <p>Lade aktuelle Messwerte...</p>
+          ) : (
+            <div className="table-wrapper">
+              <table className="metrics-table">
+                <thead>
+                  <tr>
+                    <th>Metrik</th>
+                    <th>Altbau</th>
+                    <th>Neubau</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {metrics.map((metric) => (
                     <tr key={metric}>
                       <td>{metric}</td>
-                      <td className={getWarningClass(metric, data.current.Altbau[metric])}>
-                        {data.current.Altbau[metric]}
+                      <td className={getWarningClass(warningThresholds, metric, currentData.Altbau[metric])}>
+                        {currentData.Altbau[metric]}
                       </td>
-                      <td className={getWarningClass(metric, data.current.Neubau[metric])}>
-                        {data.current.Neubau[metric]}
+                      <td className={getWarningClass(warningThresholds, metric, currentData.Neubau[metric])}>
+                        {currentData.Neubau[metric]}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-            </table>
-          </div>
+              </table>
+            </div>
+          )}
+
           <div className="button-container">
             <button onClick={() => navigate("/warnwerte")} className="btn">
               Warnungen ändern
@@ -170,7 +252,7 @@ export default function Dashboard() {
               <div key={metric} className="chart-card">
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={data.history[selectedInterval][metric]}>
+                  <LineChart data={mockData.history[selectedInterval][metric]}>
                     <XAxis dataKey="time" />
                     <YAxis />
                     <Tooltip />

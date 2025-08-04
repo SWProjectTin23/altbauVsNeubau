@@ -5,10 +5,14 @@ from handler import handle_metric
 
 # Metric mapping from topic suffix to database column
 metric_map = {
-    '01': 'pollen',
-    '02': 'particulate_matter',
+    'ikea': {
+        '01': 'pollen',
+        '02': 'particulate_matter',
+    },
+    'temperature': {
+        '01': 'temperature',
+    },
     # future mappings
-    # 'temperature': 'temperature',
     # 'humidity': '?',
 }
 
@@ -16,7 +20,7 @@ metric_map = {
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("[MQTT] Connected successfully.")
-        client.subscribe(f"{MQTT_BASE_TOPIC}/ikea/+", QOS)
+        client.subscribe(f"{MQTT_BASE_TOPIC}/+/+", QOS)
     else:
         print(f"[MQTT] Connection failed with code {rc}")
 
@@ -28,10 +32,12 @@ def on_message(client, userdata, msg):
         print(f"[WARN] Unexpected topic: {msg.topic}")
         return
 
-    metric_id = topic_parts[-1]
-    metric_name = metric_map.get(metric_id)
+    # Beispiel-Topic: dhbw/ai/si2023/<group>/<sensor-type>/<sensor-id>
+    sensor_type = topic_parts[-2]
+    sensor_id = topic_parts[-1]
+    metric_name = metric_map.get(sensor_type, {}).get(sensor_id)
     if not metric_name:
-        print(f"[WARN] Unknown metric id: {metric_id}")
+        print(f"[WARN] Unknown metric: type={sensor_type}, id={sensor_id}")
         return
 
     try:

@@ -13,6 +13,7 @@ void sendSensorData(int value, int startupTime, int timestamp, int sequence, con
   JsonObject meta = doc.createNestedObject("meta");
   meta["firmware"] = "v1.2.3";
   meta["startup"] = startupTime;
+  meta["device_id"] = 1;
 
   char payload[256];
   serializeJson(doc, payload, sizeof(payload));

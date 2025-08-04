@@ -24,9 +24,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 # Set up Docker Buildx (for more efficient builds)
 
-      - name: Build and Start Services (excluding github-runner)
+      - name: Build and Start Services
         # Start services in the background and wait for their health checks to succeed.
-        # The 'github-runner' service is explicitly not started here.
         run: |
           echo "Starting backend, frontend, and db services..."
           docker compose up -d backend frontend db --wait

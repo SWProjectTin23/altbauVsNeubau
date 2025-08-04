@@ -17,6 +17,8 @@ void setup() {
   mqttSetup();
   setupTime();
   Serial1.begin(9600);
+  Serial.begin(115200);
+  tempsensorStartup();
   startupTime = getUnixTime(); 
   sequence = 0;
 }
@@ -25,16 +27,16 @@ void loop() {
   mqttLoop();
   while (Serial1.available()) {
     sensorReadByte();
+    readTemperature();
   }
 
-  
- //mockReadByte(); delay(50);
 
    if (millis() - lastAverageTime >= AVERAGE_INTERVAL_MS) {
      checkWiFiConnection(WIFI_SSID, WIFI_PASS);
      uint16_t pm25Avg, pm10Avg;
-     getAverages(pm25Avg, pm10Avg);
-     sendAverages(startupTime, sequence++, pm25Avg, pm10Avg);
+     float temperatureAvg;
+     getAverages(pm25Avg, pm10Avg, temperatureAvg);
+     sendAverages(startupTime, sequence++, pm25Avg, pm10Avg, temperatureAvg);
      resetAverages();
      lastAverageTime = millis();
    }

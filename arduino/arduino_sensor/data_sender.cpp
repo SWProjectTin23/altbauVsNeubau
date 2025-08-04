@@ -4,7 +4,7 @@
 #include "TimeUtils.h"
 
 
-void sendSensorData(int value, int startupTime, int timestamp, int sequence, const char* sensorID) {
+void sendSensorData(int value, int startupTime, int timestamp, int sequence, const char* topic) {
   StaticJsonDocument<256> doc;
   doc["timestamp"] = timestamp;
   doc["value"] = value;
@@ -17,13 +17,12 @@ void sendSensorData(int value, int startupTime, int timestamp, int sequence, con
   char payload[256];
   serializeJson(doc, payload, sizeof(payload));
 
-  char topic[64];
-  snprintf(topic, sizeof(topic), "dhbw/ai/si2023/01/ikea/%s", sensorID);
   mqttPublish(topic, payload);
 }
 
-void sendAverages(int startupTime, int sequence, uint16_t pm25Avg, uint16_t pm10Avg) {
+void sendAverages(int startupTime, int sequence, uint16_t pm25Avg, uint16_t pm10Avg, float temperatureAvg) {
   int timestamp = getUnixTime();
-  sendSensorData(pm25Avg, startupTime, timestamp, sequence, "01");
-  sendSensorData(pm10Avg, startupTime, timestamp, sequence, "02");
+  sendSensorData(pm25Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/01");
+  sendSensorData(pm10Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/02");
+  sendSensorData(temperatureAvg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/temperature/01");
 }

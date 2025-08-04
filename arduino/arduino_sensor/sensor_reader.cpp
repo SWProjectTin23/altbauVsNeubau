@@ -1,12 +1,18 @@
 #include "sensor_reader.h"
+#include <Wire.h>
+#include "Adafruit_ADT7410.h"
 
 #define BUFFER_SIZE 20
+
+Adafruit_ADT7410 tempsensor = Adafruit_ADT7410();
 
 static uint8_t buffer[BUFFER_SIZE];
 static uint8_t bufferIndex = 0;
 static uint32_t pm25Sum = 0;
 static uint32_t pm10Sum = 0;
 static uint16_t packetCount = 0;
+static float temperatureSum = 0.0;
+static unsigned int temperatureCount = 0;
 
 
 static bool validatePacket() {
@@ -40,14 +46,21 @@ void sensorReadByte() {
   }
 }
 
+void readTemperature() {
+   float c = tempsensor.readTempC();
+   temperatureSum += c;
+   temperatureCount++;
+}  
 
-void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg) {
+void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {
   if (packetCount > 0) {
     pm25Avg = pm25Sum / packetCount;
     pm10Avg = pm10Sum / packetCount;
+    temperatureAvg = temperatureSum / temperatureCount;
   } else {
     pm25Avg = 0;
     pm10Avg = 0;
+    temperatureAvg = 0.0;
   }
 }
 
@@ -55,4 +68,37 @@ void resetAverages() {
   pm25Sum = 0;
   pm10Sum = 0;
   packetCount = 0;
+  temperatureSum = 0.0;
+  temperatureCount = 0;
 }
+
+void tempsensorStartup()
+{
+  if (!tempsensor.begin())
+  {
+    Serial.println("Could not find a valid ADT7410 sensor, check wiring!");
+    while (1)
+      ;
+  }
+  delay(250);
+
+  tempsensor.setResolution(ADT7410_16BIT);
+  Serial.print("Resolution = ");
+  switch (tempsensor.getResolution())
+  {
+  case ADT7410_13BIT:
+    Serial.print("13 ");
+    break;
+  case ADT7410_16BIT:
+    Serial.print("16 ");
+    break;
+  default:
+    Serial.print("??");
+  }
+  Serial.println("bits");
+}
+
+
+ 
+    
+  

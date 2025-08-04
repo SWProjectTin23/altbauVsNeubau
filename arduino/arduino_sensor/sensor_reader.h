@@ -9,7 +9,9 @@
 void sensorInit();
 void sensorReadByte();
 bool hasDataToSend();
-void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg);
+void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg);
 void resetAverages();
+void readTemperature();
+void tempsensorStartup();   
 
 #endif

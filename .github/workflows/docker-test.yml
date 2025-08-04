@@ -28,7 +28,7 @@ jobs:
         # Start services in the background and wait for their health checks to succeed.
         run: |
           echo "Starting backend, frontend, and db services..."
-          docker compose up -d backend frontend db --wait
+          docker compose up -d --wait
 
           # Optional: Output the status of the services to verify they are running
           echo "Services status after startup:"

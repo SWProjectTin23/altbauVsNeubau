@@ -50,14 +50,23 @@ jobs:
           curl -f http://localhost:3000
           echo "Frontend service reachable!"
 
-      - name: Get Backend Logs (on failure or success for debugging)
+      - name: Get Backend API Logs (on failure or success for debugging)
         # Ruft die Logs des Backend-Containers ab, um den Health Check zu debuggen.
         # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
         if: always()
         run: |
-          echo "--- Backend Container Logs ---"
-          docker compose logs backend
-          echo "--- End Backend Container Logs ---"
+          echo "--- Backend API Logs ---"
+          docker compose logs backend-api
+          echo "--- End Backend API Logs ---"
+
+      - name: Get Backend MQTT Logs (on failure or success for debugging)
+        # Ruft die Logs des MQTT-Containers ab, um den Health Check zu debuggen.
+        # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
+        if: always()
+        run: |
+          echo "--- MQTT Broker Logs ---"
+          docker compose logs backend-mqtt
+          echo "--- End MQTT Broker Logs ---"
 
       - name: Get Frontend Logs (on failure or success for debugging)
         # Ruft die Logs des Frontend-Containers ab, um den Health Check zu debuggen.

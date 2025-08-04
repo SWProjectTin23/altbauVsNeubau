@@ -6,7 +6,7 @@ def test_get_thresholds_success(client, mocker):
     Test the successful retrieval of thresholds.
     """
     mocker.patch(
-        'app.api.thresholds.get_thresholds_from_db',
+        'api.thresholds.get_thresholds_from_db',
         return_value={
             "temperature_min_soft": 12.0,
             "temperature_max_soft": 25.0,
@@ -26,7 +26,7 @@ def test_get_thresholds_no_data(client, mocker):
     """
     Test the case where no thresholds are available.
     """
-    mocker.patch('app.api.thresholds.get_thresholds_from_db', return_value=[])
+    mocker.patch('api.thresholds.get_thresholds_from_db', return_value=[])
     response = client.get('/api/thresholds')
     assert response.status_code == 200
     data = json.loads(response.data)
@@ -38,7 +38,7 @@ def test_get_thresholds_database_error(client, mocker):
     """
     Test the case where a database error occurs while retrieving thresholds.
     """
-    mocker.patch('app.api.thresholds.get_thresholds_from_db', side_effect=psycopg2.Error("Database error"))
+    mocker.patch('api.thresholds.get_thresholds_from_db', side_effect=psycopg2.Error("Database error"))
     response = client.get('/api/thresholds')
     assert response.status_code == 500
     data = json.loads(response.data)
@@ -49,7 +49,7 @@ def test_get_thresholds_unexpected_error(client, mocker):
     """
     Test the case where an unexpected error occurs while retrieving thresholds.
     """
-    mocker.patch('app.api.thresholds.get_thresholds_from_db', side_effect=Exception("Unexpected error"))
+    mocker.patch('api.thresholds.get_thresholds_from_db', side_effect=Exception("Unexpected error"))
     response = client.get('/api/thresholds')
     assert response.status_code == 500
     data = json.loads(response.data)
@@ -79,7 +79,7 @@ def test_post_thresholds_success(client, mocker):
         "particulate_matter_max_hard": 100
     }
     
-    mocker.patch('app.api.thresholds.update_thresholds_in_db', return_value=None)
+    mocker.patch('api.thresholds.update_thresholds_in_db', return_value=None)
     
     response = client.post('/api/thresholds', json=threshold_data)
     assert response.status_code == 200

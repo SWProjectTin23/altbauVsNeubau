@@ -3,11 +3,11 @@ from flask_restful import Api
 from flask import jsonify
 from flask_cors import CORS
 import datetime
-from app.api.device_data import DeviceData
-from app.api.range import TimeRange
-from app.api.device_latest import DeviceLatest
-from app.api.comparison import Comparison
-from app.api.thresholds import Thresholds
+from api.device_data import DeviceData
+from api.range import TimeRange
+from api.device_latest import DeviceLatest
+from api.comparison import Comparison
+from api.thresholds import Thresholds  # Assuming you have a Thresholds resource defined
 
 def create_app():
     app = Flask(__name__)

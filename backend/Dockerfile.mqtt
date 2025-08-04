@@ -1,0 +1,15 @@
+# Dockerfile for MQTT ingestion service
+FROM python:3.11-slim
+
+# Set working directory inside container
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy only mqtt_client code into image
+COPY mqtt_client/ ./mqtt_client
+
+# Set default command to run MQTT service
+CMD ["python", "mqtt_client/main_ingester.py"]

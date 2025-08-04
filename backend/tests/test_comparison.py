@@ -1,6 +1,6 @@
 def test_comparison_endpoint_basic(client, mocker):
     # Mock the database operations
-    mocker.patch('app.api.comparison.compare_devices_over_time', return_value={
+    mocker.patch('api.comparison.compare_devices_over_time', return_value={
         'device_1': [{'timestamp': 1609459200, 'value': 20.5}],
         'device_2': [{'timestamp': 1609459200, 'value': 20.2}]
     })

@@ -16,6 +16,12 @@ jobs:
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      MQTT_BROKER: ${{ secrets.MQTT_BROKER }}
+      MQTT_PORT: ${{ secrets.MQTT_PORT }}
+      PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
+      PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
 
     steps:
       - name: Checkout Code
@@ -24,12 +30,11 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 # Set up Docker Buildx (for more efficient builds)
 
-      - name: Build and Start Services (excluding github-runner)
+      - name: Build and Start Services
         # Start services in the background and wait for their health checks to succeed.
-        # The 'github-runner' service is explicitly not started here.
         run: |
           echo "Starting backend, frontend, and db services..."
-          docker compose up -d backend frontend db --wait
+          docker compose up -d --wait
 
           # Optional: Output the status of the services to verify they are running
           echo "Services status after startup:"
@@ -51,14 +56,23 @@ jobs:
           curl -f http://localhost:3000
           echo "Frontend service reachable!"
 
-      - name: Get Backend Logs (on failure or success for debugging)
+      - name: Get Backend API Logs (on failure or success for debugging)
         # Ruft die Logs des Backend-Containers ab, um den Health Check zu debuggen.
         # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
         if: always()
         run: |
-          echo "--- Backend Container Logs ---"
-          docker compose logs backend
-          echo "--- End Backend Container Logs ---"
+          echo "--- Backend API Logs ---"
+          docker compose logs backend-api
+          echo "--- End Backend API Logs ---"
+
+      - name: Get Backend MQTT Logs (on failure or success for debugging)
+        # Ruft die Logs des MQTT-Containers ab, um den Health Check zu debuggen.
+        # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
+        if: always()
+        run: |
+          echo "--- MQTT Broker Logs ---"
+          docker compose logs backend-mqtt
+          echo "--- End MQTT Broker Logs ---"
 
       - name: Get Frontend Logs (on failure or success for debugging)
         # Ruft die Logs des Frontend-Containers ab, um den Health Check zu debuggen.

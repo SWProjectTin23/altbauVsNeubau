@@ -1,14 +1,13 @@
 services:
-  backend:
-    container_name: altbau_vs_neubau_backend # A fixed name for the container
+  backend-api:
+    container_name: altbau_vs_neubau_api # A fixed name for the container
     build:
         context: ./backend
-        dockerfile: Dockerfile
+        dockerfile: Dockerfile.api
     ports:
       - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
     environment:
-      - FLASK_APP=app:create_app
-      - FLASK_APP=app # This is sufficient if run.py calls create_app()
+      - FLASK_APP=api:create_app
       - FLASK_RUN_HOST=0.0.0.0
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -28,8 +27,26 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+      
+  backend-mqtt:
+    container_name: altbau_vs_neubau_mqtt
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.mqtt
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_PORT=${MQTT_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - pg-network
 
-  
   frontend:
     container_name: altbau_vs_neubau_frontend # a fixed name for the container
     build:
@@ -44,7 +61,7 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
     depends_on:
-      backend:
+      backend-api:
         condition: service_healthy
     networks:
       - pg-network

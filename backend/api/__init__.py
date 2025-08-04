@@ -2,10 +2,10 @@ from flask import Flask
 from flask_restful import Api
 from flask import jsonify
 import datetime
-from api.api.device_data import DeviceData
-from api.api.range import TimeRange
-from api.api.device_latest import DeviceLatest
-from api.api.comparison import Comparison
+from api.device_data import DeviceData
+from api.range import TimeRange
+from api.device_latest import DeviceLatest
+from api.comparison import Comparison
 
 def create_app():
     app = Flask(__name__)

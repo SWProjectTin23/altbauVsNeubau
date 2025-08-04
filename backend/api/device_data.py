@@ -3,7 +3,7 @@ from flask import request, jsonify
 import psycopg2 # Import psycopg2 for database operations
 
 # Import database operation functions
-from db_operations import get_device_data_from_db, device_exists
+from .db_operations import get_device_data_from_db, device_exists
 
 class DeviceData(Resource):
     def get(self, device_id):

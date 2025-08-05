@@ -14,7 +14,16 @@ import './Dashboard.css';
 const API_BASE = "http://localhost:5001/api";
 
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+
+const metricUnits = {
+  Temperatur: "°C",
+  Luftfeuchtigkeit: "%",
+  Pollen: "µg/m³",
+  Feinpartikel: "µg/m³",
+};
+
 const intervals = ["3h", "1d", "1w", "1m"];
+
 
 const mockData = {
   history: {
@@ -170,14 +179,14 @@ export default function Dashboard() {
 
         const mapped = {
           Altbau: {
-            Temperatur: altbauJson.data.temperature,
-            Luftfeuchtigkeit: altbauJson.data.humidity,
+            Temperatur: parseFloat(altbauJson.data.temperature),
+            Luftfeuchtigkeit: parseFloat(altbauJson.data.humidity),
             Pollen: altbauJson.data.pollen,
             Feinpartikel: altbauJson.data.particulate_matter,
           },
           Neubau: {
-            Temperatur: neubauJson.data.temperature,
-            Luftfeuchtigkeit: neubauJson.data.humidity,
+            Temperatur: parseFloat(neubauJson.data.temperature),
+            Luftfeuchtigkeit: parseFloat(neubauJson.data.humidity),
             Pollen: neubauJson.data.pollen,
             Feinpartikel: neubauJson.data.particulate_matter,
           },
@@ -214,10 +223,10 @@ export default function Dashboard() {
                     <tr key={metric}>
                       <td>{metric}</td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Altbau[metric])}>
-                        {currentData.Altbau[metric]}
+                        {currentData.Altbau[metric]} {metricUnits[metric]}
                       </td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Neubau[metric])}>
-                        {currentData.Neubau[metric]}
+                        {currentData.Neubau[metric]} {metricUnits[metric]}
                       </td>
                     </tr>
                   ))}

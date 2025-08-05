@@ -16,6 +16,14 @@ const API_BASE = "http://localhost:5001/api";
 
 // Define the metrics and intervals
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+
+const metricUnits = {
+  Temperatur: "°C",
+  Luftfeuchtigkeit: "%",
+  Pollen: "µg/m³",
+  Feinpartikel: "µg/m³",
+};
+
 const intervals = ["3h", "1d", "1w", "1m"];
 
 // Mock data for testing
@@ -228,10 +236,10 @@ export default function Dashboard() {
                     <tr key={metric}>
                       <td>{metric}</td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Altbau[metric])}>
-                        {currentData.Altbau[metric]}
+                        {currentData.Altbau[metric]} {metricUnits[metric]}
                       </td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Neubau[metric])}>
-                        {currentData.Neubau[metric]}
+                        {currentData.Neubau[metric]} {metricUnits[metric]}
                       </td>
                     </tr>
                   ))}

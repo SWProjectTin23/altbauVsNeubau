@@ -182,14 +182,14 @@ export default function Dashboard() {
         // Map the API data to the format expected by the UI
         const mapped = {
           Altbau: {
-            Temperatur: altbauJson.data.temperature,
-            Luftfeuchtigkeit: altbauJson.data.humidity,
+            Temperatur: parseFloat(altbauJson.data.temperature),
+            Luftfeuchtigkeit: parseFloat(altbauJson.data.humidity),
             Pollen: altbauJson.data.pollen,
             Feinpartikel: altbauJson.data.particulate_matter,
           },
           Neubau: {
-            Temperatur: neubauJson.data.temperature,
-            Luftfeuchtigkeit: neubauJson.data.humidity,
+            Temperatur: parseFloat(neubauJson.data.temperature),
+            Luftfeuchtigkeit: parseFloat(neubauJson.data.humidity),
             Pollen: neubauJson.data.pollen,
             Feinpartikel: neubauJson.data.particulate_matter,
           },

@@ -26,85 +26,6 @@ const metricUnits = {
 
 const intervals = ["3h", "1d", "1w", "1m"];
 
-// Mock data for testing
-// This should be replaced with actual API calls in production
-const mockData = {
-  history: {
-    "3h": {
-      Temperatur: [
-        { time: "10:00", Altbau: 20, Neubau: 22 },
-        { time: "11:00", Altbau: 21, Neubau: 23 },
-        { time: "12:00", Altbau: 22, Neubau: 23.5 },
-      ],
-      Luftfeuchtigkeit: [
-        { time: "10:00", Altbau: 55, Neubau: 65 },
-        { time: "11:00", Altbau: 56, Neubau: 66 },
-        { time: "12:00", Altbau: 58, Neubau: 66.5 },
-      ],
-      Pollen: [
-        { time: "10:00", Altbau: 50, Neubau: 200 },
-        { time: "11:00", Altbau: 52, Neubau: 205 },
-        { time: "12:00", Altbau: 54, Neubau: 210 },
-      ],
-      Feinpartikel: [
-        { time: "10:00", Altbau: 15, Neubau: 8 },
-        { time: "11:00", Altbau: 15.5, Neubau: 8.5 },
-        { time: "12:00", Altbau: 16, Neubau: 9 },
-      ],
-    },
-    "1d": {
-      Temperatur: [
-        { time: "00:00", Altbau: 18, Neubau: 20 },
-        { time: "06:00", Altbau: 19, Neubau: 21 },
-        { time: "12:00", Altbau: 22, Neubau: 23.5 },
-        { time: "18:00", Altbau: 21, Neubau: 22.5 },
-        { time: "23:59", Altbau: 20, Neubau: 21.5 },
-      ],
-      Luftfeuchtigkeit: [
-        { time: "00:00", Altbau: 50, Neubau: 60 },
-        { time: "06:00", Altbau: 52, Neubau: 62 },
-        { time: "12:00", Altbau: 58, Neubau: 66.5 },
-        { time: "18:00", Altbau: 56, Neubau: 65 },
-        { time: "23:59", Altbau: 54, Neubau: 64 },
-      ],
-      Pollen: [
-        { time: "00:00", Altbau: 40, Neubau: 180 },
-        { time: "06:00", Altbau: 45, Neubau: 190 },
-        { time: "12:00", Altbau: 54, Neubau: 210 },
-        { time: "18:00", Altbau: 52, Neubau: 205 },
-        { time: "23:59", Altbau: 50, Neubau: 200 },
-      ],
-      Feinpartikel: [
-        { time: "00:00", Altbau: 13, Neubau: 7 },
-        { time: "06:00", Altbau: 14, Neubau: 7.5 },
-        { time: "12:00", Altbau: 16, Neubau: 9 },
-        { time: "18:00", Altbau: 15, Neubau: 8.5 },
-        { time: "23:59", Altbau: 14.5, Neubau: 8 },
-      ],
-    },
-    "1w": {
-      Temperatur: [
-        { time: "Mon", Altbau: 18, Neubau: 21 },
-        { time: "Tue", Altbau: 20, Neubau: 22 },
-        { time: "Wed", Altbau: 21, Neubau: 23 },
-        { time: "Thu", Altbau: 19, Neubau: 21.5 },
-        { time: "Fri", Altbau: 22, Neubau: 24 },
-        { time: "Sat", Altbau: 20.5, Neubau: 22.5 },
-        { time: "Sun", Altbau: 21.5, Neubau: 23 },
-      ],
-      Luftfeuchtigkeit: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 50 + i, Neubau: 60 + i })),
-      Pollen: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 40 + i * 2, Neubau: 180 + i * 5 })),
-      Feinpartikel: [...Array(7)].map((_, i) => ({ time: `Day ${i + 1}`, Altbau: 13 + i * 0.5, Neubau: 7 + i * 0.3 })),
-    },
-    "1m": {
-      Temperatur: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 18 + (i % 5), Neubau: 21 + (i % 3) })),
-      Luftfeuchtigkeit: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 50 + (i % 10), Neubau: 60 + (i % 8) })),
-      Pollen: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 40 + i, Neubau: 180 + i * 2 })),
-      Feinpartikel: [...Array(30)].map((_, i) => ({ time: `Tag ${i + 1}`, Altbau: 13 + (i % 4), Neubau: 7 + (i % 3) })),
-    },
-  },
-};
-
 // Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
   Temperatur: {
@@ -142,13 +63,104 @@ const getWarningClass = (thresholds, metric, value) => {
   return "";
 };
 
+function formatXAxisLabelFromTimestamp(ts) {
+  if (!ts) return "";
+  const date = new Date(ts * 1000);
+  const datum = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const zeit = date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  if (window.selectedInterval === "1w" || window.selectedInterval === "1m") {
+    return `${datum}\n${zeit}`;
+  }
+  return `${datum}, ${zeit}`;
+}
+
+function CustomTooltip({ active, payload, label, unit }) {
+  if (active && payload && payload.length) {
+    const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
+    return (
+      <div className="custom-tooltip" style={{ background: "#fff", border: "1px solid #ccc", padding: "0.5rem" }}>
+        <div><strong>{formatXAxisLabelFromTimestamp(label)}</strong></div>
+        {sortedPayload.map((entry, idx) => (
+          <div key={idx} style={{ color: entry.color }}>
+            {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value} {unit}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
+function getIntervalRange(selectedInterval) {
+  const end = Math.floor(Date.now() / 1000);
+  let start;
+  if (selectedInterval === "3h") start = end - 3 * 3600;
+  else if (selectedInterval === "1d") start = end - 24 * 3600;
+  else if (selectedInterval === "1w") start = end - 7 * 24 * 3600;
+  else start = end - 30 * 24 * 3600;
+  return { start, end };
+}
+
 // Main Dashboard component
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
   const [warningThresholds, setWarningThresholds] = useState(null);
   const [openChart, setOpenChart] = useState(null);
+  const [chartData, setChartData] = useState({});
+  const [visibleLines, setVisibleLines] = useState({ Altbau: true, Neubau: true });
+  const [currentError, setCurrentError] = useState(null);
+  const [chartError, setChartError] = useState(null);
   const navigate = useNavigate();
+
+
+  function CustomLegend() {
+    // Definiere die festen Einträge für Altbau und Neubau
+    const legendItems = [
+      { value: "Altbau", color: "#e2001a" },
+      { value: "Neubau", color: "#434343ff" },
+    ];
+    return (
+      <div className="custom-legend">
+        {legendItems.map((entry) => {
+          const isActive = visibleLines[entry.value];
+          return (
+            <span
+              key={entry.value}
+              onClick={() => handleLegendClick({ dataKey: entry.value })}
+              style={{
+                marginRight: 16,
+                cursor: "pointer",
+                color: isActive ? entry.color : "#bbb",
+                textDecoration: isActive ? "none" : "line-through",
+                opacity: isActive ? 1 : 0.5,
+                fontWeight: isActive ? "bold" : "normal",
+                userSelect: "none"
+              }}
+            >
+              <svg width="14" height="14" style={{ marginRight: 4, verticalAlign: "middle" }}>
+                <rect
+                  width="14"
+                  height="14"
+                  fill={isActive ? entry.color : "#eee"}
+                  stroke={isActive ? entry.color : "#bbb"}
+                  strokeWidth="2"
+                />
+              </svg>
+              {entry.value}
+            </span>
+          );
+        })}
+      </div>
+    );
+  }
+
+  function handleLegendClick({ dataKey }) {
+    setVisibleLines((prev) => ({
+      ...prev,
+      [dataKey]: !prev[dataKey],
+    }));
+  }
 
   // Fetch warning thresholds from the API
   useEffect(() => {
@@ -172,6 +184,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setCurrentError(null);
         const [altbauRes, neubauRes] = await Promise.all([
           fetch(`${API_BASE}/devices/1/latest`),
           fetch(`${API_BASE}/devices/2/latest`),
@@ -183,7 +196,7 @@ export default function Dashboard() {
 
         // Validate API response status
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
-          console.error("API status error");
+          setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
           return;
         }
 
@@ -206,6 +219,7 @@ export default function Dashboard() {
         // Set the current data state
         setCurrentData(mapped);
       } catch (err) {
+        setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
         console.error("Error loading current data:", err);
       }
     };
@@ -213,13 +227,68 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  // Fetch historical data for the selected interval
+  useEffect(() => {
+    async function fetchChartData() {
+      try {
+        setChartError(null);
+        const newChartData = {};
+        for (const metric of metrics) {
+          const apiMetric = {
+            Temperatur: "temperature",
+            Luftfeuchtigkeit: "humidity",
+            Pollen: "pollen",
+            Feinpartikel: "particulate_matter"
+          }[metric];
+          const { start, end } = getIntervalRange(selectedInterval);
+
+          const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}`;
+          const res = await fetch(url);
+          const json = await res.json();
+
+          if (json.status === "success") {
+            const arr = [];
+            for (let i = 0; i < json.device_1.length; i++) {
+              arr.push({
+                time: json.device_1[i].timestamp,
+                Altbau: json.device_1[i].value,
+                Neubau: json.device_2[i] ? json.device_2[i].value : null
+              });
+            }
+
+            newChartData[metric] = arr;
+          } 
+          
+          else {
+            setChartError("Diagrammdaten konnten nicht geladen werden.");
+            newChartData[metric] = [];
+          }
+
+        }
+        setChartData({ ...chartData, [selectedInterval]: newChartData });
+      } 
+      
+      catch (err) {
+        setChartError("Diagrammdaten konnten nicht geladen werden.");
+        console.error("Error loading chart data:", err);
+      }
+
+    }
+    fetchChartData();
+    // eslint-disable-next-line
+  }, [selectedInterval]);
+
+  const { start: intervalStart, end: intervalEnd } = getIntervalRange(selectedInterval);
+
   // Render the dashboard
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
         <section className="current-values">
           <h2 className="section-title">Aktuelle Messwerte</h2>
-          {!currentData || !warningThresholds ? (
+          {currentError ? (
+            <div className="chart-error">{currentError}</div>
+          ) : !currentData || !warningThresholds ? (
             <p>Lade aktuelle Messwerte...</p>
           ) : (
             <div className="table-wrapper">
@@ -257,6 +326,9 @@ export default function Dashboard() {
 
         <section className="chart-section">
           <h2 className="section-title">Verlauf</h2>
+          {chartError && (
+            <div className="chart-error">{chartError}</div>
+          )}
           <div className="interval-buttons">
             {intervals.map((key) => (
               <button
@@ -278,13 +350,32 @@ export default function Dashboard() {
               >
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={mockData.history[selectedInterval][metric]}>
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
+                  <LineChart data={chartData[selectedInterval]?.[metric] || []}>
+                  <XAxis
+                    dataKey="time"
+                    type="number"
+                    domain={[intervalStart, intervalEnd]}
+                    tickFormatter={formatXAxisLabelFromTimestamp}
+                    minTickGap={20}
+                  />
+                    <YAxis
+                    width={70}
+                    label={{
+                      value: metricUnits[metric],
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 10,
+                      style: { textAnchor: 'middle' }
+                    }}
+                  />
+                    <Tooltip content={<CustomTooltip unit={metricUnits[metric]} />} />
                     <Legend />
-                    <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
-                    <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+                    {visibleLines["Altbau"] && (
+                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                    )}
+                    {visibleLines["Neubau"] && (
+                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -308,16 +399,34 @@ export default function Dashboard() {
             </button>
             <h3 className="chart-title">{openChart}</h3>
             <ResponsiveContainer width="95%" height={500}>
-              <LineChart data={mockData.history[selectedInterval][openChart]}>
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
-                <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+              <LineChart data={chartData[selectedInterval]?.[openChart] || []}>
+                <XAxis
+                  dataKey="time"
+                  type="number"
+                  domain={[intervalStart, intervalEnd]}
+                  tickFormatter={formatXAxisLabelFromTimestamp}
+                  minTickGap={20}
+                />
+                <YAxis
+                    width={70}
+                    label={{
+                      value: metricUnits[openChart],
+                      angle: -90,
+                      position: 'insideLeft',
+                      offset: 10,
+                      style: { textAnchor: 'middle' }
+                    }}
+                  />
+                <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} />} />
+                <Legend content={<CustomLegend />} />
+                    {visibleLines["Altbau"] && (
+                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                    )}
+                    {visibleLines["Neubau"] && (
+                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+                    )}
               </LineChart>
             </ResponsiveContainer>
-            <button className="btn" onClick={() => setOpenChart(null)} style={{marginTop: "1rem"}}>Schließen</button>
           </div>
         </div>
       )}

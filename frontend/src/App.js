@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Dashboard from "./Dashboard";
+import Dashboard from "./pages/Dashboard";
 import Warnings from "./pages/Warnings";
 import "./App.css";
 import bgImage from './assets/Aussenaufnahme_Marienstrasse_Hanns-Voith-Campus_Schloss_Fotograf_Oliver_Vogel_Startseite.jpg';

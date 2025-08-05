@@ -13,7 +13,10 @@ const API_BASE = "http://localhost:5001/api";
 
 export default function Warnings() {
   const [warnings, setWarnings] = useState(null);
+  const [originalWarnings, setOriginalWarnings] = useState(null); 
   const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState(null);
+  const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
 
   const mapApiToUi = (data) => ({
@@ -65,7 +68,6 @@ const mapUiToApi = (uiData) => ({
   particulate_matter_max_hard: uiData.Feinpartikel.redHigh,
 });
 
-
   useEffect(() => {
     const fetchThresholds = async () => {
       try {
@@ -76,13 +78,15 @@ const mapUiToApi = (uiData) => ({
           Array.isArray(result.data) &&
           result.data.length > 0
         ) {
-          setWarnings(mapApiToUi(result.data[0]));
+          const mapped = mapApiToUi(result.data[0]);
+          setWarnings(mapped);
+          setOriginalWarnings(mapped); // Originalwerte speichern
         } else {
-          alert("Warnwerte konnten nicht geladen werden.");
+          setSaveError("Warnwerte konnten nicht geladen werden.");
         }
       } catch (error) {
         console.error("Fehler beim Laden:", error);
-        alert("Fehler beim Abrufen der Warnwerte.");
+        setSaveError("Fehler beim Abrufen der Warnwerte.");
       } finally {
         setLoading(false);
       }
@@ -90,6 +94,25 @@ const mapUiToApi = (uiData) => ({
 
     fetchThresholds();
   }, []);
+
+  const isDirty = () => {
+    return JSON.stringify(warnings) !== JSON.stringify(originalWarnings);
+  };
+
+  const validateWarnings = (warnings) => {
+  for (const [metric, levels] of Object.entries(warnings)) {
+    if (levels.redLow >= levels.yellowLow) {
+      return `Bei "${metric}": "Warnwert niedrig rot" darf nicht größer als "Warnwert niedrig gelb" sein.`;
+    }
+    if (levels.redLow >= levels.redHigh) {
+      return `Bei "${metric}": "Warnwert niedrig rot" muss kleiner als "Warnwert hoch rot" sein.`;
+    }
+    if (levels.yellowLow >= levels.yellowHigh) {
+      return `Bei "${metric}": "Warnwert niedrig gelb" muss kleiner als "Warnwert hoch gelb" sein.`;
+    }
+  }
+  return null;
+};
 
   const handleChange = (metric, level, value) => {
     setWarnings((prev) => ({
@@ -101,7 +124,25 @@ const mapUiToApi = (uiData) => ({
     }));
   };
 
+  const handleBack = () => {
+    setBackError(null);
+    if (isDirty()) {
+      setBackError("Es gibt ungespeicherte Änderungen. Bitte speichern oder Änderungen verwerfen.");
+    } else {
+      navigate("/");
+    }
+  };
+
   const saveThresholds = async () => {
+    setSaveError(null);
+    setBackError(null);
+
+    const validationError = validateWarnings(warnings);
+    if (validationError) {
+      setSaveError(validationError);
+      return;
+    }
+
     try {
       const payload = mapUiToApi(warnings);
       const response = await fetch(`${API_BASE}/thresholds`, {
@@ -111,13 +152,15 @@ const mapUiToApi = (uiData) => ({
       });
       const result = await response.json();
       if (result.status === "success") {
-        alert("Warnwerte erfolgreich gespeichert.");
+        setOriginalWarnings(warnings); 
+        navigate("/");
       } else {
-        alert(`Fehler: ${result.message}`);
+        setSaveError(result.message || "Fehler beim Speichern der Warnwerte.");
+        console.error("Fehler beim Speichern:", result);
       }
     } catch (error) {
       console.error("Fehler beim Speichern:", error);
-      alert("Ein Fehler ist beim Speichern aufgetreten.");
+      setSaveError("Ein Fehler ist beim Speichern aufgetreten.");
     }
   };
 
@@ -157,11 +200,21 @@ const mapUiToApi = (uiData) => ({
             <button type="button" className="btn" onClick={saveThresholds}>
               Speichern
             </button>
-            <button type="button" className="btn" onClick={() => navigate("/")}>
+            <button type="button" className="btn" onClick={handleBack}>
               Zurück zum Dashboard
             </button>
           </div>
         </form>
+        {saveError && (
+        <div className="save-error" style={{ marginTop: 16 }}>
+            {saveError}
+          </div>
+        )}
+        {backError && (
+        <div className="save-error" style={{ marginTop: 16 }}>
+            {backError}
+          </div>
+        )}
       </div>
     </div>
   );

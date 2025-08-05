@@ -12,6 +12,7 @@ class Comparison(Resource):
             metric = request.args.get("metric")
             start = request.args.get("start", type=int)
             end = request.args.get("end", type=int)
+            num_buckets = request.args.get("buckets", default=100, type=int)
 
             # Validate that the metric is specified
             if not metric:
@@ -27,7 +28,7 @@ class Comparison(Resource):
                 if not is_valid:
                     return {"status": "error", "message": f"Invalid time range: {error_msg}"}, 400
 
-            data = compare_devices_over_time(device_id1, device_id2, metric, start, end)
+            data = compare_devices_over_time(device_id1, device_id2, metric, start, end, num_buckets)
 
             # If no data is found, return an empty list
             if not data or (not data.get('device_1') and not data.get('device_2')):

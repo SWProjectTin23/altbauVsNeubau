@@ -251,10 +251,11 @@ def get_latest_device_data_from_db(device_id):
 # - metric: Metric to compare (optional, defaults to all metrics)
 # - start: Start timestamp (optional)
 # - end: End timestamp (optional)
-def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, end=None):
+def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, end=None, num_buckets=100):
     """
-    Compares the selected metric of two devices over a given time range.
-    Returns a list of dictionaries with the comparison data.
+    Compares the specified metric for two devices over a given time range.
+    If no metric is specified, compares all metrics.
+    Returns a dictionary with the comparison data.
     """
     if metric not in ['humidity', 'temperature', 'pollen', 'particulate_matter']:
         raise ValueError("Invalid metric. Must be one of: 'humidity', 'temperature', 'pollen', 'particulate_matter'.")
@@ -262,41 +263,47 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
+    # Determine time range
+    if not start or not end:
+        # If no start/end is specified, take the entire range of both devices
+        cursor.execute("""
+            SELECT MIN(EXTRACT(EPOCH FROM timestamp)), MAX(EXTRACT(EPOCH FROM timestamp))
+            FROM sensor_data
+            WHERE device_id = %s OR device_id = %s
+        """, (device_id1, device_id2))
+        start, end = cursor.fetchone()
+
+    # Calculate bucket size
+    bucket_size = max(1, int((end - start) / num_buckets))
+
+    # Aggregated query
     query = f"""
-        SELECT device_id, 
-        EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
-        {metric}
+        SELECT
+            device_id,
+            FLOOR((EXTRACT(EPOCH FROM timestamp) - %s) / %s) AS bucket,
+            MIN(EXTRACT(EPOCH FROM timestamp)) AS bucket_start,
+            AVG({metric}) AS avg_value
         FROM sensor_data
         WHERE (device_id = %s OR device_id = %s)
+          AND EXTRACT(EPOCH FROM timestamp) >= %s
+          AND EXTRACT(EPOCH FROM timestamp) <= %s
+        GROUP BY device_id, bucket
+        ORDER BY device_id, bucket_start
     """
-    params = [device_id1, device_id2]
-
-    if start:
-        query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-        params.append(start)
-
-    if end:
-        query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-        params.append(end)
-
-    query += " ORDER BY timestamp;"
-
-    cursor.execute(query, tuple(params))
+    params = [start, bucket_size, device_id1, device_id2, start, end]
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
 
-    result = {f"device_{row['device_id']}": [] for row in rows}
-    for row in rows:    
-        value = row[metric]
-        if isinstance(value, Decimal):
-            value = float(value)
-        result[f"device_{row['device_id']}"].append({
-            "timestamp": row["unix_timestamp_seconds"],
-            "value": value
-        })
-    print(rows) 
-
+    # Format the result
+    result = {f"device_{device_id1}": [], f"device_{device_id2}": []}
+    for row in rows:
+        entry = {
+            "timestamp": int(row["bucket_start"]),
+            "value": float(row["avg_value"]) if row["avg_value"] is not None else None
+        }
+        result[f"device_{row['device_id']}"].append(entry)
     return result
 
 # Get thresholds from the database

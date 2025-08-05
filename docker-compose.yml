@@ -27,6 +27,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    image: geroldj/altbau_vs_neubau_api:latest
       
   backend-mqtt:
     container_name: altbau_vs_neubau_mqtt
@@ -46,6 +47,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     networks:
       - pg-network
+    image: geroldj/altbau_vs_neubau_mqtt:latest
 
   frontend:
     container_name: altbau_vs_neubau_frontend # a fixed name for the container
@@ -72,6 +74,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    image: geroldj/altbau_vs_neubau_frontend:latest
 
   db:
     image: timescale/timescaledb:latest-pg14

@@ -37,7 +37,7 @@ INSERT INTO thresholds (temperature_min_soft, temperature_max_soft, temperature_
                         humidity_min_soft, humidity_max_soft, humidity_min_hard, humidity_max_hard,
                         pollen_min_soft, pollen_max_soft, pollen_min_hard, pollen_max_hard,
                         particulate_matter_min_soft, particulate_matter_max_soft, particulate_matter_min_hard, particulate_matter_max_hard) VALUES
-(18.00, 28.00, 20.00, 30.00,
- 30.00, 70.00, 40.00, 80.00,
- 5, 50, 10, 70,
- 10, 60, 20, 80);
+(18.00, 28.00, 15.00, 32.00,
+ 40.00, 80.00, 30.00, 70.00,
+ 10, 70, 5, 80,
+ 20, 80, 10, 60);

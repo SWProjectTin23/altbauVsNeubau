@@ -3,8 +3,9 @@
 #include "MQTTUtils.h"
 #include "TimeUtils.h"
 
-
-void sendSensorData(int value, int startupTime, int timestamp, int sequence, const char* topic) {
+// Template-Funktion für beliebige numerische Werte
+template<typename T>
+void sendSensorData(T value, int startupTime, int timestamp, int sequence, const char* topic) {
   StaticJsonDocument<256> doc;
   doc["timestamp"] = timestamp;
   doc["value"] = value;
@@ -23,7 +24,7 @@ void sendSensorData(int value, int startupTime, int timestamp, int sequence, con
 
 void sendAverages(int startupTime, int sequence, uint16_t pm25Avg, uint16_t pm10Avg, float temperatureAvg) {
   int timestamp = getUnixTime();
-  sendSensorData(pm25Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/01");
-  sendSensorData(pm10Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/02");
-  sendSensorData(temperatureAvg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/temperature/01");
+  sendSensorData<uint16_t>(pm25Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/01");
+  sendSensorData<uint16_t>(pm10Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/02");
+  sendSensorData<float>(temperatureAvg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/temperature/01");
 }

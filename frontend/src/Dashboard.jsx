@@ -11,11 +11,15 @@ import {
 } from "recharts";
 import './Dashboard.css';
 
+// Define the base API URL
 const API_BASE = "http://localhost:5001/api";
 
+// Define the metrics and intervals
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
 const intervals = ["3h", "1d", "1w", "1m"];
 
+// Mock data for testing
+// This should be replaced with actual API calls in production
 const mockData = {
   history: {
     "3h": {
@@ -93,34 +97,35 @@ const mockData = {
   },
 };
 
+// Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
   Temperatur: {
-    redLow: data.temperature_min_soft,
-    yellowLow: data.temperature_min_hard,
+    redLow: data.temperature_min_hard,
+    yellowLow: data.temperature_min_soft,
     yellowHigh: data.temperature_max_soft,
     redHigh: data.temperature_max_hard,
   },
   Luftfeuchtigkeit: {
-    redLow: data.humidity_min_soft,
-    yellowLow: data.humidity_min_hard,
+    redLow: data.humidity_min_hard,
+    yellowLow: data.humidity_min_soft,
     yellowHigh: data.humidity_max_soft,
     redHigh: data.humidity_max_hard,
   },
   Pollen: {
-    redLow: data.pollen_min_soft,
-    yellowLow: data.pollen_min_hard,
+    redLow: data.pollen_min_hard,
+    yellowLow: data.pollen_min_soft,
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
   Feinpartikel: {
-    redLow: data.particulate_matter_min_soft,
-    yellowLow: data.particulate_matter_min_hard,
+    redLow: data.particulate_matter_min_hard,
+    yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
     redHigh: data.particulate_matter_max_hard,
   },
 });
 
-
+// Function to get the warning class based on thresholds and metric value
 const getWarningClass = (thresholds, metric, value) => {
   if (!thresholds || !thresholds[metric]) return "";
   const t = thresholds[metric];
@@ -129,12 +134,15 @@ const getWarningClass = (thresholds, metric, value) => {
   return "";
 };
 
+// Main Dashboard component
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
   const [warningThresholds, setWarningThresholds] = useState(null);
+  const [openChart, setOpenChart] = useState(null);
   const navigate = useNavigate();
 
+  // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
       try {
@@ -143,15 +151,16 @@ export default function Dashboard() {
         if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
           setWarningThresholds(mapApiToUi(json.data[0]));
         } else {
-          console.error("Keine Warnwerte verfügbar.");
+          console.error("No thresholds available.");
         }
       } catch (err) {
-        console.error("Fehler beim Laden der Warnwerte:", err);
+        console.error("Error loading warning thresholds:", err);
       }
     };
     fetchThresholds();
   }, []);
 
+  // Fetch current data from the API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -160,14 +169,17 @@ export default function Dashboard() {
           fetch(`${API_BASE}/devices/2/latest`),
         ]);
 
+        // Check if both responses are OK
         const altbauJson = await altbauRes.json();
         const neubauJson = await neubauRes.json();
 
+        // Validate API response status
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           console.error("API status error");
           return;
         }
 
+        // Map the API data to the format expected by the UI
         const mapped = {
           Altbau: {
             Temperatur: altbauJson.data.temperature,
@@ -183,15 +195,17 @@ export default function Dashboard() {
           },
         };
 
+        // Set the current data state
         setCurrentData(mapped);
       } catch (err) {
-        console.error("Fehler beim Laden der aktuellen Daten:", err);
+        console.error("Error loading current data:", err);
       }
     };
 
     fetchData();
   }, []);
 
+  // Render the dashboard
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
@@ -249,16 +263,20 @@ export default function Dashboard() {
 
           <div className="charts-grid">
             {metrics.map((metric) => (
-              <div key={metric} className="chart-card">
+              <div key={metric} className="chart-card"
+                onClick={() => setOpenChart(metric)}
+                style={{ cursor: "pointer" }}
+                title="Für Großansicht klicken"
+              >
                 <h3 className="chart-title">{metric}</h3>
-                <ResponsiveContainer width="100%" height={200}>
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={mockData.history[selectedInterval][metric]}>
                     <XAxis dataKey="time" />
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="Altbau" stroke="#602383" />
-                    <Line type="monotone" dataKey="Neubau" stroke="#1750BA" />
+                    <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                    <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -266,6 +284,35 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {openChart && (
+        <div className="chart-modal" onClick={() => setOpenChart(null)}>
+          <div className="chart-modal-content" onClick={e => e.stopPropagation()}>
+            <button
+            className="chart-modal-close"
+            onClick={() => setOpenChart(null)}
+            aria-label="Schließen"
+            >
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <line x1="7" y1="7" x2="21" y2="21" stroke="currentColor" strokeWidth="2"/>
+                <line x1="21" y1="7" x2="7" y2="21" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+            </button>
+            <h3 className="chart-title">{openChart}</h3>
+            <ResponsiveContainer width="95%" height={500}>
+              <LineChart data={mockData.history[selectedInterval][openChart]}>
+                <XAxis dataKey="time" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+              </LineChart>
+            </ResponsiveContainer>
+            <button className="btn" onClick={() => setOpenChart(null)} style={{marginTop: "1rem"}}>Schließen</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

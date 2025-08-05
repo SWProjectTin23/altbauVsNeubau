@@ -8,10 +8,8 @@ def parse_payload(payload: dict):
     try:
         value = payload.get("value")
         timestamp_str = payload.get("timestamp")
-        # meta = payload.get("meta", {})
-        # device_id = meta.get("device_id")
-        device_id = int(1)
-
+        meta = payload.get("meta", {})
+        device_id = meta.get("device_id")
 
         # Check valid
         if device_id is None or timestamp_str is None or value is None:

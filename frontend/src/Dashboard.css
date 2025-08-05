@@ -16,9 +16,12 @@
 
 /* Hintergrund Hauptbereich */
 .dashboard-wrapper {
-  background-color: #F9F9FE;
+  background-color: #ffffff;
   min-height: 100vh;
   padding: 2rem;
+  width: 80vw;
+  
+  margin: 0 auto;
 }
 
 /* Zentrale Containerbegrenzung */
@@ -54,8 +57,8 @@
 }
 
 .interval-btn {
-  background-color: #FFFFFF;
-  color: black;
+  background-color: #e2001a;
+  color: #ffffff;
   border: 1px solid #ccc;
   padding: 0.5rem 1rem;
   margin-right: 0.5rem;
@@ -65,7 +68,11 @@
 }
 
 .interval-btn.active {
-  background-color: #D3D4FB;
+  background-color: #990012;
+}
+
+.interval-btn.hover {
+  background-color: #bc0016;
 }
 
 /* Chart-Wrapper */
@@ -93,11 +100,18 @@
 .btn {
   margin-top: 1rem;
   padding: 0.5rem 1.2rem;
-  background-color: white;
-  color: black;
+  background-color: #e2001a !important;
+  color: #ffffff !important;
   border: 1px solid #ccc;
   border-radius: 4px;
   cursor: pointer;
+}
+
+
+
+/* Button is clicked */
+.btn.hover {
+  background-color: #990012 !important;
 }
 
 .warn-yellow {

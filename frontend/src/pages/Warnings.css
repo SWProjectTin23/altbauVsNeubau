@@ -1,7 +1,10 @@
 .warnings-wrapper {
-  background-color: #F9F9FE;
+  background-color: #f9f9fe;
   min-height: 100vh;
   padding: 2rem;
+  width: 80vw;
+  
+  margin: 0 auto;
 }
 
 .warnings-container {

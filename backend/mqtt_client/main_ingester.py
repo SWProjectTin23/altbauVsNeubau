@@ -1,7 +1,8 @@
 import paho.mqtt.client as mqtt
 import json
-from mqtt_config import MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS
-from handler import handle_metric
+import psycopg2
+from mqtt_client.mqtt_config import MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
+from mqtt_client.handler import handle_metric
 
 # Metric mapping from topic suffix to database column
 metric_map = {
@@ -48,8 +49,6 @@ def on_message(client, userdata, msg):
 
 # Database connection helper
 def connect_db():
-    import psycopg2
-    from mqtt_config import DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
     try:
         conn = psycopg2.connect(
             host=DB_HOST,

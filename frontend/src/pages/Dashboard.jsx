@@ -86,7 +86,7 @@ function formatCurrentTimestamp(ts) {
   });
 }
 
-function CustomTooltip({ active, payload, label, unit }) {
+function CustomTooltip({ active, payload, label, unit, metric }) {
   if (active && payload && payload.length) {
     const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
     return (
@@ -96,9 +96,11 @@ function CustomTooltip({ active, payload, label, unit }) {
           <div key={idx} style={{ color: entry.color }}>
             {entry.name}: {
               typeof entry.value === "number"
-                ? (["Temperatur", "Luftfeuchtigkeit"].includes(unit.replace("°C", "").replace("%", ""))
+                ? (metric === "Temperatur" || metric === "Luftfeuchtigkeit"
                     ? entry.value.toFixed(2)
-                    : Math.round(entry.value))
+                    : entry.value.toFixed
+                      ? Math.round(entry.value)
+                      : entry.value)
                 : entry.value
             } {unit}
           </div>
@@ -492,7 +494,7 @@ function extractLineData(data, key) {
                         style: { textAnchor: 'middle' }
                       }}
                     />
-                    <Tooltip content={<CustomTooltip unit={metricUnits[metric]} />} />
+                    <Tooltip content={<CustomTooltip unit={metricUnits[metric]} metric={metric} />} />
                     <Legend content={<CustomLegend />} />
                     {visibleLines["Altbau"] && (
                       <Line
@@ -562,7 +564,7 @@ function extractLineData(data, key) {
                         style: { textAnchor: 'middle' }
                       }}
                     />
-                    <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} />} />
+                    <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} metric={openChart} />} />
                     <Legend content={<CustomLegend />} />
                     {visibleLines["Altbau"] && (
                       <Line

@@ -12,7 +12,7 @@ class Comparison(Resource):
             metric = request.args.get("metric")
             start = request.args.get("start", type=int)
             end = request.args.get("end", type=int)
-            num_buckets = request.args.get("buckets", default=100, type=int)
+            num_buckets = request.args.get("buckets", type=int)
 
             # Validate that the metric is specified
             if not metric:
@@ -42,6 +42,7 @@ class Comparison(Resource):
                     "message": "No data found for the specified devices and metric."
                 }, 200
 
+            # Return the data in the expected format
             return {
                 "device_1": data.get('device_1', []),
                 "device_2": data.get('device_2', []),
@@ -49,9 +50,15 @@ class Comparison(Resource):
                 "start": start,
                 "end": end,
                 "status": "success",
-                "message": None
+                "message": data.get('message')  # Get the warning or None from the result
             }, 200
 
+        # Handle database connection errors
+        except psycopg2.Error as e:
+            print(f"Database error in Comparison API: {e}")
+            return {"status": "error", "message": "Database error occurred while processing your request."}, 500
+        
+        # Handle other exceptions
         except Exception as e:
             print(f"An unexpected error occurred in Comparison API: {e}")
             return {"status": "error", "message": "An unexpected error occurred while processing your request."}, 500 # 500 for unexpected errors

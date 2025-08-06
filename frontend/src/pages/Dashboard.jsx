@@ -94,7 +94,13 @@ function CustomTooltip({ active, payload, label, unit }) {
         <div><strong>{formatXAxisLabelFromTimestamp(label)}</strong></div>
         {sortedPayload.map((entry, idx) => (
           <div key={idx} style={{ color: entry.color }}>
-            {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value} {unit}
+            {entry.name}: {
+              typeof entry.value === "number"
+                ? (["Temperatur", "Luftfeuchtigkeit"].includes(unit.replace("°C", "").replace("%", ""))
+                    ? entry.value.toFixed(2)
+                    : Math.round(entry.value))
+                : entry.value
+            } {unit}
           </div>
         ))}
       </div>
@@ -113,19 +119,19 @@ function getIntervalRange(selectedInterval) {
   return { start, end };
 }
 
-function insertLineBreaks(data, maxGapSeconds = 300) {
+function insertLineBreaksPerLine(data, key, maxGapSeconds = 300) {
   if (!Array.isArray(data) || data.length === 0) return data;
   const result = [data[0]];
   for (let i = 1; i < data.length; i++) {
     const prev = data[i - 1];
     const curr = data[i];
-    if (curr.time - prev.time > maxGapSeconds) {
-      // Füge einen "null"-Punkt für die Lücke ein
-      result.push({
-        time: prev.time + maxGapSeconds,
-        Altbau: null,
-        Neubau: null,
-      });
+    // Nur prüfen, wenn beide Werte für die Linie vorhanden sind
+    if (typeof prev[key] === "number" && typeof curr[key] === "number") {
+      if (curr.time - prev.time > maxGapSeconds) {
+        // Füge einen "null"-Punkt für die Lücke ein
+        const gapPoint = { ...curr, [key]: null };
+        result.push(gapPoint);
+      }
     }
     result.push(curr);
   }
@@ -196,7 +202,7 @@ export default function Dashboard() {
     }));
   }
 
-  function getMinMax(data, keys = ["Altbau", "Neubau"], padding = 0.05) {
+function getMinMax(data, keys = ["Altbau", "Neubau"], padding = 0.05, metric = "Temperatur") {
   let min = Infinity;
   let max = -Infinity;
   data.forEach(d => {
@@ -211,10 +217,21 @@ export default function Dashboard() {
   // Fallback falls keine Werte vorhanden sind
   if (min === Infinity || max === -Infinity) return [0, 1];
 
-  // Padding to ensure the chart is not too tight
   const range = max - min;
-  const pad =range > 0 ? range * padding : 1;
-  return [Math.floor(min), Math.ceil(max)];
+  const pad = range > 0 ? range * padding : 1;
+
+  // Runden je nach Metrik
+  if (metric === "Temperatur" || metric === "Luftfeuchtigkeit") {
+    return [
+      +(min - pad).toFixed(2),
+      +(max + pad).toFixed(2)
+    ];
+  } else {
+    return [
+      Math.floor(min - pad),
+      Math.ceil(max + pad)
+    ];
+  }
 }
 
 function mergeDeviceData(device1, device2) {
@@ -232,6 +249,12 @@ function mergeDeviceData(device1, device2) {
   });
   // Sortiere nach Zeit
   return Array.from(map.values()).sort((a, b) => a.time - b.time);
+}
+
+function extractLineData(data, key) {
+  return data
+    .filter(d => typeof d[key] === "number")
+    .map(d => ({ time: d.time, value: d[key] }));
 }
 
   // Fetch warning thresholds from the API
@@ -329,13 +352,17 @@ function mergeDeviceData(device1, device2) {
           const json = await res.json();
 
           if (json.status === "success") {
-            const arr = mergeDeviceData(json.device_1, json.device_2);
-            newChartData[metric] = insertLineBreaks(arr, gapSeconds);
-        } else {
-          errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
-          newChartData[metric] = [];
+            if (json.status === "success") {
+              let arr = mergeDeviceData(json.device_1, json.device_2);
+              arr = insertLineBreaksPerLine(arr, "Altbau", gapSeconds);
+              arr = insertLineBreaksPerLine(arr, "Neubau", gapSeconds);
+              newChartData[metric] = arr;
+            }
+          } else {
+            errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
+            newChartData[metric] = [];
+          }
         }
-      }
       if (errorMessage) {
         setChartError(errorMessage);
       } else {
@@ -432,9 +459,13 @@ function mergeDeviceData(device1, device2) {
               </button>
             ))}
           </div>
+        <div className="charts-grid">
+          {metrics.map((metric) => {
+            const chart = chartData[selectedInterval]?.[metric] || [];
+            const altbauData = extractLineData(chart, "Altbau");
+            const neubauData = extractLineData(chart, "Neubau");
 
-          <div className="charts-grid">
-            {metrics.map((metric) => (
+            return (
               <div key={metric} className="chart-card"
                 onClick={() => setOpenChart(metric)}
                 style={{ cursor: "pointer" }}
@@ -442,38 +473,53 @@ function mergeDeviceData(device1, device2) {
               >
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData[selectedInterval]?.[metric] || []}>
-                  <XAxis
-                    dataKey="time"
-                    type="number"
-                    domain={[intervalStart, intervalEnd]}
-                    tickFormatter={formatXAxisLabelFromTimestamp}
-                    minTickGap={20}
-                  />
+                  <LineChart>
+                    <XAxis
+                      dataKey="time"
+                      type="number"
+                      domain={[intervalStart, intervalEnd]}
+                      tickFormatter={formatXAxisLabelFromTimestamp}
+                      minTickGap={20}
+                    />
                     <YAxis
-                    width={70}
-                    domain={getMinMax(chartData[selectedInterval]?.[metric] || [])}
-                    label={{
-                      value: metricUnits[metric],
-                      angle: -90,
-                      position: 'insideLeft',
-                      offset: 10,
-                      style: { textAnchor: 'middle' }
-                    }}
-                  />
+                      width={70}
+                      domain={getMinMax((chart), ["Altbau", "Neubau"], 0.05, metric)}
+                      label={{
+                        value: metricUnits[metric],
+                        angle: -90,
+                        position: 'insideLeft',
+                        offset: 10,
+                        style: { textAnchor: 'middle' }
+                      }}
+                    />
                     <Tooltip content={<CustomTooltip unit={metricUnits[metric]} />} />
-                    <Legend />
+                    <Legend content={<CustomLegend />} />
                     {visibleLines["Altbau"] && (
-                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" dot={false}/>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        data={altbauData}
+                        name="Altbau"
+                        stroke="#e2001a"
+                        dot={false}
+                      />
                     )}
                     {visibleLines["Neubau"] && (
-                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" dot={false}/>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        data={neubauData}
+                        name="Neubau"
+                        stroke="#434343ff"
+                        dot={false}
+                      />
                     )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            ))}
-          </div>
+            );
+          })}
+        </div>
         </section>
       </div>
 
@@ -491,36 +537,57 @@ function mergeDeviceData(device1, device2) {
               </svg>
             </button>
             <h3 className="chart-title">{openChart}</h3>
-            <ResponsiveContainer width="95%" height={500}>
-              <LineChart data={chartData[selectedInterval]?.[openChart] || []}>
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  domain={[intervalStart, intervalEnd]}
-                  tickFormatter={formatXAxisLabelFromTimestamp}
-                  minTickGap={20}
-                />
-                <YAxis
-                    width={70}
-                    domain={getMinMax(chartData[selectedInterval]?.[openChart] || [])}
-                    label={{
-                      value: metricUnits[openChart],
-                      angle: -90,
-                      position: 'insideLeft',
-                      offset: 10,
-                      style: { textAnchor: 'middle' }
-                    }}
-                  />
-                <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} />} />
-                <Legend content={<CustomLegend />} />
+            {(() => {
+            const modalChart = chartData[selectedInterval]?.[openChart] || [];
+            const altbauData = extractLineData(modalChart, "Altbau");
+            const neubauData = extractLineData(modalChart, "Neubau");
+            return (
+            <ResponsiveContainer width="100%" height={300}>
+                  <LineChart>
+                    <XAxis
+                      dataKey="time"
+                      type="number"
+                      domain={[intervalStart, intervalEnd]}
+                      tickFormatter={formatXAxisLabelFromTimestamp}
+                      minTickGap={20}
+                    />
+                    <YAxis
+                      width={70}
+                      domain={getMinMax((modalChart), ["Altbau", "Neubau"], 0.05, openChart)}
+                      label={{
+                        value: metricUnits[openChart],
+                        angle: -90,
+                        position: 'insideLeft',
+                        offset: 10,
+                        style: { textAnchor: 'middle' }
+                      }}
+                    />
+                    <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} />} />
+                    <Legend content={<CustomLegend />} />
                     {visibleLines["Altbau"] && (
-                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" dot={false}/>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        data={altbauData}
+                        name="Altbau"
+                        stroke="#e2001a"
+                        dot={false}
+                      />
                     )}
                     {visibleLines["Neubau"] && (
-                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" dot={false}/>
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        data={neubauData}
+                        name="Neubau"
+                        stroke="#434343ff"
+                        dot={false}
+                      />
                     )}
-              </LineChart>
-            </ResponsiveContainer>
+                  </LineChart>
+                </ResponsiveContainer>
+            );
+            })()}
           </div>
         </div>
       )}

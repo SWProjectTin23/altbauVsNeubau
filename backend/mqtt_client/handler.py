@@ -1,4 +1,4 @@
-from db_writer import insert_sensor_data
+from mqtt_client.db_writer import insert_sensor_data
 from datetime import datetime
 import logging
 

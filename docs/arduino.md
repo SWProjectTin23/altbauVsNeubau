@@ -41,4 +41,18 @@ Die Arduino-Skripte dienen dazu, Sensordaten zu erfassen und per MQTT-Protokoll 
 ->Im gitignore ist deshalb die secrest.h datei
 - Für die Integration neuer Sensoren bitte die bestehenden Strukturen und das Nachrichtenformat beachten.
 
+secrests.h:
+```
+#ifndef SECRETS_H
+#define SECRETS_H
+
+#define WIFI_SSID     "Wifi_SSID"
+#define WIFI_PASS     "Wifi_pass"
+
+#define MQTT_SERVER   "isd-gerold.de"
+#define MQTT_PORT     1883
+
+
+#endif
+```
 

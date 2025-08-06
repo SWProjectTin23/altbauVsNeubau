@@ -363,19 +363,17 @@ function extractLineData(data, key) {
             newChartData[metric] = [];
           }
         }
-      if (errorMessage) {
-        setChartError(errorMessage);
-      } else {
-        setChartError(null);
-      }
-      setChartData({ ...chartData, [selectedInterval]: newChartData });
-      console.log("Loaded chart data for interval:", selectedInterval, new Date().toLocaleTimeString());
-    }
-    catch (err) {
+        if (errorMessage) {
+          setChartError(errorMessage);
+        } else {
+          setChartError(null);
+        }
+        setChartData({ ...chartData, [selectedInterval]: newChartData });
+        console.log("Loaded chart data for interval:", selectedInterval, new Date().toLocaleTimeString());
+      } catch (err) {
         setChartError("Diagrammdaten konnten nicht geladen werden.");
         console.error("Error loading chart data:", err);
       }
-
     }
     fetchChartData();
     // Set up interval to fetch chart data periodically

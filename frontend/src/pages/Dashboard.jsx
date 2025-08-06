@@ -74,6 +74,18 @@ function formatXAxisLabelFromTimestamp(ts) {
   return `${datum}, ${zeit}`;
 }
 
+function formatCurrentTimestamp(ts) {
+  if (!ts) return "";
+  const date = new Date(ts * 1000);
+  return date.toLocaleString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 function CustomTooltip({ active, payload, label, unit }) {
   if (active && payload && payload.length) {
     const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
@@ -101,6 +113,25 @@ function getIntervalRange(selectedInterval) {
   return { start, end };
 }
 
+function insertLineBreaks(data, maxGapSeconds = 300) {
+  if (!Array.isArray(data) || data.length === 0) return data;
+  const result = [data[0]];
+  for (let i = 1; i < data.length; i++) {
+    const prev = data[i - 1];
+    const curr = data[i];
+    if (curr.time - prev.time > maxGapSeconds) {
+      // Füge einen "null"-Punkt für die Lücke ein
+      result.push({
+        time: prev.time + maxGapSeconds,
+        Altbau: null,
+        Neubau: null,
+      });
+    }
+    result.push(curr);
+  }
+  return result;
+}
+
 // Main Dashboard component
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
@@ -113,9 +144,12 @@ export default function Dashboard() {
   const [chartError, setChartError] = useState(null);
   const navigate = useNavigate();
 
+  // Handle interval change
+  const gapMap = { "3h": 300, "1d": 1800, "1w": 7200, "1m": 43200 };
+  const gapSeconds = gapMap[selectedInterval] || 300;
 
   function CustomLegend() {
-    // Definiere die festen Einträge für Altbau und Neubau
+    // Define legend items with colors and click handlers
     const legendItems = [
       { value: "Altbau", color: "#e2001a" },
       { value: "Neubau", color: "#434343ff" },
@@ -162,6 +196,27 @@ export default function Dashboard() {
     }));
   }
 
+  function getMinMax(data, keys = ["Altbau", "Neubau"], padding = 0.05) {
+  let min = Infinity;
+  let max = -Infinity;
+  data.forEach(d => {
+    keys.forEach(key => {
+      if (typeof d[key] === "number") {
+        if (d[key] < min) min = d[key];
+        if (d[key] > max) max = d[key];
+      }
+    });
+  });
+  console.log(`Min/Max for ${keys.join(", ")}: ${min}/${max}`);
+  // Fallback falls keine Werte vorhanden sind
+  if (min === Infinity || max === -Infinity) return [0, 1];
+
+  // Padding to ensure the chart is not too tight
+  const range = max - min;
+  const pad =range > 0 ? range * padding : 1;
+  return [Math.floor(min), Math.ceil(max)];
+}
+
   // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
@@ -182,6 +237,7 @@ export default function Dashboard() {
 
   // Fetch current data from the API
   useEffect(() => {
+    let intervalId;
     const fetchData = async () => {
       try {
         setCurrentError(null);
@@ -207,17 +263,20 @@ export default function Dashboard() {
             Luftfeuchtigkeit: parseFloat(altbauJson.data.humidity),
             Pollen: altbauJson.data.pollen,
             Feinpartikel: altbauJson.data.particulate_matter,
+            timestamp: altbauJson.data.unix_timestamp_seconds,
           },
           Neubau: {
             Temperatur: parseFloat(neubauJson.data.temperature),
             Luftfeuchtigkeit: parseFloat(neubauJson.data.humidity),
             Pollen: neubauJson.data.pollen,
             Feinpartikel: neubauJson.data.particulate_matter,
+            timestamp: neubauJson.data.unix_timestamp_seconds,
           },
         };
 
         // Set the current data state
         setCurrentData(mapped);
+        console.log("Loaded current data:",  new Date().toLocaleTimeString());
       } catch (err) {
         setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
         console.error("Error loading current data:", err);
@@ -225,10 +284,14 @@ export default function Dashboard() {
     };
 
     fetchData();
+    intervalId = setInterval(fetchData, 30000); // Fetch every 30 seconds
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
 
   // Fetch historical data for the selected interval
   useEffect(() => {
+    let intervalId;
+  
     async function fetchChartData() {
       try {
         setChartError(null);
@@ -242,7 +305,8 @@ export default function Dashboard() {
           }[metric];
           const { start, end } = getIntervalRange(selectedInterval);
 
-          const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}`;
+          // Fetch data for both devices
+          const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`;
           const res = await fetch(url);
           const json = await res.json();
 
@@ -255,19 +319,13 @@ export default function Dashboard() {
                 Neubau: json.device_2[i] ? json.device_2[i].value : null
               });
             }
-
-            newChartData[metric] = arr;
-          } 
-          
-          else {
-            setChartError("Diagrammdaten konnten nicht geladen werden.");
-            newChartData[metric] = [];
-          }
-
+            // Insert line breaks for gaps
+            newChartData[metric] = insertLineBreaks(arr, gapSeconds);
         }
         setChartData({ ...chartData, [selectedInterval]: newChartData });
+        console.log("Loaded chart data for interval:", new Date().toLocaleTimeString());
       } 
-      
+    }
       catch (err) {
         setChartError("Diagrammdaten konnten nicht geladen werden.");
         console.error("Error loading chart data:", err);
@@ -275,6 +333,9 @@ export default function Dashboard() {
 
     }
     fetchChartData();
+    // Set up interval to fetch chart data periodically
+    intervalId = setInterval(fetchChartData, 30000); // Fetch every 30 seconds
+    return () => clearInterval(intervalId); // Cleanup on unmount
     // eslint-disable-next-line
   }, [selectedInterval]);
 
@@ -314,6 +375,22 @@ export default function Dashboard() {
                   ))}
                 </tbody>
               </table>
+              {currentData && console.log("CurrentData:", currentData)}
+              {currentData && (
+                <div style={{ marginTop: "0.5rem", textAlign: "center", color: "#555" }}>
+                  <span>
+                    Stand:{" "}
+                    {(currentData.Altbau.timestamp || currentData.Neubau.timestamp)
+                      ? formatCurrentTimestamp(
+                          Math.max(
+                            currentData.Altbau.timestamp || 0,
+                            currentData.Neubau.timestamp || 0
+                          )
+                        )
+                      : "kein Zeitstempel vorhanden"}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -360,6 +437,7 @@ export default function Dashboard() {
                   />
                     <YAxis
                     width={70}
+                    domain={getMinMax(chartData[selectedInterval]?.[metric] || [])}
                     label={{
                       value: metricUnits[metric],
                       angle: -90,
@@ -371,10 +449,10 @@ export default function Dashboard() {
                     <Tooltip content={<CustomTooltip unit={metricUnits[metric]} />} />
                     <Legend />
                     {visibleLines["Altbau"] && (
-                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" dot={false}/>
                     )}
                     {visibleLines["Neubau"] && (
-                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" dot={false}/>
                     )}
                   </LineChart>
                 </ResponsiveContainer>
@@ -409,6 +487,7 @@ export default function Dashboard() {
                 />
                 <YAxis
                     width={70}
+                    domain={getMinMax(chartData[selectedInterval]?.[openChart] || [])}
                     label={{
                       value: metricUnits[openChart],
                       angle: -90,
@@ -420,10 +499,10 @@ export default function Dashboard() {
                 <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} />} />
                 <Legend content={<CustomLegend />} />
                     {visibleLines["Altbau"] && (
-                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" />
+                      <Line type="monotone" dataKey="Altbau" stroke="#e2001a" dot={false}/>
                     )}
                     {visibleLines["Neubau"] && (
-                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" />
+                      <Line type="monotone" dataKey="Neubau" stroke="#434343ff" dot={false}/>
                     )}
               </LineChart>
             </ResponsiveContainer>

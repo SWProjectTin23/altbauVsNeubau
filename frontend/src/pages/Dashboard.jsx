@@ -217,6 +217,23 @@ export default function Dashboard() {
   return [Math.floor(min), Math.ceil(max)];
 }
 
+function mergeDeviceData(device1, device2) {
+  // device1 und device2 sind Arrays mit {timestamp, value}
+  const map = new Map();
+  device1.forEach(d => {
+    map.set(d.timestamp, { time: d.timestamp, Altbau: d.value, Neubau: null });
+  });
+  device2.forEach(d => {
+    if (map.has(d.timestamp)) {
+      map.get(d.timestamp).Neubau = d.value;
+    } else {
+      map.set(d.timestamp, { time: d.timestamp, Altbau: null, Neubau: d.value });
+    }
+  });
+  // Sortiere nach Zeit
+  return Array.from(map.values()).sort((a, b) => a.time - b.time);
+}
+
   // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
@@ -312,15 +329,7 @@ export default function Dashboard() {
           const json = await res.json();
 
           if (json.status === "success") {
-            const arr = [];
-            for (let i = 0; i < json.device_1.length; i++) {
-              arr.push({
-                time: json.device_1[i].timestamp,
-                Altbau: json.device_1[i].value,
-                Neubau: json.device_2[i] ? json.device_2[i].value : null
-              });
-            }
-            // Insert line breaks for gaps
+            const arr = mergeDeviceData(json.device_1, json.device_2);
             newChartData[metric] = insertLineBreaks(arr, gapSeconds);
         } else {
           errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
@@ -382,24 +391,21 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ))}
+                      <tr>
+                        <td style={{ fontWeight: "bold", color: "#555" }}>Zeitstempel</td>
+                        <td style={{ color: "#555" }}>
+                          {currentData.Altbau.timestamp
+                            ? formatCurrentTimestamp(currentData.Altbau.timestamp)
+                            : "—"}
+                        </td>
+                        <td style={{ color: "#555" }}>
+                          {currentData.Neubau.timestamp
+                            ? formatCurrentTimestamp(currentData.Neubau.timestamp)
+                            : "—"}
+                        </td>
+                      </tr>
                 </tbody>
               </table>
-              {currentData && console.log("CurrentData:", currentData)}
-              {currentData && (
-                <div style={{ marginTop: "0.5rem", textAlign: "center", color: "#555" }}>
-                  <span>
-                    Stand:{" "}
-                    {(currentData.Altbau.timestamp || currentData.Neubau.timestamp)
-                      ? formatCurrentTimestamp(
-                          Math.max(
-                            currentData.Altbau.timestamp || 0,
-                            currentData.Neubau.timestamp || 0
-                          )
-                        )
-                      : "kein Zeitstempel vorhanden"}
-                  </span>
-                </div>
-              )}
             </div>
           )}
 

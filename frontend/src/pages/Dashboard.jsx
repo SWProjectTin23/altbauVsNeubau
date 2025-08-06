@@ -354,12 +354,10 @@ function extractLineData(data, key) {
           const json = await res.json();
 
           if (json.status === "success") {
-            if (json.status === "success") {
-              let arr = mergeDeviceData(json.device_1, json.device_2);
-              arr = insertLineBreaksPerLine(arr, "Altbau", gapSeconds);
-              arr = insertLineBreaksPerLine(arr, "Neubau", gapSeconds);
-              newChartData[metric] = arr;
-            }
+            let arr = mergeDeviceData(json.device_1, json.device_2);
+            arr = insertLineBreaksPerLine(arr, "Altbau", gapSeconds);
+            arr = insertLineBreaksPerLine(arr, "Neubau", gapSeconds);
+            newChartData[metric] = arr;
           } else {
             errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
             newChartData[metric] = [];

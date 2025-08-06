@@ -484,7 +484,7 @@ def update_thresholds_in_db(threshold_data):
         cur.execute(insert_query, (
             threshold_data['temperature_min_hard'], threshold_data['temperature_min_soft'], threshold_data['temperature_max_soft'], threshold_data['temperature_max_hard'],
             threshold_data['humidity_min_hard'], threshold_data['humidity_min_soft'], threshold_data['humidity_max_soft'], threshold_data['humidity_max_hard'],
-            threshold_data['pollen_min_hard'], threshold_data['pollen_min_soft'], threshold_data['pollen_max_soft'],threshold_data['pollen_max_hard'],
+            threshold_data['pollen_min_hard'], threshold_data['pollen_min_soft'], threshold_data['pollen_max_soft'], threshold_data['pollen_max_hard'],
             threshold_data['particulate_matter_min_hard'], threshold_data['particulate_matter_min_soft'], threshold_data['particulate_matter_max_soft'], threshold_data['particulate_matter_max_hard']
         ))
 

@@ -14,7 +14,7 @@ def required(key: str) -> str:
     return value
 
 # MQTT configuration
-MQTT_BROKER = os.getenv("MQTT_BROKER")
+MQTT_BROKER = required("MQTT_BROKER")
 MQTT_PORT = int(required("MQTT_PORT"))
 MQTT_BASE_TOPIC="dhbw/ai/si2023/01"
 QOS = 1

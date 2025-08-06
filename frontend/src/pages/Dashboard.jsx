@@ -296,6 +296,7 @@ export default function Dashboard() {
       try {
         setChartError(null);
         const newChartData = {};
+        let errorMessage = null; // Variable to hold error messages
         for (const metric of metrics) {
           const apiMetric = {
             Temperatur: "temperature",
@@ -321,12 +322,20 @@ export default function Dashboard() {
             }
             // Insert line breaks for gaps
             newChartData[metric] = insertLineBreaks(arr, gapSeconds);
+        } else {
+          errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
+          newChartData[metric] = [];
         }
-        setChartData({ ...chartData, [selectedInterval]: newChartData });
-        console.log("Loaded chart data for interval:", new Date().toLocaleTimeString());
-      } 
+      }
+      if (errorMessage) {
+        setChartError(errorMessage);
+      } else {
+        setChartError(null);
+      }
+      setChartData({ ...chartData, [selectedInterval]: newChartData });
+      console.log("Loaded chart data for interval:", selectedInterval, new Date().toLocaleTimeString());
     }
-      catch (err) {
+    catch (err) {
         setChartError("Diagrammdaten konnten nicht geladen werden.");
         console.error("Error loading chart data:", err);
       }

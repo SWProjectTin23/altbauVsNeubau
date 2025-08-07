@@ -93,7 +93,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 60s # Longer start period for the database
-    
 
   pgadmin: # The name of your pgAdmin service
     image: dpage/pgadmin4 # The Docker image for pgAdmin
@@ -109,8 +108,21 @@ services:
       - pg-network
     restart: unless-stopped
 
+  uptime-kuma:
+    build:
+      context: ./kuma-data
+      dockerfile: Dockerfile
+    container_name: uptime-kuma
+    ports:
+      - "3002:3001"
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+
 volumes: # This section must be at the same level as 'services'
   db_data:
+  kuma-data: 
 
 networks: # Definition of networks
   pg-network:

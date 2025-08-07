@@ -21,26 +21,26 @@ export default function Warnings() {
 
   const mapApiToUi = (data) => ({
   Temperatur: {
-    redLow: data.temperature_min_soft,
-    yellowLow: data.temperature_min_hard,
-    yellowHigh: data.temperature_max_soft,
-    redHigh: data.temperature_max_hard,
+    redLow: data.temperature_min_hard,    // min_hard = rot
+    yellowLow: data.temperature_min_soft, // min_soft = gelb
+    yellowHigh: data.temperature_max_soft,// max_soft = gelb
+    redHigh: data.temperature_max_hard,   // max_hard = rot
   },
   Luftfeuchtigkeit: {
-    redLow: data.humidity_min_soft,
-    yellowLow: data.humidity_min_hard,
+    redLow: data.humidity_min_hard,
+    yellowLow: data.humidity_min_soft,
     yellowHigh: data.humidity_max_soft,
     redHigh: data.humidity_max_hard,
   },
   Pollen: {
-    redLow: data.pollen_min_soft,
-    yellowLow: data.pollen_min_hard,
+    redLow: data.pollen_min_hard,
+    yellowLow: data.pollen_min_soft,
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
   Feinpartikel: {
-    redLow: data.particulate_matter_min_soft,
-    yellowLow: data.particulate_matter_min_hard,
+    redLow: data.particulate_matter_min_hard,
+    yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
     redHigh: data.particulate_matter_max_hard,
   },

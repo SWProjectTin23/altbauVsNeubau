@@ -11,5 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy only mqtt_client code into image
 COPY mqtt_client/ ./mqtt_client
 
+ENV PYTHONPATH=/app
+
 # Set default command to run MQTT service
 CMD ["python", "mqtt_client/main_ingester.py"]

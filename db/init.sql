@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS thresholds (
 DELETE FROM thresholds;
 INSERT INTO thresholds (temperature_min_hard, temperature_min_soft, temperature_max_soft, temperature_max_hard,
                         humidity_min_hard, humidity_min_soft, humidity_max_soft, humidity_max_hard,
-                        pollen_min_hard, pollen_min_soft, pollen_max_soft, pollen_min_soft, pollen_max_hard,
+                        pollen_min_hard, pollen_min_soft, pollen_max_soft, pollen_max_hard,
                         particulate_matter_min_hard, particulate_matter_min_soft, particulate_matter_max_soft, particulate_matter_max_hard) VALUES
 (15.00, 18.00, 26.00, 32.00,
  30.00, 40.00, 60.00, 80.00,

@@ -17,6 +17,7 @@ This document describes the current uptime monitoring setup, including which ser
 ### Uptime Robot (external)
 - SaaS-based monitoring service.
 - Used to verify availability of publicly exposed endpoints.
+- Go to `https://dashboard.uptimerobot.com/login` and log in using the username and password defined in the environment file
 
 ## Monitored Services
 

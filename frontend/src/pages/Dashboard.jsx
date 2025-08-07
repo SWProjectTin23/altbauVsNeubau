@@ -121,26 +121,28 @@ function getIntervalRange(selectedInterval) {
   return { start, end };
 }
 
-function insertLineBreaksPerLine(data, key, maxGapSeconds = 300) {
+// Angepasste Funktion zur Unterbrechung von Linien
+function insertLineBreaks(data, gapSeconds = 300) {
   if (!Array.isArray(data) || data.length === 0) return data;
-  const result = [data[0]];
-  for (let i = 1; i < data.length; i++) {
-    const prev = data[i - 1];
-    const curr = data[i];
-    // Nur prüfen, wenn beide Werte für die Linie vorhanden sind
-    if (typeof prev[key] === "number" && typeof curr[key] === "number") {
-      if (curr.time - prev.time > maxGapSeconds) {
-        // Füge einen "null"-Punkt für die Lücke ein
-        const gapPoint = { ...curr, [key]: null };
-        result.push(gapPoint);
+  const result = [];
+  data.forEach((curr, i) => {
+    if (i > 0) {
+      const prev = data[i - 1];
+      // Füge eine Lücke ein, wenn die Zeitlücke größer als `gapSeconds` ist und beide Datenpunkte existieren
+      if (curr.time - prev.time > gapSeconds) {
+        result.push({
+          time: prev.time + gapSeconds, // Zeitstempel für den "Lücken"-Punkt
+          Altbau: null, // Setze die Werte auf null, um die Linie zu unterbrechen
+          Neubau: null,
+        });
       }
     }
     result.push(curr);
-  }
+  });
   return result;
 }
 
-// Main Dashboard component
+// Haupt-Dashboard-Komponente
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
@@ -155,6 +157,7 @@ export default function Dashboard() {
   // Handle interval change
   const gapMap = { "3h": 300, "1d": 1800, "1w": 7200, "1m": 43200 };
   const gapSeconds = gapMap[selectedInterval] || 300;
+  console.log(`Gap seconds for ${selectedInterval}:`, gapSeconds);
 
   function CustomLegend() {
     // Define legend items with colors and click handlers
@@ -236,27 +239,26 @@ function getMinMax(data, keys = ["Altbau", "Neubau"], padding = 0.05, metric = "
   }
 }
 
+// Angepasste Funktion zur Zusammenführung von Daten
 function mergeDeviceData(device1, device2) {
-  // device1 und device2 sind Arrays mit {timestamp, value}
+  // Erstelle ein Map, um die Daten nach Zeitstempel zu gruppieren
   const map = new Map();
+  // Verarbeite die Daten des ersten Geräts (Altbau)
   device1.forEach(d => {
     map.set(d.timestamp, { time: d.timestamp, Altbau: d.value, Neubau: null });
   });
+  // Verarbeite die Daten des zweiten Geräts (Neubau)
   device2.forEach(d => {
     if (map.has(d.timestamp)) {
+      // Wenn der Timestamp bereits existiert, füge den Neubau-Wert hinzu
       map.get(d.timestamp).Neubau = d.value;
     } else {
+      // Wenn der Timestamp neu ist, erstelle einen neuen Eintrag
       map.set(d.timestamp, { time: d.timestamp, Altbau: null, Neubau: d.value });
     }
   });
-  // Sortiere nach Zeit
+  // Konvertiere die Map-Werte in ein Array und sortiere nach Zeitstempel
   return Array.from(map.values()).sort((a, b) => a.time - b.time);
-}
-
-function extractLineData(data, key) {
-  return data
-    .filter(d => typeof d[key] === "number")
-    .map(d => ({ time: d.time, value: d[key] }));
 }
 
   // Fetch warning thresholds from the API
@@ -354,9 +356,10 @@ function extractLineData(data, key) {
           const json = await res.json();
 
           if (json.status === "success") {
+            // Wende die neue merge-Funktion an
             let arr = mergeDeviceData(json.device_1, json.device_2);
-            arr = insertLineBreaksPerLine(arr, "Altbau", gapSeconds);
-            arr = insertLineBreaksPerLine(arr, "Neubau", gapSeconds);
+            // Füge die Lücken für die Darstellung hinzu
+            arr = insertLineBreaks(arr, gapSeconds);
             newChartData[metric] = arr;
           } else {
             errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
@@ -460,8 +463,8 @@ function extractLineData(data, key) {
         <div className="charts-grid">
           {metrics.map((metric) => {
             const chart = chartData[selectedInterval]?.[metric] || [];
-            const altbauData = extractLineData(chart, "Altbau");
-            const neubauData = extractLineData(chart, "Neubau");
+            // Nutze die zusammengeführten und mit Lücken versehenen Daten direkt
+            const finalChartData = chartData[selectedInterval]?.[metric] || [];
 
             return (
               <div key={metric} className="chart-card"
@@ -471,7 +474,7 @@ function extractLineData(data, key) {
               >
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart>
+                  <LineChart data={finalChartData}>
                     <XAxis
                       dataKey="time"
                       type="number"
@@ -481,7 +484,7 @@ function extractLineData(data, key) {
                     />
                     <YAxis
                       width={70}
-                      domain={getMinMax((chart), ["Altbau", "Neubau"], 0.05, metric)}
+                      domain={getMinMax((finalChartData), ["Altbau", "Neubau"], 0.05, metric)}
                       label={{
                         value: metricUnits[metric],
                         angle: -90,
@@ -495,8 +498,7 @@ function extractLineData(data, key) {
                     {visibleLines["Altbau"] && (
                       <Line
                         type="monotone"
-                        dataKey="value"
-                        data={altbauData}
+                        dataKey="Altbau" // Wichtig: `dataKey` auf "Altbau" setzen
                         name="Altbau"
                         stroke="#e2001a"
                         dot={false}
@@ -505,8 +507,7 @@ function extractLineData(data, key) {
                     {visibleLines["Neubau"] && (
                       <Line
                         type="monotone"
-                        dataKey="value"
-                        data={neubauData}
+                        dataKey="Neubau" // Wichtig: `dataKey` auf "Neubau" setzen
                         name="Neubau"
                         stroke="#434343ff"
                         dot={false}
@@ -536,12 +537,10 @@ function extractLineData(data, key) {
             </button>
             <h3 className="chart-title">{openChart}</h3>
             {(() => {
-            const modalChart = chartData[selectedInterval]?.[openChart] || [];
-            const altbauData = extractLineData(modalChart, "Altbau");
-            const neubauData = extractLineData(modalChart, "Neubau");
+            const finalChartData = chartData[selectedInterval]?.[openChart] || [];
             return (
             <ResponsiveContainer width="100%" height={300}>
-                  <LineChart>
+                  <LineChart data={finalChartData}>
                     <XAxis
                       dataKey="time"
                       type="number"
@@ -551,7 +550,7 @@ function extractLineData(data, key) {
                     />
                     <YAxis
                       width={70}
-                      domain={getMinMax((modalChart), ["Altbau", "Neubau"], 0.05, openChart)}
+                      domain={getMinMax((finalChartData), ["Altbau", "Neubau"], 0.05, openChart)}
                       label={{
                         value: metricUnits[openChart],
                         angle: -90,
@@ -565,8 +564,7 @@ function extractLineData(data, key) {
                     {visibleLines["Altbau"] && (
                       <Line
                         type="monotone"
-                        dataKey="value"
-                        data={altbauData}
+                        dataKey="Altbau"
                         name="Altbau"
                         stroke="#e2001a"
                         dot={false}
@@ -575,8 +573,7 @@ function extractLineData(data, key) {
                     {visibleLines["Neubau"] && (
                       <Line
                         type="monotone"
-                        dataKey="value"
-                        data={neubauData}
+                        dataKey="Neubau"
                         name="Neubau"
                         stroke="#434343ff"
                         dot={false}

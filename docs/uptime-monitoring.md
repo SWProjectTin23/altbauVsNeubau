@@ -11,14 +11,12 @@ This document describes the current uptime monitoring setup, including which ser
 - Monitors internal services that are not publicly accessible.
 - Accessible internally via: `http://localhost:3002` (or equivalent internal network address).
 - Status page available at: `http://localhost:3002/status/dashboard`
-- Stores monitoring history and configuration in a local SQLite database (`kuma.db`).
+- Stores configuration in a local SQLite database (`kuma.db`).
 - **Important:** By default, `kuma.db` is stored inside the container and is not persistent unless explicitly mounted. All configuration and monitoring data will be lost if the container is removed. Regular export is required.
-- Alerts configured via Telegram and/or email.
 
 ### Uptime Robot (external)
 - SaaS-based monitoring service.
 - Used to verify availability of publicly exposed endpoints.
-- Sends alerts via email.
 
 ## Monitored Services
 

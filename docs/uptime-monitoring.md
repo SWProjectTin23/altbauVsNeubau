@@ -27,6 +27,7 @@ This document describes the current uptime monitoring setup, including which ser
 | Frontend (Web App)       | HTTP         | Kuma | http://localhost:3000  |
 | Backend API              | HTTP         | Kuma | http://localhost:5001  |
 | Database (TimescaleDB)   | TCP          | Kuma               | tcp://localhost:5432               |
+| Uptime Kuma      | HTTP         | Uptime Robot | http://localhost:3002  |
 
 > Note: Internal services are only monitored by Uptime Kuma. Kuma is monitored externally by Uptime Robot.
 

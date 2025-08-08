@@ -60,6 +60,7 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
+      - VITE_API_URL=${VITE_API_URL}
     depends_on:
       backend-api:
         condition: service_healthy

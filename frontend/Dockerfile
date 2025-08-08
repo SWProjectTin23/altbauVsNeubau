@@ -4,12 +4,13 @@ FROM node:20-alpine AS build
 # Set the working directory inside the container
 WORKDIR /app
 
+ENV VITE_API_URL=http://backend-api:5000/api
+
 # copy package.json and package-lock.json to the working directory
 COPY package*.json ./
 
 # Install npm dependencies
 RUN npm install
-
 # Copy the entire application source code
 COPY . .
 

@@ -31,7 +31,7 @@ const metricUnits = {
   Feinpartikel: "µg/m³",
 };
 
-const intervals = ["1h", "3h", "1d", "1w", "1m"];
+const intervals = ["30min", "1h", "3h", "12h", "1d", "1w", "1m"];
 
 // Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
@@ -121,7 +121,10 @@ function CustomTooltip({ active, payload, label, unit, metric }) {
 function getIntervalRange(selectedInterval) {
   const end = Math.floor(Date.now() / 1000);
   let start;
-  if (selectedInterval === "3h") start = end - 3 * 3600;
+  if (selectedInterval === "30min") start = end - 30 * 60;
+  else if (selectedInterval === "1h") start = end - 60 * 60;
+  else if (selectedInterval === "3h") start = end - 3 * 3600;
+  else if (selectedInterval === "12h") start = end - 12 * 3600;
   else if (selectedInterval === "1d") start = end - 24 * 3600;
   else if (selectedInterval === "1w") start = end - 7 * 24 * 3600;
   else start = end - 30 * 24 * 3600;
@@ -192,7 +195,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // Define dynamic gap seconds for line breaks
-  const gapMap = { "3h": 600, "1d": 3600, "1w": 10800, "1m": 43200 };
+  const gapMap = { "30min": 200, "1h": 400, "3h": 600, "12h": 1200, "1d": 3600, "1w": 10800, "1m": 43200 };
   const gapSeconds = gapMap[selectedInterval] || 600;
 
   function CustomLegend() {
@@ -273,8 +276,6 @@ export default function Dashboard() {
 
         const altbauJson = await altbauRes.json();
         const neubauJson = await neubauRes.json();
-        console.log("Altbau aktuell:", altbauJson);
-        console.log("Neubau aktuell:", neubauJson);
 
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
@@ -330,15 +331,10 @@ export default function Dashboard() {
           const res = await fetch(url);
           const json = await res.json();
 
-          console.log(`Daten für ${metric} (${selectedInterval}):`, json);
-
           if (json.status === "success") {
             // Separat die Daten für jedes Gerät verarbeiten
             const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
             const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
-
-            console.log(`Altbau Daten für ${metric}:`, altbauData);
-            console.log(`Neubau Daten für ${metric}:`, neubauData);
             
             newChartData[metric] = { altbauData, neubauData };
           } else {
@@ -432,7 +428,7 @@ export default function Dashboard() {
                 className={`interval-btn ${selectedInterval === key ? "active" : ""}`}
                 onClick={() => setSelectedInterval(key)}
               >
-                {key === "1h" ? "1 Stunde" : key === "3h" ? "3 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
+                {key === "30min" ? "30 Minuten" : key === "1h" ? "1 Stunde" : key === "3h" ? "3 Stunden" : key === "12h" ? "12 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
               </button>
             ))}
           </div>

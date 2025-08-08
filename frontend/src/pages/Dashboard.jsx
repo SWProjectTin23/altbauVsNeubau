@@ -12,9 +12,14 @@ import {
 import './Dashboard.css';
 
 // Define the base API URL
-const currentURL = window.location.href;
+const currentURL = new URL(window.location.href);
 
-const API_BASE = currentURL.includes("localhost") ? "/api" : `${currentURL}api`;
+currentURL.port = "5001";
+currentURL.pathname = "/api";
+
+const API_BASE = currentURL.href;
+
+console.log("API_BASE:", API_BASE);
 
 // Define the metrics and intervals
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];

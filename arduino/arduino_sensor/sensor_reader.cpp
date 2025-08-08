@@ -24,8 +24,11 @@ static bool validatePacket() {
 }
 
 static void parsePacket(uint16_t &pm25, uint16_t &pm10) {
-  pm25 = (buffer[5] << 8) | buffer[6];
-  pm10 = (buffer[9] << 8) | buffer[10];
+  pm25 = (buffer[5] << 8) | buffer[4];
+  pm10 = (buffer[7] << 8) | buffer[6];
+  Serial.println(pm25);
+  Serial.print("..");
+  Serial.println(pm10);
 }
 
 void sensorReadByte() {

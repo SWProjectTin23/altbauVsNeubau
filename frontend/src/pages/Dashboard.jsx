@@ -12,7 +12,9 @@ import {
 import './Dashboard.css';
 
 // Define the base API URL
-const API_BASE = import.meta.env.VITE_API_URL;
+const currentURL = window.location.href;
+
+const API_BASE = currentURL.includes("localhost") ? "/api" : `${currentURL}api`;
 
 // Define the metrics and intervals
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];

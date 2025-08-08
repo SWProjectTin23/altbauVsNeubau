@@ -68,7 +68,8 @@ function formatXAxisLabelFromTimestamp(ts) {
   const date = new Date(ts * 1000);
   const datum = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
   const zeit = date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-  if (window.selectedInterval === "1w" || window.selectedInterval === "1m") {
+  const selectedInterval = window.selectedInterval;
+  if (selectedInterval === "1w" || selectedInterval === "1m") {
     return `${datum}\n${zeit}`;
   }
   return `${datum}, ${zeit}`;
@@ -88,21 +89,20 @@ function formatCurrentTimestamp(ts) {
 
 function CustomTooltip({ active, payload, label, unit, metric }) {
   if (active && payload && payload.length) {
-    const sortedPayload = [...payload].sort((a, b) => b.value - a.value);
+    const dateLabel = formatCurrentTimestamp(label);
+
     return (
       <div className="custom-tooltip" style={{ background: "#fff", border: "1px solid #ccc", padding: "0.5rem" }}>
-        <div><strong>{formatXAxisLabelFromTimestamp(label)}</strong></div>
-        {sortedPayload.map((entry, idx) => (
+        <div><strong>{dateLabel}</strong></div>
+        {payload.map((entry, idx) => (
           <div key={idx} style={{ color: entry.color }}>
             {entry.name}: {
               typeof entry.value === "number"
                 ? (metric === "Temperatur" || metric === "Luftfeuchtigkeit"
                     ? entry.value.toFixed(2)
-                    : entry.value.toFixed
-                      ? Math.round(entry.value)
-                      : entry.value)
-                : entry.value
-            } {unit}
+                    : Math.round(entry.value))
+                : "Keine Daten"
+            } {typeof entry.value === "number" ? unit : ""}
           </div>
         ))}
       </div>
@@ -121,25 +121,55 @@ function getIntervalRange(selectedInterval) {
   return { start, end };
 }
 
-// Angepasste Funktion zur Unterbrechung von Linien
-function insertLineBreaks(data, gapSeconds = 300) {
-  if (!Array.isArray(data) || data.length === 0) return data;
+/**
+ * Verarbeitet die Daten eines einzelnen Geräts und fügt bei Zeitlücken null-Punkte ein.
+ * @param {Array<Object>} data - Das Daten-Array eines einzelnen Geräts.
+ * @param {number} gapSeconds - Die Schwellenwert-Zeitlücke in Sekunden.
+ * @returns {Array<Object>} - Das aufbereitete Daten-Array.
+ */
+function insertGapsInSingleDeviceData(data, gapSeconds) {
+  if (!data || data.length === 0) return [];
   const result = [];
-  data.forEach((curr, i) => {
-    if (i > 0) {
-      const prev = data[i - 1];
-      // Füge eine Lücke ein, wenn die Zeitlücke größer als `gapSeconds` ist und beide Datenpunkte existieren
-      if (curr.time - prev.time > gapSeconds) {
-        result.push({
-          time: prev.time + gapSeconds, // Zeitstempel für den "Lücken"-Punkt
-          Altbau: null, // Setze die Werte auf null, um die Linie zu unterbrechen
-          Neubau: null,
-        });
-      }
+  data.forEach((d, i) => {
+    // Füge einen null-Punkt hinzu, um eine Lücke zu erzeugen, wenn die Zeitlücke zu groß ist
+    if (i > 0 && (d.timestamp - data[i - 1].timestamp) > gapSeconds) {
+      result.push({ timestamp: d.timestamp, value: null });
     }
-    result.push(curr);
+    result.push({ timestamp: d.timestamp, value: d.value });
   });
   return result;
+}
+
+function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
+  let min = Infinity;
+  let max = -Infinity;
+  keys.forEach(key => {
+    if (data[key]) {
+      data[key].forEach(d => {
+        if (typeof d.value === "number") {
+          if (d.value < min) min = d.value;
+          if (d.value > max) max = d.value;
+        }
+      });
+    }
+  });
+
+  if (min === Infinity || max === -Infinity) return [0, 1];
+
+  const range = max - min;
+  const pad = range > 0 ? range * padding : 1;
+
+  if (metric === "Temperatur" || metric === "Luftfeuchtigkeit") {
+    return [
+      +(min - pad).toFixed(2),
+      +(max + pad).toFixed(2)
+    ];
+  } else {
+    return [
+      Math.floor(min - pad),
+      Math.ceil(max + pad)
+    ];
+  }
 }
 
 // Haupt-Dashboard-Komponente
@@ -154,13 +184,11 @@ export default function Dashboard() {
   const [chartError, setChartError] = useState(null);
   const navigate = useNavigate();
 
-  // Handle interval change
-  const gapMap = { "3h": 300, "1d": 1800, "1w": 7200, "1m": 43200 };
-  const gapSeconds = gapMap[selectedInterval] || 300;
-  console.log(`Gap seconds for ${selectedInterval}:`, gapSeconds);
+  // Define dynamic gap seconds for line breaks
+  const gapMap = { "3h": 600, "1d": 3600, "1w": 10800, "1m": 43200 };
+  const gapSeconds = gapMap[selectedInterval] || 600;
 
   function CustomLegend() {
-    // Define legend items with colors and click handlers
     const legendItems = [
       { value: "Altbau", color: "#e2001a" },
       { value: "Neubau", color: "#434343ff" },
@@ -207,60 +235,6 @@ export default function Dashboard() {
     }));
   }
 
-function getMinMax(data, keys = ["Altbau", "Neubau"], padding = 0.05, metric = "Temperatur") {
-  let min = Infinity;
-  let max = -Infinity;
-  data.forEach(d => {
-    keys.forEach(key => {
-      if (typeof d[key] === "number") {
-        if (d[key] < min) min = d[key];
-        if (d[key] > max) max = d[key];
-      }
-    });
-  });
-  console.log(`Min/Max for ${keys.join(", ")}: ${min}/${max}`);
-  // Fallback falls keine Werte vorhanden sind
-  if (min === Infinity || max === -Infinity) return [0, 1];
-
-  const range = max - min;
-  const pad = range > 0 ? range * padding : 1;
-
-  // Runden je nach Metrik
-  if (metric === "Temperatur" || metric === "Luftfeuchtigkeit") {
-    return [
-      +(min - pad).toFixed(2),
-      +(max + pad).toFixed(2)
-    ];
-  } else {
-    return [
-      Math.floor(min - pad),
-      Math.ceil(max + pad)
-    ];
-  }
-}
-
-// Angepasste Funktion zur Zusammenführung von Daten
-function mergeDeviceData(device1, device2) {
-  // Erstelle ein Map, um die Daten nach Zeitstempel zu gruppieren
-  const map = new Map();
-  // Verarbeite die Daten des ersten Geräts (Altbau)
-  device1.forEach(d => {
-    map.set(d.timestamp, { time: d.timestamp, Altbau: d.value, Neubau: null });
-  });
-  // Verarbeite die Daten des zweiten Geräts (Neubau)
-  device2.forEach(d => {
-    if (map.has(d.timestamp)) {
-      // Wenn der Timestamp bereits existiert, füge den Neubau-Wert hinzu
-      map.get(d.timestamp).Neubau = d.value;
-    } else {
-      // Wenn der Timestamp neu ist, erstelle einen neuen Eintrag
-      map.set(d.timestamp, { time: d.timestamp, Altbau: null, Neubau: d.value });
-    }
-  });
-  // Konvertiere die Map-Werte in ein Array und sortiere nach Zeitstempel
-  return Array.from(map.values()).sort((a, b) => a.time - b.time);
-}
-
   // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
@@ -290,17 +264,14 @@ function mergeDeviceData(device1, device2) {
           fetch(`${API_BASE}/devices/2/latest`),
         ]);
 
-        // Check if both responses are OK
         const altbauJson = await altbauRes.json();
         const neubauJson = await neubauRes.json();
 
-        // Validate API response status
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
           return;
         }
 
-        // Map the API data to the format expected by the UI
         const mapped = {
           Altbau: {
             Temperatur: parseFloat(altbauJson.data.temperature),
@@ -317,19 +288,15 @@ function mergeDeviceData(device1, device2) {
             timestamp: neubauJson.data.unix_timestamp_seconds,
           },
         };
-
-        // Set the current data state
         setCurrentData(mapped);
-        console.log("Loaded current data:",  new Date().toLocaleTimeString());
       } catch (err) {
         setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
-        console.error("Error loading current data:", err);
       }
     };
 
     fetchData();
-    intervalId = setInterval(fetchData, 30000); // Fetch every 30 seconds
-    return () => clearInterval(intervalId); // Cleanup on unmount
+    intervalId = setInterval(fetchData, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Fetch historical data for the selected interval
@@ -340,7 +307,7 @@ function mergeDeviceData(device1, device2) {
       try {
         setChartError(null);
         const newChartData = {};
-        let errorMessage = null; // Variable to hold error messages
+        let errorMessage = null;
         for (const metric of metrics) {
           const apiMetric = {
             Temperatur: "temperature",
@@ -350,20 +317,19 @@ function mergeDeviceData(device1, device2) {
           }[metric];
           const { start, end } = getIntervalRange(selectedInterval);
 
-          // Fetch data for both devices
           const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`;
           const res = await fetch(url);
           const json = await res.json();
 
           if (json.status === "success") {
-            // Wende die neue merge-Funktion an
-            let arr = mergeDeviceData(json.device_1, json.device_2);
-            // Füge die Lücken für die Darstellung hinzu
-            arr = insertLineBreaks(arr, gapSeconds);
-            newChartData[metric] = arr;
+            // Separat die Daten für jedes Gerät verarbeiten
+            const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
+            const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
+            
+            newChartData[metric] = { altbauData, neubauData };
           } else {
             errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
-            newChartData[metric] = [];
+            newChartData[metric] = { altbauData: [], neubauData: [] };
           }
         }
         if (errorMessage) {
@@ -371,23 +337,19 @@ function mergeDeviceData(device1, device2) {
         } else {
           setChartError(null);
         }
-        setChartData({ ...chartData, [selectedInterval]: newChartData });
-        console.log("Loaded chart data for interval:", selectedInterval, new Date().toLocaleTimeString());
+        setChartData(newChartData);
+        window.selectedInterval = selectedInterval;
       } catch (err) {
         setChartError("Diagrammdaten konnten nicht geladen werden.");
-        console.error("Error loading chart data:", err);
       }
     }
     fetchChartData();
-    // Set up interval to fetch chart data periodically
-    intervalId = setInterval(fetchChartData, 30000); // Fetch every 30 seconds
-    return () => clearInterval(intervalId); // Cleanup on unmount
-    // eslint-disable-next-line
-  }, [selectedInterval]);
+    intervalId = setInterval(fetchChartData, 30000);
+    return () => clearInterval(intervalId);
+  }, [selectedInterval, gapSeconds]);
 
   const { start: intervalStart, end: intervalEnd } = getIntervalRange(selectedInterval);
 
-  // Render the dashboard
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
@@ -412,10 +374,10 @@ function mergeDeviceData(device1, device2) {
                     <tr key={metric}>
                       <td>{metric}</td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Altbau[metric])}>
-                        {currentData.Altbau[metric]} {metricUnits[metric]}
+                        {currentData.Altbau[metric] || "—"} {currentData.Altbau[metric] ? metricUnits[metric] : ""}
                       </td>
                       <td className={getWarningClass(warningThresholds, metric, currentData.Neubau[metric])}>
-                        {currentData.Neubau[metric]} {metricUnits[metric]}
+                        {currentData.Neubau[metric] || "—"} {currentData.Neubau[metric] ? metricUnits[metric] : ""}
                       </td>
                     </tr>
                   ))}
@@ -462,9 +424,12 @@ function mergeDeviceData(device1, device2) {
           </div>
         <div className="charts-grid">
           {metrics.map((metric) => {
-            const chart = chartData[selectedInterval]?.[metric] || [];
-            // Nutze die zusammengeführten und mit Lücken versehenen Daten direkt
-            const finalChartData = chartData[selectedInterval]?.[metric] || [];
+            const data = chartData[metric] || {};
+            const allData = [...(data.altbauData || []), ...(data.neubauData || [])];
+            const hasData = allData.length > 0;
+            const yAxisDomain = hasData ? getMinMax(data, ["altbauData", "neubauData"], 0.05, metric) : [0, 100];
+            const hasAltbauData = (data.altbauData || []).some(d => typeof d.value === "number");
+            const hasNeubauData = (data.neubauData || []).some(d => typeof d.value === "number");
 
             return (
               <div key={metric} className="chart-card"
@@ -474,9 +439,9 @@ function mergeDeviceData(device1, device2) {
               >
                 <h3 className="chart-title">{metric}</h3>
                 <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={finalChartData}>
+                  <LineChart>
                     <XAxis
-                      dataKey="time"
+                      dataKey="timestamp"
                       type="number"
                       domain={[intervalStart, intervalEnd]}
                       tickFormatter={formatXAxisLabelFromTimestamp}
@@ -484,7 +449,7 @@ function mergeDeviceData(device1, device2) {
                     />
                     <YAxis
                       width={70}
-                      domain={getMinMax((finalChartData), ["Altbau", "Neubau"], 0.05, metric)}
+                      domain={yAxisDomain}
                       label={{
                         value: metricUnits[metric],
                         angle: -90,
@@ -495,19 +460,19 @@ function mergeDeviceData(device1, device2) {
                     />
                     <Tooltip content={<CustomTooltip unit={metricUnits[metric]} metric={metric} />} />
                     <Legend content={<CustomLegend />} />
-                    {visibleLines["Altbau"] && (
+                    {visibleLines["Altbau"] && hasAltbauData && (
                       <Line
-                        type="monotone"
-                        dataKey="Altbau" // Wichtig: `dataKey` auf "Altbau" setzen
+                        data={data.altbauData}
+                        dataKey="value"
                         name="Altbau"
                         stroke="#e2001a"
                         dot={false}
                       />
                     )}
-                    {visibleLines["Neubau"] && (
+                    {visibleLines["Neubau"] && hasNeubauData && (
                       <Line
-                        type="monotone"
-                        dataKey="Neubau" // Wichtig: `dataKey` auf "Neubau" setzen
+                        data={data.neubauData}
+                        dataKey="value"
                         name="Neubau"
                         stroke="#434343ff"
                         dot={false}
@@ -537,12 +502,18 @@ function mergeDeviceData(device1, device2) {
             </button>
             <h3 className="chart-title">{openChart}</h3>
             {(() => {
-            const finalChartData = chartData[selectedInterval]?.[openChart] || [];
+            const data = chartData[openChart] || {};
+            const allData = [...(data.altbauData || []), ...(data.neubauData || [])];
+            const hasData = allData.length > 0;
+            const yAxisDomain = hasData ? getMinMax(data, ["altbauData", "neubauData"], 0.05, openChart) : [0, 100];
+            const hasAltbauData = (data.altbauData || []).some(d => typeof d.value === "number");
+            const hasNeubauData = (data.neubauData || []).some(d => typeof d.value === "number");
+
             return (
             <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={finalChartData}>
+                  <LineChart>
                     <XAxis
-                      dataKey="time"
+                      dataKey="timestamp"
                       type="number"
                       domain={[intervalStart, intervalEnd]}
                       tickFormatter={formatXAxisLabelFromTimestamp}
@@ -550,7 +521,7 @@ function mergeDeviceData(device1, device2) {
                     />
                     <YAxis
                       width={70}
-                      domain={getMinMax((finalChartData), ["Altbau", "Neubau"], 0.05, openChart)}
+                      domain={yAxisDomain}
                       label={{
                         value: metricUnits[openChart],
                         angle: -90,
@@ -561,19 +532,19 @@ function mergeDeviceData(device1, device2) {
                     />
                     <Tooltip content={<CustomTooltip unit={metricUnits[openChart]} metric={openChart} />} />
                     <Legend content={<CustomLegend />} />
-                    {visibleLines["Altbau"] && (
+                    {visibleLines["Altbau"] && hasAltbauData && (
                       <Line
-                        type="monotone"
-                        dataKey="Altbau"
+                        data={data.altbauData}
+                        dataKey="value"
                         name="Altbau"
                         stroke="#e2001a"
                         dot={false}
                       />
                     )}
-                    {visibleLines["Neubau"] && (
+                    {visibleLines["Neubau"] && hasNeubauData && (
                       <Line
-                        type="monotone"
-                        dataKey="Neubau"
+                        data={data.neubauData}
+                        dataKey="value"
                         name="Neubau"
                         stroke="#434343ff"
                         dot={false}

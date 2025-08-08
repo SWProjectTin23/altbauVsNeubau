@@ -53,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -67,7 +67,7 @@ services:
       - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (3000)
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 15s
       timeout: 10s
       retries: 5

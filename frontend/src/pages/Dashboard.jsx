@@ -31,7 +31,7 @@ const metricUnits = {
   Feinpartikel: "µg/m³",
 };
 
-const intervals = ["3h", "1d", "1w", "1m"];
+const intervals = ["1h", "3h", "1d", "1w", "1m"];
 
 // Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
@@ -432,7 +432,7 @@ export default function Dashboard() {
                 className={`interval-btn ${selectedInterval === key ? "active" : ""}`}
                 onClick={() => setSelectedInterval(key)}
               >
-                {key === "3h" ? "3 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
+                {key === "1h" ? "1 Stunde" : key === "3h" ? "3 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
               </button>
             ))}
           </div>

@@ -53,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}

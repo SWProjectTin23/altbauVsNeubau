@@ -12,7 +12,7 @@ import {
 import './Dashboard.css';
 
 // Define the base API URL
-const API_BASE = "http://localhost:5001/api";
+const API_BASE = "/api";
 
 // Define the metrics and intervals
 const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];

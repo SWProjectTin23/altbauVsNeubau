@@ -37,8 +37,12 @@ if ((sum & 0xFF) == 0) {
 }
 
 
-uint16_t pm25 = (buffer[5] << 8) | buffer[4];  
-uint16_t pm10 = (buffer[7] << 8) | buffer[6];
+uint16_t pm25 = (buffer[5] << 8) | buffer[6];
+uint16_t pm10_raw = (buffer[9] << 8) | buffer[10];
+
+float factor = max(1.0, (float)pm10_raw / (float)pm25 / 5.0);
+
+int pm10 = (int)(pm10_raw / factor);
 
 
 

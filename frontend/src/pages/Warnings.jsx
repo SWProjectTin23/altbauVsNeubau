@@ -13,58 +13,60 @@ const API_BASE = "http://localhost:5001/api";
 
 export default function Warnings() {
   const [warnings, setWarnings] = useState(null);
+  const [originalWarnings, setOriginalWarnings] = useState(null); 
   const [loading, setLoading] = useState(true);
+  const [saveError, setSaveError] = useState(null);
+  const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
 
   const mapApiToUi = (data) => ({
   Temperatur: {
-    redLow: data.temperature_min_soft,
-    yellowLow: data.temperature_min_hard,
-    yellowHigh: data.temperature_max_soft,
-    redHigh: data.temperature_max_hard,
+    redLow: data.temperature_min_hard,    // min_hard = rot
+    yellowLow: data.temperature_min_soft, // min_soft = gelb
+    yellowHigh: data.temperature_max_soft,// max_soft = gelb
+    redHigh: data.temperature_max_hard,   // max_hard = rot
   },
   Luftfeuchtigkeit: {
-    redLow: data.humidity_min_soft,
-    yellowLow: data.humidity_min_hard,
+    redLow: data.humidity_min_hard,
+    yellowLow: data.humidity_min_soft,
     yellowHigh: data.humidity_max_soft,
     redHigh: data.humidity_max_hard,
   },
   Pollen: {
-    redLow: data.pollen_min_soft,
-    yellowLow: data.pollen_min_hard,
+    redLow: data.pollen_min_hard,
+    yellowLow: data.pollen_min_soft,
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
   Feinpartikel: {
-    redLow: data.particulate_matter_min_soft,
-    yellowLow: data.particulate_matter_min_hard,
+    redLow: data.particulate_matter_min_hard,
+    yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
     redHigh: data.particulate_matter_max_hard,
   },
 });
 
 const mapUiToApi = (uiData) => ({
-  temperature_min_soft: uiData.Temperatur.redLow,
-  temperature_min_hard: uiData.Temperatur.yellowLow,
+  temperature_min_hard: uiData.Temperatur.redLow,
+  temperature_min_soft: uiData.Temperatur.yellowLow,
   temperature_max_soft: uiData.Temperatur.yellowHigh,
   temperature_max_hard: uiData.Temperatur.redHigh,
 
-  humidity_min_soft: uiData.Luftfeuchtigkeit.redLow,
-  humidity_min_hard: uiData.Luftfeuchtigkeit.yellowLow,
+  humidity_min_hard: uiData.Luftfeuchtigkeit.redLow,
+  humidity_min_soft: uiData.Luftfeuchtigkeit.yellowLow,
   humidity_max_soft: uiData.Luftfeuchtigkeit.yellowHigh,
   humidity_max_hard: uiData.Luftfeuchtigkeit.redHigh,
 
-  pollen_min_soft: uiData.Pollen.redLow,
-  pollen_min_hard: uiData.Pollen.yellowLow,
+  pollen_min_hard: uiData.Pollen.redLow,
+  pollen_min_soft: uiData.Pollen.yellowLow,
   pollen_max_soft: uiData.Pollen.yellowHigh,
   pollen_max_hard: uiData.Pollen.redHigh,
 
-  particulate_matter_min_soft: uiData.Feinpartikel.redLow,
-  particulate_matter_min_hard: uiData.Feinpartikel.yellowLow,
+  particulate_matter_min_hard: uiData.Feinpartikel.redLow,
+  particulate_matter_min_soft: uiData.Feinpartikel.yellowLow,
   particulate_matter_max_soft: uiData.Feinpartikel.yellowHigh,
   particulate_matter_max_hard: uiData.Feinpartikel.redHigh,
 });
-
 
   useEffect(() => {
     const fetchThresholds = async () => {
@@ -76,13 +78,15 @@ const mapUiToApi = (uiData) => ({
           Array.isArray(result.data) &&
           result.data.length > 0
         ) {
-          setWarnings(mapApiToUi(result.data[0]));
+          const mapped = mapApiToUi(result.data[0]);
+          setWarnings(mapped);
+          setOriginalWarnings(mapped); // Originalwerte speichern
         } else {
-          alert("Warnwerte konnten nicht geladen werden.");
+          setSaveError("Warnwerte konnten nicht geladen werden.");
         }
       } catch (error) {
         console.error("Fehler beim Laden:", error);
-        alert("Fehler beim Abrufen der Warnwerte.");
+        setSaveError("Fehler beim Abrufen der Warnwerte.");
       } finally {
         setLoading(false);
       }
@@ -90,6 +94,25 @@ const mapUiToApi = (uiData) => ({
 
     fetchThresholds();
   }, []);
+
+  const isDirty = () => {
+    return JSON.stringify(warnings) !== JSON.stringify(originalWarnings);
+  };
+
+  const validateWarnings = (warnings) => {
+  for (const [metric, levels] of Object.entries(warnings)) {
+    if (levels.redLow >= levels.yellowLow) {
+      return `Bei "${metric}": "Warnwert niedrig rot" darf nicht größer als "Warnwert niedrig gelb" sein.`;
+    }
+    if (levels.redLow >= levels.redHigh) {
+      return `Bei "${metric}": "Warnwert niedrig rot" muss kleiner als "Warnwert hoch rot" sein.`;
+    }
+    if (levels.yellowLow >= levels.yellowHigh) {
+      return `Bei "${metric}": "Warnwert niedrig gelb" muss kleiner als "Warnwert hoch gelb" sein.`;
+    }
+  }
+  return null;
+};
 
   const handleChange = (metric, level, value) => {
     setWarnings((prev) => ({
@@ -101,7 +124,25 @@ const mapUiToApi = (uiData) => ({
     }));
   };
 
+  const handleBack = () => {
+    setBackError(null);
+    if (isDirty()) {
+      setBackError("Es gibt ungespeicherte Änderungen. Bitte speichern oder Änderungen verwerfen.");
+    } else {
+      navigate("/");
+    }
+  };
+
   const saveThresholds = async () => {
+    setSaveError(null);
+    setBackError(null);
+
+    const validationError = validateWarnings(warnings);
+    if (validationError) {
+      setSaveError(validationError);
+      return;
+    }
+
     try {
       const payload = mapUiToApi(warnings);
       const response = await fetch(`${API_BASE}/thresholds`, {
@@ -111,13 +152,15 @@ const mapUiToApi = (uiData) => ({
       });
       const result = await response.json();
       if (result.status === "success") {
-        alert("Warnwerte erfolgreich gespeichert.");
+        setOriginalWarnings(warnings); 
+        navigate("/");
       } else {
-        alert(`Fehler: ${result.message}`);
+        setSaveError(result.message || "Fehler beim Speichern der Warnwerte.");
+        console.error("Fehler beim Speichern:", result);
       }
     } catch (error) {
       console.error("Fehler beim Speichern:", error);
-      alert("Ein Fehler ist beim Speichern aufgetreten.");
+      setSaveError("Ein Fehler ist beim Speichern aufgetreten.");
     }
   };
 
@@ -157,11 +200,21 @@ const mapUiToApi = (uiData) => ({
             <button type="button" className="btn" onClick={saveThresholds}>
               Speichern
             </button>
-            <button type="button" className="btn" onClick={() => navigate("/")}>
+            <button type="button" className="btn" onClick={handleBack}>
               Zurück zum Dashboard
             </button>
           </div>
         </form>
+        {saveError && (
+        <div className="save-error" style={{ marginTop: 16 }}>
+            {saveError}
+          </div>
+        )}
+        {backError && (
+        <div className="save-error" style={{ marginTop: 16 }}>
+            {backError}
+          </div>
+        )}
       </div>
     </div>
   );

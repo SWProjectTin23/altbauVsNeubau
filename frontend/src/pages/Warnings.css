@@ -2,11 +2,14 @@
   background-color: #F9F9FE;
   min-height: 100vh;
   padding: 2rem;
+  width: 80vw;
+  margin: 0 auto;
 }
 
 .warnings-container {
   max-width: 1100px;
   margin: 0 auto;
+  padding: 2rem;
 }
 
 /* Titel */
@@ -71,7 +74,7 @@
 
 .button-group {
   grid-column: span 2;
-  margin-top: 2rem;
+  margin: 0 2rem 0 2rem;
   display: flex;
   justify-content: center;
   gap: 1rem;
@@ -89,4 +92,23 @@
 
 .btn:hover {
   background-color: #D3D4FB;
+}
+
+.save-error {
+  background: #f9f9fe;
+  border: 1.5px solid #e2001a;
+  color: #b30000;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.7em;
+  margin: 1rem auto; /* zentriert horizontal */
+  box-shadow: 0 2px 8px rgba(226,0,26,0.07);
+  animation: fadeInError 0.5s;
+  max-width: 500px; /* Optional, damit die Box nicht zu breit wird */
 }

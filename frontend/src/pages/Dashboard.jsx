@@ -273,6 +273,8 @@ export default function Dashboard() {
 
         const altbauJson = await altbauRes.json();
         const neubauJson = await neubauRes.json();
+        console.log("Altbau aktuell:", altbauJson);
+        console.log("Neubau aktuell:", neubauJson);
 
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
@@ -328,10 +330,15 @@ export default function Dashboard() {
           const res = await fetch(url);
           const json = await res.json();
 
+          console.log(`Daten für ${metric} (${selectedInterval}):`, json);
+
           if (json.status === "success") {
             // Separat die Daten für jedes Gerät verarbeiten
             const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
             const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
+
+            console.log(`Altbau Daten für ${metric}:`, altbauData);
+            console.log(`Neubau Daten für ${metric}:`, neubauData);
             
             newChartData[metric] = { altbauData, neubauData };
           } else {

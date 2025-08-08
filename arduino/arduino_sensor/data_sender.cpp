@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include "MQTTUtils.h"
 #include "TimeUtils.h"
+#include "secrets.h"
 
 // Template-Funktion für beliebige numerische Werte
 template<typename T>
@@ -14,7 +15,7 @@ void sendSensorData(T value, int startupTime, int timestamp, int sequence, const
   JsonObject meta = doc.createNestedObject("meta");
   meta["firmware"] = "v1.2.3";
   meta["startup"] = startupTime;
-  meta["device_id"] = 1;
+  meta["device_id"] = DEVICE_ID;
 
   char payload[256];
   serializeJson(doc, payload, sizeof(payload));

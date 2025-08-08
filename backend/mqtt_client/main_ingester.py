@@ -48,26 +48,29 @@ def on_message(client, userdata, msg):
         print(f"[ERROR] Failed to process message: {e}")
 
 # Database connection helper
-def connect_db():
-    try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            port=DB_PORT
-        )
-        conn.autocommit = False
-        print("[DB] Connected to database.")
-        return conn
-    except Exception as e:
-        print(f"[DB ERROR] Could not connect: {e}")
-        return None
+def connect_db(retries=10, delay=5):
+    for attempt in range(retries):
+        try:
+            conn = psycopg2.connect(
+                host=DB_HOST,
+                database=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD,
+                port=DB_PORT
+            )
+            conn.autocommit = False
+            print("[DB] Connected to database.")
+            return conn
+        except Exception as e:
+            print(f"[DB ERROR] Could not connect (attempt {attempt+1}/{retries}): {e}")
+            time.sleep(delay)
+    print("[DB ERROR] Giving up after retries.")
+    return None
 
 # Main entry point
 if __name__ == "__main__":
     print("[START] Launching MQTT ingester...")
-    db_connection = connect_db()
+    db_connection = connect_db(retries=10, delay=5)
     if not db_connection:
         exit(1)
 

@@ -4,7 +4,7 @@ import psycopg2
 from mqtt_client.mqtt_config import MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from mqtt_client.handler import handle_metric
 import logging
-from logging_setup import setup_logging
+from mqtt_client.logging_setup import setup_logging
 
 logger = logging.getLogger(__name__)
 

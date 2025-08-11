@@ -92,50 +92,85 @@ class Thresholds(Resource):
                     "message": f"Invalid value for '{key}': {value}. Expected type {expected_type.__name__}."
                 }, 400
             
-            # Validate that min values are less than max values
-            validation_pairs = [
-                ("temperature_min_soft", "temperature_max_soft"),
+            # min_hard < max_hard und min_hard < max_soft
+            minhard_maxhard_pairs = [
                 ("temperature_min_hard", "temperature_max_hard"),
-                ("humidity_min_soft", "humidity_max_soft"),
                 ("humidity_min_hard", "humidity_max_hard"),
-                ("pollen_min_soft", "pollen_max_soft"),
                 ("pollen_min_hard", "pollen_max_hard"),
-                ("particulate_matter_min_soft", "particulate_matter_max_soft"),
-                ("particulate_matter_min_hard", "particulate_matter_max_hard")
+                ("particulate_matter_min_hard", "particulate_matter_max_hard"),
             ]
-            for min_key, max_key in validation_pairs:
-                min_value = validated_threshold_data[min_key]
-                max_value = validated_threshold_data[max_key]
-
-                if min_value is not None and max_value is not None and min_value >= max_value:
+            for min_hard_key, max_hard_key in minhard_maxhard_pairs:
+                min_hard_value = validated_threshold_data[min_hard_key]
+                max_hard_value = validated_threshold_data[max_hard_key]
+                if min_hard_value is not None and max_hard_value is not None and min_hard_value >= max_hard_value:
                     return {
                         "status": "error",
-                        "message": f"Minimum value for '{min_key}' must be less than maximum value for '{max_key}'."
-                    }, 400
-            
-            # Validate that hard thresholds are greater than soft thresholds
-            hard_soft_pairs = [
-                ("temperature_min_hard", "temperature_min_soft"),
-                ("temperature_max_hard", "temperature_max_soft"),
-                ("humidity_min_hard", "humidity_min_soft"),
-                ("humidity_max_hard", "humidity_max_soft"),
-                ("pollen_min_hard", "pollen_min_soft"),
-                ("pollen_max_hard", "pollen_max_soft"),
-                ("particulate_matter_min_hard", "particulate_matter_min_soft"),
-                ("particulate_matter_max_hard", "particulate_matter_max_soft")
-            ]
-
-            for hard_key, soft_key in hard_soft_pairs:
-                hard_value = validated_threshold_data[hard_key]
-                soft_value = validated_threshold_data[soft_key]
-
-                if hard_value is not None and soft_value is not None and hard_value <= soft_value:
-                    return {
-                        "status": "error",
-                        "message": f"Hard threshold '{hard_key}' must be greater than soft threshold '{soft_key}'."
+                        "message": f"'{min_hard_key}' must be less than '{max_hard_key}'."
                     }, 400
                 
-                        # Validate that min_hard is less than max_soft
+            # min_soft < max_hard und min_soft < max_soft
+            minsoft_maxhard_pairs = [
+                ("temperature_min_soft", "temperature_max_hard"),
+                ("humidity_min_soft", "humidity_max_hard"),
+                ("pollen_min_soft", "pollen_max_hard"),
+                ("particulate_matter_min_soft", "particulate_matter_max_hard"),
+            ]
+            for min_soft_key, max_hard_key in minsoft_maxhard_pairs:
+                min_soft_value = validated_threshold_data[min_soft_key]
+                max_hard_value = validated_threshold_data[max_hard_key]
+                if min_soft_value is not None and max_hard_value is not None and min_soft_value >= max_hard_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{min_soft_key}' must be less than '{max_hard_key}'."
+                    }, 400
+
+            minsoft_maxsoft_pairs = [
+                ("temperature_min_soft", "temperature_max_soft"),
+                ("humidity_min_soft", "humidity_max_soft"),
+                ("pollen_min_soft", "pollen_max_soft"),
+                ("particulate_matter_min_soft", "particulate_matter_max_soft"),
+            ]
+            for min_soft_key, max_soft_key in minsoft_maxsoft_pairs:
+                min_soft_value = validated_threshold_data[min_soft_key]
+                max_soft_value = validated_threshold_data[max_soft_key]
+                if min_soft_value is not None and max_soft_value is not None and min_soft_value >= max_soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{min_soft_key}' must be less than '{max_soft_key}'."
+                    }, 400
+
+            # Validate that min_hard is less than min_soft and max_hard is greater than max_soft
+            minhard_minsoft_pairs = [
+                ("temperature_min_hard", "temperature_min_soft"),
+                ("humidity_min_hard", "humidity_min_soft"),
+                ("pollen_min_hard", "pollen_min_soft"),
+                ("particulate_matter_min_hard", "particulate_matter_min_soft"),
+            ]
+            for min_hard_key, min_soft_key in minhard_minsoft_pairs:
+                min_hard_value = validated_threshold_data[min_hard_key]
+                min_soft_value = validated_threshold_data[min_soft_key]
+                if min_hard_value is not None and min_soft_value is not None and min_hard_value >= min_soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{min_hard_key}' must be less than '{min_soft_key}'."
+                    }, 400
+
+            maxhard_maxsoft_pairs = [
+                ("temperature_max_hard", "temperature_max_soft"),
+                ("humidity_max_hard", "humidity_max_soft"),
+                ("pollen_max_hard", "pollen_max_soft"),
+                ("particulate_matter_max_hard", "particulate_matter_max_soft"),
+            ]
+            for max_hard_key, max_soft_key in maxhard_maxsoft_pairs:
+                max_hard_value = validated_threshold_data[max_hard_key]
+                max_soft_value = validated_threshold_data[max_soft_key]
+                if max_hard_value is not None and max_soft_value is not None and max_hard_value <= max_soft_value:
+                    return {
+                        "status": "error",
+                        "message": f"'{max_hard_key}' must be greater than '{max_soft_key}'."
+                    }, 400
+            
+            # Validate that min_hard is less than max_soft
             minhard_maxsoft_pairs = [
                 ("temperature_min_hard", "temperature_max_soft"),
                 ("humidity_min_hard", "humidity_max_soft"),

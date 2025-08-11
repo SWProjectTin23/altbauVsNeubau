@@ -1,4 +1,4 @@
-from db_writer import insert_sensor_data
+from mqtt_client.db_writer import insert_sensor_data
 from datetime import datetime
 import logging
 
@@ -55,8 +55,8 @@ def handle_metric(metric_name: str, topic: str, payload_dict: dict, db_conn):
             topic, payload_dict
         )
         return
-
-    # Check if metric is recognized
+    
+        # Check if metric is recognized
     if metric_name not in VALID_RANGES:
         logger.warning(
             "[UNKNOWN_METRIC] Metric '%s' is not recognized. Skipping. topic=%s, payload=%s",
@@ -68,13 +68,13 @@ def handle_metric(metric_name: str, topic: str, payload_dict: dict, db_conn):
     min_val, max_val = VALID_RANGES[metric_name]
     if not isinstance(value, (int, float)):
         logger.warning(
-            "[INVALID_VALUE_TYPE] Non-numeric value for %s. device_id=%s, value=%s, timestamp=%s, raw_payload=%s",
+            "[INVALID_VALUE_TYPE] Non-numeric value for Metric '%s'. device_id=%s, value=%s, timestamp=%s, raw_payload=%s",
             metric_name, device_id, value, timestamp, payload_dict
         )
         return
     if not (min_val <= value <= max_val):
         logger.warning(
-            "[OUT_OF_RANGE] %s out of range. device_id=%s, value=%s, expected=(%s-%s), timestamp=%s, raw_payload=%s",
+            "[OUT_OF_RANGE] %s value out of range. device_id=%s, value=%s, expected=(%s-%s), timestamp=%s, raw_payload=%s",
             metric_name, device_id, value, min_val, max_val, timestamp, payload_dict
         )
         return

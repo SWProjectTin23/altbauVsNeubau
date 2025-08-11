@@ -83,6 +83,15 @@ jobs:
           docker compose logs frontend
           echo "--- End Frontend Container Logs ---"
 
+      - name: Get Database Logs (on failure or success for debugging)
+        # Ruft die Logs des Datenbank-Containers ab, um den Health Check zu debuggen.
+        # Führt diesen Schritt immer aus, um Debugging-Informationen zu erhalten.
+        if: always()
+        run: |
+          echo "--- Database Container Logs ---"
+          docker compose logs db
+          echo "--- End Database Container Logs ---"
+
       - name: Clean up Docker Compose Services
         # Stop all services and remove networks and volumes.
         # This is important to free up resources.

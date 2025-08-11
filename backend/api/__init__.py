@@ -7,11 +7,21 @@ from api.device_data import DeviceData
 from api.range import TimeRange
 from api.device_latest import DeviceLatest
 from api.comparison import Comparison
-from api.thresholds import Thresholds  # Assuming you have a Thresholds resource defined
+from api.thresholds import Thresholds
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins=["http://localhost:3000"])
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": [
+            "http://217.154.215.67:3000",
+            "http://localhost:3000",
+            "https://timhirschmiller-fotografie.de",
+            "http://isd-gerold.de:3000"
+        ]}},
+        supports_credentials=True,
+        allow_headers=["*"]
+    )
     api = Api(app)
 
     # register routes

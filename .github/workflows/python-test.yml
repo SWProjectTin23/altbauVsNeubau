@@ -16,6 +16,15 @@ jobs:
           uses: actions/setup-python@v5
           with:
             python-version: '3.13'  # Oder deine Version
+        - name: Export environment variables from secrets
+          run: |
+            echo "MQTT_BROKER=${{ secrets.MQTT_BROKER }}" >> $GITHUB_ENV
+            echo "MQTT_PORT=${{ secrets.MQTT_PORT }}" >> $GITHUB_ENV
+            echo "DB_HOST=${{ secrets.DB_HOST }}" >> $GITHUB_ENV
+            echo "DB_NAME=${{ secrets.DB_NAME }}" >> $GITHUB_ENV
+            echo "DB_USER=${{ secrets.DB_USER }}" >> $GITHUB_ENV
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
+            echo "DB_PORT=${{ secrets.DB_PORT }}" >> $GITHUB_ENV
 
         - name: Install dependencies
           run: |

@@ -48,7 +48,7 @@ pollen=None, particulate_matter=None):
             )
         else:
             logger.debug(
-                "Insert attempted but no fields were provided: device_id=%s, timestamp=%s",
+                "Insert attempted but no fields/metric were provided: device_id=%s, timestamp=%s",
                 device_id, timestamp
             )
 

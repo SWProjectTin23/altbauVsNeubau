@@ -1,4 +1,3 @@
-
 # API Overview
 This document describes the available REST API endpoints for the sensor backend.
 
@@ -54,6 +53,7 @@ Endpoints are under development and may change as needed.
 }
 ```
 
+---
 
 ### 2. Get sensor data by device ID and time range
 
@@ -126,6 +126,7 @@ Endpoints are under development and may change as needed.
 }
 ```
 
+---
 
 ### 3. Get Latest Data for a Device
 
@@ -177,12 +178,14 @@ Endpoints are under development and may change as needed.
 }
 ```
 
+---
 
-### 4. Comparison Between Devices over Time Range
+### 4. Comparison Between Devices over Time Range (Aggregated)
 
 **GET** `/comparison`
 
 - Returns the selected metric of two devices over a given time range.
+- The data is aggregated in buckets (e.g., 100 average values per device) for efficient charting.
 
 #### Query Parameters
 - `device_1`: ID of first device (e.g., `1`)
@@ -190,9 +193,10 @@ Endpoints are under development and may change as needed.
 - `metric`: one of `temperature`, `humidity`, `pollen`, `particulate_matter`
 - `start`: Unix timestamp (optional)
 - `end`: Unix timestamp (optional)
+- `buckets`: *(optional, default: 100)* Number of buckets (average values) to return per device
 
 #### Example:
-`http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660`
+`http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660&buckets=100`
 
 #### Success Response:
 ```json
@@ -212,6 +216,8 @@ Endpoints are under development and may change as needed.
   "message": null
 }
 ```
+- Each array contains up to `buckets` entries, each representing the average value for that time bucket.
+
 #### No Data Response:
 ```json
 {
@@ -249,6 +255,8 @@ Endpoints are under development and may change as needed.
   "message": "An unexpected error occurred while processing your request."
 }
 ```
+
+---
 
 ### 5. Manage Thresholds
 This endpoint allows you to retrieve and update the soft and hard thresholds for different sensor metrics (temperature, humidity, pollen, particulate matter).
@@ -299,6 +307,7 @@ This endpoint allows you to retrieve and update the soft and hard thresholds for
   "status": "error",
   "message": "A database error occurred while processing your request."
 }
+```
 ```json
 {
   "status": "error",

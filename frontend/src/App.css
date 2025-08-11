@@ -1,10 +1,29 @@
+body, .font-sans {
+  font-family: 'Inter', 'Open Sans', Arial, sans-serif;
+}
 
+.main-bg {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 0;
+  margin: 0;
+}
+
+.white-bg {
+  background-color: #f9f9fe; /* Tailwind's bg-white */
+  border-radius: 0.5rem; /* equivalent to rounded-lg */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); /* Tailwind's shadow-lg */
+  padding: 1.5rem; /* equivalent to p-6 */
+}
 
 .custom-header {
-  background-color: #312e81; /* dark indigo */
-  color: white;
+  background-color: #ffffff; /* dark indigo */
+  color: #e2001a;
   padding: 1rem 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 3px solid #e2001a; /* Rote Linie unten */
 }
 
 .header-container {
@@ -15,6 +34,11 @@
   gap: 1rem;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-logo {
+  width: 125px; /* Adjust as needed */
+  height: auto;
 }
 
 @media (min-width: 768px) {
@@ -28,3 +52,21 @@
   font-weight: bold;
 }
 
+.footer {
+  background-color: #262626;
+  color: #fff;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.footer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-text {
+  margin: 0;
+  font-size: 1rem;
+}

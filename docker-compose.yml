@@ -53,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -67,7 +67,7 @@ services:
       - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (3000)
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -93,7 +93,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 60s # Longer start period for the database
-    
 
   pgadmin: # The name of your pgAdmin service
     image: dpage/pgadmin4 # The Docker image for pgAdmin
@@ -109,8 +108,21 @@ services:
       - pg-network
     restart: unless-stopped
 
+  uptime-kuma:
+    build:
+      context: ./kuma-data
+      dockerfile: Dockerfile
+    container_name: uptime-kuma
+    ports:
+      - "3002:3001"
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+
 volumes: # This section must be at the same level as 'services'
   db_data:
+  kuma-data: 
 
 networks: # Definition of networks
   pg-network:

@@ -32,3 +32,6 @@ venv/
 
 # Database files
 .db/data
+
+#Loadtest results
+./frontend-loadtest/results

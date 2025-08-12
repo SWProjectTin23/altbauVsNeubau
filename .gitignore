@@ -34,4 +34,5 @@ venv/
 .db/data
 
 #Loadtest results
-./frontend-loadtest/results
+/frontend-loadtest/results/
+!frontend-loadtest/.env

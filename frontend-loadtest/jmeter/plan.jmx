@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Frontend TTLB + Intervals (no-plugins)" enabled="true">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="target_url" elementType="Argument"><stringProp name="Argument.name">target_url</stringProp><stringProp name="Argument.value">http://altbau_vs_neubau_frontend</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+          <elementProp name="api_base" elementType="Argument"><stringProp name="Argument.name">api_base</stringProp><stringProp name="Argument.value">http://altbau_vs_neubau_api:5000/api</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Users" enabled="true">
+        <stringProp name="ThreadGroup.num_threads">${__P(users,15)}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${__P(ramp,15)}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Once" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+
+        <!-- Initial Page TTLB inkl. eingebetteter Ressourcen -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Initial Page TTLB" enabled="true">
+          <boolProp name="TransactionController.includeTimers">true</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET ${target_url}/" enabled="true">
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+            <stringProp name="HTTPSampler.path">${__P(target_url)}/</stringProp>
+            <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+            <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+            <boolProp name="HTTPSampler.image_parser">true</boolProp>
+            <stringProp name="HTTPSampler.concurrentPool">8</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+        </hashTree>
+
+        <!-- Helper: Metrics -->
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="SET metrics" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">vars.put("metrics","temperature,humidity,pollen,particulate_matter")</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+
+        <!-- Click 3h -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Click 3h" enabled="true">
+          <boolProp name="TransactionController.includeTimers">true</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="calc 3h" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">long e=System.currentTimeMillis()/1000L; long s=e-3*3600; vars.put("start_ts",""+s); vars.put("end_ts",""+e)</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison temperature (3h)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=temperature&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison humidity (3h)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=humidity&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison pollen (3h)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=pollen&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison particulate_matter (3h)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=particulate_matter&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp><boolProp name="HTTPSampler.use_keepalive">true</boolProp></HTTPSamplerProxy><hashTree/>
+        </hashTree>
+
+        <!-- Click 1d -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Click 1d" enabled="true">
+          <boolProp name="TransactionController.includeTimers">true</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="calc 1d" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">long e=System.currentTimeMillis()/1000L; long s=e-24*3600; vars.put("start_ts",""+s); vars.put("end_ts",""+e)</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison temperature (1d)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=temperature&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison humidity (1d)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=humidity&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison pollen (1d)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=pollen&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison particulate_matter (1d)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=particulate_matter&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+        </hashTree>
+
+        <!-- Click 1w -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Click 1w" enabled="true">
+          <boolProp name="TransactionController.includeTimers">true</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="calc 1w" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">long e=System.currentTimeMillis()/1000L; long s=e-7*24*3600; vars.put("start_ts",""+s); vars.put("end_ts",""+e)</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison temperature (1w)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=temperature&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison humidity (1w)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=humidity&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison pollen (1w)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=pollen&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison particulate_matter (1w)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=particulate_matter&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+        </hashTree>
+
+        <!-- Click 1m -->
+        <TransactionController guiclass="TransactionControllerGui" testclass="TransactionController" testname="Click 1m" enabled="true">
+          <boolProp name="TransactionController.includeTimers">true</boolProp>
+          <boolProp name="TransactionController.parent">true</boolProp>
+        </TransactionController>
+        <hashTree>
+          <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="calc 1m" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">long e=System.currentTimeMillis()/1000L; long s=e-30*24*3600; vars.put("start_ts",""+s); vars.put("end_ts",""+e)</stringProp>
+          </JSR223PreProcessor>
+          <hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison temperature (1m)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=temperature&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison humidity (1m)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=humidity&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison pollen (1m)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=pollen&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="comparison particulate_matter (1m)" enabled="true"><stringProp name="HTTPSampler.method">GET</stringProp><stringProp name="HTTPSampler.path">${api_base}/comparison?device_1=1&amp;device_2=2&amp;metric=particulate_matter&amp;start=${start_ts}&amp;end=${end_ts}&amp;buckets=360</stringProp></HTTPSamplerProxy><hashTree/>
+        </hashTree>
+
+        <!-- CSV + Report -->
+        <ResultCollector guiclass="SimpleDataWriter" testclass="ResultCollector" testname="CSV" enabled="true">
+          <stringProp name="filename">/results/results.jtl</stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary" enabled="true"/>
+        <hashTree/>
+
+      </hashTree>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

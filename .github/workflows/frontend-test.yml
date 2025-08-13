@@ -10,11 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # SLOs (anpassbar): Fail, wenn p95 drüber liegt
-      SLO_INITIAL_P95_MS: "2000"     # Initial Page TTLB p95 < 2.0s
-      SLO_INTERVAL_P95_MS: "300"     # Interval transactions p95 < 300ms
+      # SLOs & Pfade
+      SLO_INITIAL_P95_MS: "2000"
+      SLO_INTERVAL_P95_MS: "300"
       JM_RESULTS_DIR: frontend-loadtest/results
 
+      # Compose-ENV (deine bestehenden Secrets)
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_NAME: ${{ secrets.DB_NAME }}
@@ -25,11 +26,13 @@ jobs:
       PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
       PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
 
-      NO_OPEN: "1"  # im CI keinen Browser öffnen
-      TARGET_URL: "http://altbau_vs_neubau_frontend"     # interner Service-Name (Port 80)
-      API_BASE:  "http://altbau_vs_neubau_api:5000/api"  # interner API-Port
-      USERS: "15"
-      RAMP: "15"
+      # 🔐 JMeter/Runner-ENV aus Secrets
+      NO_OPEN: "1"  # Browser im CI nicht öffnen
+      TARGET_URL: ${{ secrets.TARGET_URL }}
+      API_BASE:  ${{ secrets.API_BASE }}
+      USERS:     ${{ secrets.USERS }}
+      RAMP:      ${{ secrets.RAMP }}
+      COMPOSE_NETWORK: ${{ secrets.COMPOSE_NETWORK }}  # optional, siehe Hinweis
 
     steps:
       - name: Checkout
@@ -43,6 +46,13 @@ jobs:
           docker compose up -d --wait
           docker compose ps
 
+      # optional, sehr empfohlen gegen CRLF-Probleme
+      - name: Normalize LF (runner + optional .env)
+        run: |
+          sed -i 's/\r$//' frontend-loadtest/run-jmeter.sh || true
+          sed -i 's/\r$//' frontend-loadtest/.env || true
+          chmod +x frontend-loadtest/run-jmeter.sh
+
       - name: Quick reachability checks
         run: |
           curl -f http://localhost:3000/ || (echo "Frontend not reachable" && exit 1)
@@ -50,8 +60,7 @@ jobs:
 
       - name: Run JMeter smoke (no browser open)
         working-directory: frontend-loadtest
-        run: |
-          NO_OPEN=1 USERS=15 RAMP=15 ./run-jmeter.sh
+        run: ./run-jmeter.sh
         shell: bash
 
       - name: Upload JMeter artifacts
@@ -66,61 +75,34 @@ jobs:
       - name: Evaluate SLOs (fail build if thresholds exceeded)
         run: |
           python3 - <<'PY'
-          import csv, os, sys, statistics
-          import numpy as np
+          import csv, os, sys, numpy as np
           jtl = os.path.join(os.getenv("JM_RESULTS_DIR"), "results.jtl")
           if not os.path.exists(jtl):
               print("No JTL file found at", jtl); sys.exit(1)
-
-          # read JTL (CSV with headers)
           rows = []
           with open(jtl, newline='') as f:
-              reader = csv.DictReader(f)
-              for r in reader:
+              r = csv.DictReader(f)
+              for x in r:
                   try:
-                      r['elapsed'] = float(r.get('elapsed', 'nan'))
-                      r['label'] = r.get('label','')
-                      r['success'] = (r.get('success','').lower() == 'true')
-                      rows.append(r)
+                      x['elapsed']=float(x.get('elapsed','nan')); x['label']=x.get('label','')
+                      rows.append(x)
                   except: pass
-
-          def pctl(vals, q):
-              a = [v for v in vals if v==v]  # drop NaNs
-              if not a: return float('nan')
-              return float(np.percentile(a, q))
-
-          # group by label
-          by_label = {}
-          for r in rows:
-              by_label.setdefault(r['label'], []).append(r['elapsed'])
-
-          slo_init = float(os.getenv("SLO_INITIAL_P95_MS", "2000"))
-          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS", "300"))
-
-          # labels we care about
-          init_label = "Initial Page TTLB"
-          interval_labels = ["Click 3h","Click 1d","Click 1w","Click 1m"]
-
-          failures = []
-
-          if init_label in by_label:
-              p95 = pctl(by_label[init_label], 95)
-              print(f"{init_label} p95 = {p95:.0f} ms (SLO < {slo_init} ms)")
-              if p95 > slo_init: failures.append(f"{init_label} p95 {p95:.0f} > {slo_init}")
-          else:
-              print(f"WARNING: label '{init_label}' not found in JTL")
-
-          for lab in interval_labels:
-              if lab in by_label:
-                  p95 = pctl(by_label[lab], 95)
-                  print(f"{lab} p95 = {p95:.0f} ms (SLO < {slo_int} ms)")
-                  if p95 > slo_int: failures.append(f"{lab} p95 {p95:.0f} > {slo_int}")
-              else:
-                  print(f"WARNING: label '{lab}' not found in JTL")
-
-          if failures:
-              print("SLO FAIL:", "; ".join(failures))
-              sys.exit(1)
+          def pctl(a,q): 
+              a=[v for v in a if v==v]; 
+              return float(np.percentile(a,q)) if a else float('nan')
+          by={}
+          for x in rows: by.setdefault(x['label'],[]).append(x['elapsed'])
+          slo_init=float(os.getenv("SLO_INITIAL_P95_MS","2000"))
+          slo_int=float(os.getenv("SLO_INTERVAL_P95_MS","300"))
+          fail=[]
+          if 'Initial Page TTLB' in by:
+              p95=pctl(by['Initial Page TTLB'],95); print(f"Initial Page TTLB p95={p95:.0f}ms (<{slo_init})")
+              if p95>slo_init: fail.append(f"Initial p95 {p95:.0f}>{slo_init}")
+          for lab in ['Click 3h','Click 1d','Click 1w','Click 1m']:
+              if lab in by:
+                  p95=pctl(by[lab],95); print(f"{lab} p95={p95:.0f}ms (<{slo_int})")
+                  if p95>slo_int: fail.append(f"{lab} p95 {p95:.0f}>{slo_int}")
+          if fail: print("SLO FAIL:", "; ".join(fail)); sys.exit(1)
           print("SLO PASS")
           PY
 

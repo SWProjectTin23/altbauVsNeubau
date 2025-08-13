@@ -25,6 +25,12 @@ jobs:
       PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
       PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
 
+      NO_OPEN: "1"  # im CI keinen Browser öffnen
+      TARGET_URL: "http://altbau_vs_neubau_frontend"     # interner Service-Name (Port 80)
+      API_BASE:  "http://altbau_vs_neubau_api:5000/api"  # interner API-Port
+      USERS: "15"
+      RAMP: "15"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

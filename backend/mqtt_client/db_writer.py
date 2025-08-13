@@ -1,12 +1,25 @@
-import logging
+from typing import Any, Dict, Optional
+from exceptions import (
+    DatabaseError,
+    DatabaseTimeoutError,
+    DatabaseConnectionError,
+)
 
-# mqtt_client.db_writer
-logger = logging.getLogger(__name__)
-
-def insert_sensor_data(conn, device_id, timestamp, *, temperature=None, humidity=None,
-pollen=None, particulate_matter=None):
+def insert_sensor_data(
+    conn: Any,
+    device_id: int,
+    timestamp: Any,  # timezone-aware datetime or DB-acceptable type
+    *,
+    temperature: Optional[float] = None,
+    humidity: Optional[float] = None,
+    pollen: Optional[int] = None,
+    particulate_matter: Optional[int] = None,
+) -> Dict[str, Any]:
     """
-    Insert a row into the sensor_data table. Default to None.
+    Upsert a row into sensor_data.
+    - No logging here (logging is done by the caller).
+    - On failure: rollback and raise a domain-specific exception.
+    - Returns a small summary for the caller to include in logs.
     """
     cursor = conn.cursor()
     try:
@@ -20,18 +33,14 @@ pollen=None, particulate_matter=None):
             pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
             particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
         """
-        cursor.execute(insert_query, (
-            device_id,
-            timestamp,
-            temperature,
-            humidity,
-            pollen,
-            particulate_matter
-        ))
+
+        cursor.execute(
+            insert_query,
+            (device_id, timestamp, temperature, humidity, pollen, particulate_matter),
+        )
         conn.commit()
-        
-        # Only log non-None values
-        updated_fields = {}
+
+        updated_fields: Dict[str, Any] = {}
         if temperature is not None:
             updated_fields["temperature"] = temperature
         if humidity is not None:
@@ -41,19 +50,32 @@ pollen=None, particulate_matter=None):
         if particulate_matter is not None:
             updated_fields["particulate_matter"] = particulate_matter
 
-        if updated_fields:
-            logger.info(
-                "Sensor data written: device_id=%s, timestamp=%s, fields=%s",
-                device_id, timestamp, updated_fields
-            )
-        else:
-            logger.debug(
-                "Insert attempted but no fields/metric were provided: device_id=%s, timestamp=%s",
-                device_id, timestamp
-            )
+        rows_affected = getattr(cursor, "rowcount", 1)
+
+        return {
+            "device_id": device_id,
+            "timestamp": timestamp,
+            "updated_fields": updated_fields,
+            "rows_affected": rows_affected,
+        }
 
     except Exception as e:
-        conn.rollback()
-        logger.error("Database insert failed: device_id=%s, timestamp=%s, error=%s", device_id, timestamp, str(e))
+        # Keep DB consistent
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+        # Very light classification without driver-specific imports
+        msg = str(e).lower()
+        if "timeout" in msg or "timed out" in msg:
+            raise DatabaseTimeoutError("database write timeout") from e
+        if "connect" in msg or "could not connect" in msg:
+            raise DatabaseConnectionError("database connection error") from e
+        raise DatabaseError("database write failed") from e
+
     finally:
-        cursor.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass

@@ -1,4 +1,5 @@
 # Logging Specification
+
 Lightweight baseline (v0)
 *No code usage in this document; this is a format/operational spec.*
 
@@ -21,7 +22,7 @@ Establish a **uniform, structured logging standard** so that:
 * **Per-service extensions:** Add fields that fit the domain (API, MQTT ingestor, backend).
 * **Event names:** Short, stable, `snake_case` (e.g., `request_ok`, `msg_processed`).
 * **Durations:** When an event represents an operation, include `duration_ms` (elapsed time in milliseconds).
-* **Keep payloads out:** Log identifiers, sizes, and reasons. Not full raw payloads for security reason.
+* **Keep payloads out:** Log identifiers, sizes, and reasons. Not full raw payloads for security reasons.
 
 ---
 
@@ -35,11 +36,11 @@ Every log line **must** include these keys:
 | `level`       | string | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` \| `CRITICAL`.     |
 | `service`     | string | Logical service name: `api`, `ingestor`, …                   |
 | `module`      | string | Component or source within the service.                      |
-| `message`     | string | Short event name (not a prose sentence), e.g., `request_ok`. |
+| `event`       | string | Short event name (not a prose sentence), e.g., `request_ok`. |
 | `env`         | string | Deployment environment: `dev` \| `staging` \| `prod`.        |
 | `duration_ms` | number | **When applicable**: elapsed time of the operation (ms).     |
 
-**Duration definition:** time between the operation’s start and end (e.g., request handling, message processing, DB write), recorded in **milliseconds**.
+**Duration definition:** Time between the operation’s start and end (e.g., request handling, message processing, DB write), recorded in **milliseconds**.
 
 ---
 
@@ -62,7 +63,7 @@ Add:
   "level": "INFO",
   "service": "api",
   "module": "routes",
-  "message": "request_ok",
+  "event": "request_ok",
   "env": "staging",
   "request_id": "abc123",
   "method": "GET",
@@ -93,7 +94,7 @@ Use domain-specific fields (no HTTP status code):
   "level": "INFO",
   "service": "ingestor",
   "module": "handler",
-  "message": "msg_processed",
+  "event": "msg_processed",
   "env": "prod",
   "device_id": 1,
   "metric": "temperature",
@@ -110,7 +111,7 @@ Use domain-specific fields (no HTTP status code):
   "level": "WARNING",
   "service": "ingestor",
   "module": "validator",
-  "message": "value_out_of_range",
+  "event": "value_out_of_range",
   "env": "prod",
   "device_id": 1,
   "metric": "temperature",
@@ -142,11 +143,11 @@ Use domain-specific fields (no HTTP status code):
 ## 6. Payload Policy
 
 * **Do not log raw payloads** in production logs.
-* Log **identifiers and metadata** instead: `payload_size`, `device_id`, `metric`, `reason`, and (when relevant) `invalid_payload_file` (see below).
+* Log **identifiers and metadata** instead: `payload_size`, `device_id`, `metric`, `reason`, and (when relevant) `invalid_payload_file`.
 * **Invalid payload storage (local file):**
 
-  * Store the full invalid payload in a dedicated directory inside the container, e.g. `/var/log/app/invalid_payloads/`, which must be a **mounted volume**.
-  * File naming: timestamp + stable identifier (e.g., `2025-08-12T14-36-05Z_req-abc123.json`). Avoid user-controlled strings in filenames.
+  * Store the full invalid payload in `/var/log/app/invalid_payloads/` (mounted volume).
+  * File naming: timestamp + stable identifier (e.g., `2025-08-12T14-36-05Z_req-abc123.json`).
   * In the log entry, include the path as `invalid_payload_file` so incidents can be correlated without embedding the payload.
-  * Apply **lifecycle management** (e.g., delete files older than 7 days) and restrict access to this directory.
-* **Development-only exception:** If absolutely necessary for debugging, truncated snippets (first N characters) may be captured in non-production environments. Avoid in shared/staging/prod.
+  * Apply lifecycle management (e.g., delete files older than 7 days) and restrict access.
+* **Development-only exception:** In non-production environments, truncated snippets (first N characters) may be captured for debugging. Avoid in shared/staging/prod.

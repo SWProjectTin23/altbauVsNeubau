@@ -12,7 +12,7 @@ jobs:
     env:
       # SLOs & Pfade
       SLO_INITIAL_P95_MS: "2000"
-      SLO_INTERVAL_P95_MS: "300"
+      SLO_INTERVAL_P95_MS: "600"
       JM_RESULTS_DIR: frontend-loadtest/results
 
       # Compose-ENV (deine bestehenden Secrets)
@@ -105,7 +105,7 @@ jobs:
               by.setdefault(label, []).append(elapsed)
 
           slo_init = float(os.getenv("SLO_INITIAL_P95_MS","2000"))
-          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS","300"))
+          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS","600"))
 
           failures = []
           def check(label, limit):

@@ -6,18 +6,8 @@ It covers **local execution** using Docker and **CI/CD automation** via GitHub A
 
 ---
 
-## 1. Prerequisites
 
-Before running the tests locally, ensure you have:
-
-- **Docker** installed and running ([Download](https://www.docker.com/get-started))
-- **Docker Compose** installed (usually comes with Docker Desktop)
-- Bash shell (Linux, macOS, or Git Bash on Windows)
-- Application stack (frontend, backend, DB) running
-
----
-
-## 2. Test Files Overview
+## 1. Test Files Overview
 
 | File | Purpose |
 |------|---------|
@@ -29,7 +19,7 @@ Before running the tests locally, ensure you have:
 
 ---
 
-## 3. Local Execution
+## 2. Local Execution
 
 ### Step 1 — Configure `.env`
 Edit `.env` to match your environment:
@@ -75,16 +65,13 @@ This will:
 
 ### Step 4 — View the Results
 
-Open the generated report in your browser:
+Open the generated report in your browser at `results/report/index.html`     
 
-```bash
-open results/report/index.html     # macOS
-xdg-open results/report/index.html # Linux
-```
+
 
 ---
 
-## 4. CI/CD Execution (GitHub Actions)
+## 3. CI/CD Execution (GitHub Actions)
 
 This project includes a GitHub Actions workflow (`frontend-test.yml`) that runs the JMeter smoke test on:
 
@@ -108,7 +95,7 @@ This project includes a GitHub Actions workflow (`frontend-test.yml`) that runs 
 
 ---
 
-## 5. Key Variables
+## 4. Key Variables
 
 | Variable          | Description                                       |
 | ----------------- | ------------------------------------------------- |
@@ -120,31 +107,6 @@ This project includes a GitHub Actions workflow (`frontend-test.yml`) that runs 
 
 ---
 
-## 6. Troubleshooting
-
-**Problem:** `.env: line 1: $'\r': command not found`
-**Solution:** Convert `.env` to LF endings:
-
-```bash
-sed -i 's/\r$//' .env
-```
-
-**Problem:** No `index.html` report generated
-**Solution:**
-
-* Ensure `results/report/` is empty before running
-* Remove duplicate JTL writing from `plan.jmx` if using `-l` in CLI
-
-**Problem:** Frontend/Backend not reachable
-**Solution:** Start services with:
-
-```bash
-docker compose up -d
-```
-
-and verify with `curl`.
-
----
 
 ## 7. Example Command Summary
 
@@ -173,10 +135,7 @@ The workflow checks **95th percentile response times** from the JMeter results (
 
 If any p95 latency exceeds its threshold, the build fails.
 
----
 
-**Author’s Note:**
-This setup allows you to run quick **smoke tests** during development and automated **performance checks** in CI/CD.
-By adjusting `USERS` and `RAMP` in `.env`, you can scale tests from light load to stress conditions.
+
 
 

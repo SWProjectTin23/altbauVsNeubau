@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Warnings from "./pages/Warnings";
 import "./App.css";
 import bgImage from './assets/Aussenaufnahme_Marienstrasse_Hanns-Voith-Campus_Schloss_Fotograf_Oliver_Vogel_Startseite.jpg';
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
 function App() {
   return (
@@ -33,12 +34,14 @@ function App() {
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">
+        <AppErrorBoundary>
+          <main className="px-4 py-6 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/warnwerte" element={<Warnings />} />
             </Routes>
-        </main>
+          </main>
+        </AppErrorBoundary>
 
       <footer className="footer">
         <div className="footer-container">

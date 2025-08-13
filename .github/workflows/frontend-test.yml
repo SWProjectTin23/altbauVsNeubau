@@ -75,36 +75,57 @@ jobs:
       - name: Evaluate SLOs (fail build if thresholds exceeded)
         run: |
           python3 - <<'PY'
-          import csv, os, sys, numpy as np
+          import csv, os, sys, math
           jtl = os.path.join(os.getenv("JM_RESULTS_DIR"), "results.jtl")
           if not os.path.exists(jtl):
               print("No JTL file found at", jtl); sys.exit(1)
+
           rows = []
           with open(jtl, newline='') as f:
-              r = csv.DictReader(f)
-              for x in r:
+              reader = csv.DictReader(f)
+              for r in reader:
                   try:
-                      x['elapsed']=float(x.get('elapsed','nan')); x['label']=x.get('label','')
-                      rows.append(x)
-                  except: pass
-          def pctl(a,q): 
-              a=[v for v in a if v==v]; 
-              return float(np.percentile(a,q)) if a else float('nan')
-          by={}
-          for x in rows: by.setdefault(x['label'],[]).append(x['elapsed'])
-          slo_init=float(os.getenv("SLO_INITIAL_P95_MS","2000"))
-          slo_int=float(os.getenv("SLO_INTERVAL_P95_MS","300"))
-          fail=[]
-          if 'Initial Page TTLB' in by:
-              p95=pctl(by['Initial Page TTLB'],95); print(f"Initial Page TTLB p95={p95:.0f}ms (<{slo_init})")
-              if p95>slo_init: fail.append(f"Initial p95 {p95:.0f}>{slo_init}")
-          for lab in ['Click 3h','Click 1d','Click 1w','Click 1m']:
-              if lab in by:
-                  p95=pctl(by[lab],95); print(f"{lab} p95={p95:.0f}ms (<{slo_int})")
-                  if p95>slo_int: fail.append(f"{lab} p95 {p95:.0f}>{slo_int}")
-          if fail: print("SLO FAIL:", "; ".join(fail)); sys.exit(1)
+                      elapsed = float(r.get('elapsed','nan'))
+                      label   = r.get('label','')
+                  except:
+                      continue
+                  if elapsed == elapsed:  # not NaN
+                      rows.append((label, elapsed))
+
+          def percentile(vals, q):
+              if not vals: return float('nan')
+              vals = sorted(vals)
+              k = (len(vals)-1) * (q/100.0)
+              f = math.floor(k); c = math.ceil(k)
+              if f == c: return float(vals[int(k)])
+              return vals[f] + (vals[c]-vals[f])*(k-f)
+
+          by = {}
+          for label, elapsed in rows:
+              by.setdefault(label, []).append(elapsed)
+
+          slo_init = float(os.getenv("SLO_INITIAL_P95_MS","2000"))
+          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS","300"))
+
+          failures = []
+          def check(label, limit):
+              if label in by:
+                  p95 = percentile(by[label], 95)
+                  print(f"{label} p95 = {p95:.0f} ms (SLO < {limit} ms)")
+                  if p95 > limit:
+                      failures.append(f"{label} p95 {p95:.0f} > {limit}")
+              else:
+                  print(f"WARNING: label '{label}' not found in JTL")
+
+          check("Initial Page TTLB", slo_init)
+          for lab in ["Click 3h","Click 1d","Click 1w","Click 1m"]:
+              check(lab, slo_int)
+
+          if failures:
+              print("SLO FAIL:", "; ".join(failures)); sys.exit(1)
           print("SLO PASS")
           PY
+
 
       - name: Show logs (always)
         if: always()

@@ -42,7 +42,7 @@ fi
 
 # Fallback to host ports if no network was set
 if [[ ${#NET_ARGS[@]} -eq 0 ]]; then
-  echo "⚠️  No compose network found — using host ports."
+  echo "No compose network found — using host ports."
   TARGET_URL="${TARGET_URL:-http://host.docker.internal:3000}"
   API_BASE="${API_BASE:-http://host.docker.internal:5001/api}"
   [[ "$(uname -s)" == "Linux" ]] && EXTRA_ARGS+=(--add-host=host.docker.internal:host-gateway)

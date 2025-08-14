@@ -1,4 +1,6 @@
 import logging
+import psycopg2
+from exceptions import DatabaseError
 
 # mqtt_client.db_writer
 logger = logging.getLogger(__name__)
@@ -20,40 +22,11 @@ pollen=None, particulate_matter=None):
             pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
             particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
         """
-        cursor.execute(insert_query, (
-            device_id,
-            timestamp,
-            temperature,
-            humidity,
-            pollen,
-            particulate_matter
-        ))
+        cursor.execute(insert_query, (device_id, timestamp, temperature, humidity, pollen, particulate_matter))
         conn.commit()
         
-        # Only log non-None values
-        updated_fields = {}
-        if temperature is not None:
-            updated_fields["temperature"] = temperature
-        if humidity is not None:
-            updated_fields["humidity"] = humidity
-        if pollen is not None:
-            updated_fields["pollen"] = pollen
-        if particulate_matter is not None:
-            updated_fields["particulate_matter"] = particulate_matter
-
-        if updated_fields:
-            logger.info(
-                "Sensor data written: device_id=%s, timestamp=%s, fields=%s",
-                device_id, timestamp, updated_fields
-            )
-        else:
-            logger.debug(
-                "Insert attempted but no fields/metric were provided: device_id=%s, timestamp=%s",
-                device_id, timestamp
-            )
-
-    except Exception as e:
+    except psycopg2.Error as e:
         conn.rollback()
-        logger.error("Database insert failed: device_id=%s, timestamp=%s, error=%s", device_id, timestamp, str(e))
+        raise DatabaseError(e.pgerror or str(e))
     finally:
         cursor.close()

@@ -1,4 +1,5 @@
 import psycopg2
+from exceptions import DatabaseError 
 
 def test_time_range_basic(client, mocker):
     mocker.patch('api.range.get_all_device_time_ranges_from_db', return_value=[
@@ -23,19 +24,21 @@ def test_time_range_no_data(client, mocker):
     assert json_data['data'] == []
 
 def test_time_range_database_error(client, mocker):
-    mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=psycopg2.Error("Database error"))
-    
+    mocker.patch('api.range.get_all_device_time_ranges_from_db',
+                 side_effect=DatabaseError("A database error occurred while processing your request."))
     response = client.get('/api/range')
     assert response.status_code == 500
     json_data = response.get_json()
     assert json_data['status'] == 'error'
     assert json_data['message'] == 'A database error occurred while processing your request.'
 
+
 def test_time_range_unexpected_error(client, mocker):
-    mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=Exception("Unexpected error"))
-    
+    mocker.patch('api.range.get_all_device_time_ranges_from_db',
+                 side_effect=Exception("Unexpected error"))
     response = client.get('/api/range')
-    assert response.status_code == 400
+    # zentraler Handler: 500 statt bisher 400
+    assert response.status_code == 500
     json_data = response.get_json()
     assert json_data['status'] == 'error'
-    assert json_data['message'] == 'An unexpected error occurred.'
+    assert json_data['message'] == 'An unexpected error occurred'

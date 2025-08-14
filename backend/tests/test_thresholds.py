@@ -1,5 +1,6 @@
 import json
 import psycopg2
+from exceptions import DatabaseError
 
 def test_get_thresholds_success(client, mocker):
     """
@@ -35,26 +36,21 @@ def test_get_thresholds_no_data(client, mocker):
     assert data['message'] == 'No thresholds available.'
 
 def test_get_thresholds_database_error(client, mocker):
-    """
-    Test the case where a database error occurs while retrieving thresholds.
-    """
-    mocker.patch('api.thresholds.get_thresholds_from_db', side_effect=psycopg2.Error("Database error"))
+    mocker.patch('api.thresholds.get_thresholds_from_db',
+                 side_effect=DatabaseError("A database error occurred while processing your request."))
     response = client.get('/api/thresholds')
     assert response.status_code == 500
-    data = json.loads(response.data)
+    data = response.get_json()
     assert data['status'] == 'error'
     assert data['message'] == 'A database error occurred while processing your request.'
 
 def test_get_thresholds_unexpected_error(client, mocker):
-    """
-    Test the case where an unexpected error occurs while retrieving thresholds.
-    """
     mocker.patch('api.thresholds.get_thresholds_from_db', side_effect=Exception("Unexpected error"))
     response = client.get('/api/thresholds')
     assert response.status_code == 500
-    data = json.loads(response.data)
+    data = response.get_json()
     assert data['status'] == 'error'
-    assert data['message'] == 'An unexpected error occurred while processing your request.'
+    assert data['message'] == 'An unexpected error occurred'
 
 def test_post_thresholds_success(client, mocker):
     """

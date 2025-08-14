@@ -1,3 +1,6 @@
+import psycopg2
+import pytest
+from exceptions import DatabaseConnectionError
 from unittest.mock import MagicMock
 from mqtt_client.main_ingester import on_connect, on_message, connect_db
 
@@ -71,7 +74,7 @@ def test_connect_db_success(mocker):
 
 
 def test_connect_db_failure(mocker):
-    mocker.patch("mqtt_client.main_ingester.psycopg2.connect", side_effect=Exception("fail"))
+    mocker.patch("mqtt_client.main_ingester.psycopg2.connect", side_effect=psycopg2.OperationalError("fail"))
 
     # Patch config variables
     mocker.patch("mqtt_client.main_ingester.DB_HOST", "localhost")
@@ -80,6 +83,5 @@ def test_connect_db_failure(mocker):
     mocker.patch("mqtt_client.main_ingester.DB_PASSWORD", "pass")
     mocker.patch("mqtt_client.main_ingester.DB_PORT", 5432)
 
-    conn = connect_db()
-
-    assert conn is None
+    with pytest.raises(DatabaseConnectionError):
+        connect_db()

@@ -1,3 +1,5 @@
+import pytest
+from exceptions import ValidationError
 from mqtt_client.handler import handle_metric
 
 def valid_payload():
@@ -29,7 +31,8 @@ def test_missing_device_id_does_not_call_insert(mocker):
     payload = valid_payload()
     del payload["meta"]["device_id"]
 
-    handle_metric("temperature", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
+    with pytest.raises(ValidationError):
+        handle_metric("temperature", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
 def test_unknown_metric_does_not_call_insert(mocker):
@@ -37,7 +40,8 @@ def test_unknown_metric_does_not_call_insert(mocker):
     mock_conn = mocker.MagicMock()
 
     payload = valid_payload()
-    handle_metric("unknown_metric", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
+    with pytest.raises(ValidationError):
+        handle_metric("unknown_metric", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
 def test_non_numeric_value_does_not_call_insert(mocker):
@@ -47,7 +51,8 @@ def test_non_numeric_value_does_not_call_insert(mocker):
     payload = valid_payload()
     payload["value"] = "not-a-number"
 
-    handle_metric("temperature", "sdhbw/ai/si2023/01/temperature/01", payload, mock_conn)
+    with pytest.raises(ValidationError):
+        handle_metric("temperature", "sdhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
 def test_value_out_of_range_does_not_call_insert(mocker):
@@ -57,5 +62,6 @@ def test_value_out_of_range_does_not_call_insert(mocker):
     payload = valid_payload()
     payload["value"] = 1000  # too high for temperature (0–40)
 
-    handle_metric("temperature", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
+    with pytest.raises(ValidationError):
+        handle_metric("temperature", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()

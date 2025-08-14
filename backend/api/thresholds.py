@@ -1,216 +1,122 @@
+import logging
 from flask_restful import Resource
-from flask import jsonify, request
-import psycopg2 # Import psycopg2 for specific error handling
+from flask import request
+from exceptions import ValidationError
+from .db_operations import get_thresholds_from_db, update_thresholds_in_db
+
+logger = logging.getLogger(__name__)
 
 # Import database operation functions
 from .db_operations import get_thresholds_from_db, update_thresholds_in_db
 
+
 class Thresholds(Resource):
     def get(self):
-        try:
-            # Get the thresholds from the database
-            thresholds = get_thresholds_from_db()
-
-            # If no thresholds are found, return an empty list with a success status
-            if not thresholds:
-                return {
-                    "status": "success",
-                    "data": [],
-                    "message": "No thresholds available."
-                }, 200
-            
-            # Return the thresholds in JSON format
+        thresholds = get_thresholds_from_db()  # kann DatabaseError raisen -> zentraler Handler
+        if not thresholds:
+            logger.info("No thresholds available.")
             return {
                 "status": "success",
-                "data": thresholds,
-                "message": "Thresholds retrieved successfully."
+                "data": [],
+                "message": "No thresholds available."
             }, 200
+
+        return {
+            "status": "success",
+            "data": thresholds,
+            "message": None
+        }, 200
         
-        except psycopg2.Error as e:
-            print(f"Database error in Thresholds: {e}")
-            return {
-                "status": "error",
-                "message": "A database error occurred while processing your request."
-            }, 500
-        
-        except Exception as e:
-            print(f"An unexpected error occurred in Thresholds API: {e}")
-            return {
-                "status": "error",
-                "message": "An unexpected error occurred while processing your request."
-            }, 500
 
     def post(self):
-        try:
-            # Get the JSON data from the request
-            threshold_data_raw = request.get_json()
+        # JSON laden
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            raise ValidationError("Invalid input data. Expecting a Dictionary.")
 
-            # Validate the input data
-            if not threshold_data_raw or not isinstance(threshold_data_raw, dict):
-                return {
-                    "status": "error",
-                    "message": "Invalid input data. Expecting a Dictionary."
-                }, 400
-            
-            # Define expected keys
-            expected_keys_and_types = {
-                "temperature_min_soft": float, "temperature_max_soft": float,
-                "temperature_min_hard": float, "temperature_max_hard": float,
-                "humidity_min_soft": float, "humidity_max_soft": float,
-                "humidity_min_hard": float, "humidity_max_hard": float,
-                "pollen_min_soft": int, "pollen_max_soft": int,
-                "pollen_min_hard": int, "pollen_max_hard": int,
-                "particulate_matter_min_soft": int, "particulate_matter_max_soft": int,
-                "particulate_matter_min_hard": int, "particulate_matter_max_hard": int
-            }
+        # Erwartete Keys + Zieltypen
+        expected = {
+            "temperature_min_soft": float, "temperature_max_soft": float,
+            "temperature_min_hard": float, "temperature_max_hard": float,
+            "humidity_min_soft": float, "humidity_max_soft": float,
+            "humidity_min_hard": float, "humidity_max_hard": float,
+            "pollen_min_soft": int, "pollen_max_soft": int,
+            "pollen_min_hard": int, "pollen_max_hard": int,
+            "particulate_matter_min_soft": int, "particulate_matter_max_soft": int,
+            "particulate_matter_min_hard": int, "particulate_matter_max_hard": int
+        }
 
-            validated_threshold_data = {}
-            for key, expected_type in expected_keys_and_types.items():
-                if key not in threshold_data_raw:
-                    return {
-                        "status": "error",
-                        "message": f"Missing required key: '{key}'."
-                    }, 400
-                value = threshold_data_raw[key]
-                if value is None:
-                    return {
-                        "status": "error",
-                        "message": f"Value for '{key}' cannot be None."
-                    }, 400
-                validated_threshold_data[key] = value
-
+        validated = {}
+        for key, typ in expected.items():
+            if key not in payload:
+                raise ValidationError(f"Missing required key: '{key}'.")
+            value = payload[key]
+            if value is None:
+                raise ValidationError(f"Value for '{key}' cannot be None.")
             try:
-                if expected_type == float:
-                    validated_threshold_data[key] = float(value)
-                elif expected_type == int:
-                    validated_threshold_data[key] = int(value)
-                else:
-                    validated_threshold_data
-            except (ValueError, TypeError) as e:
-                return {
-                    "status": "error",
-                    "message": f"Invalid value for '{key}': {value}. Expected type {expected_type.__name__}."
-                }, 400
-            
-            # min_hard < max_hard und min_hard < max_soft
-            minhard_maxhard_pairs = [
-                ("temperature_min_hard", "temperature_max_hard"),
-                ("humidity_min_hard", "humidity_max_hard"),
-                ("pollen_min_hard", "pollen_max_hard"),
-                ("particulate_matter_min_hard", "particulate_matter_max_hard"),
-            ]
-            for min_hard_key, max_hard_key in minhard_maxhard_pairs:
-                min_hard_value = validated_threshold_data[min_hard_key]
-                max_hard_value = validated_threshold_data[max_hard_key]
-                if min_hard_value is not None and max_hard_value is not None and min_hard_value >= max_hard_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{min_hard_key}' must be less than '{max_hard_key}'."
-                    }, 400
-                
-            # min_soft < max_hard und min_soft < max_soft
-            minsoft_maxhard_pairs = [
-                ("temperature_min_soft", "temperature_max_hard"),
-                ("humidity_min_soft", "humidity_max_hard"),
-                ("pollen_min_soft", "pollen_max_hard"),
-                ("particulate_matter_min_soft", "particulate_matter_max_hard"),
-            ]
-            for min_soft_key, max_hard_key in minsoft_maxhard_pairs:
-                min_soft_value = validated_threshold_data[min_soft_key]
-                max_hard_value = validated_threshold_data[max_hard_key]
-                if min_soft_value is not None and max_hard_value is not None and min_soft_value >= max_hard_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{min_soft_key}' must be less than '{max_hard_key}'."
-                    }, 400
+                validated[key] = float(value) if typ is float else int(value)
+            except (ValueError, TypeError):
+                raise ValidationError(f"Invalid value for '{key}': {value}. Expected type {typ.__name__}.")
 
-            minsoft_maxsoft_pairs = [
-                ("temperature_min_soft", "temperature_max_soft"),
-                ("humidity_min_soft", "humidity_max_soft"),
-                ("pollen_min_soft", "pollen_max_soft"),
-                ("particulate_matter_min_soft", "particulate_matter_max_soft"),
-            ]
-            for min_soft_key, max_soft_key in minsoft_maxsoft_pairs:
-                min_soft_value = validated_threshold_data[min_soft_key]
-                max_soft_value = validated_threshold_data[max_soft_key]
-                if min_soft_value is not None and max_soft_value is not None and min_soft_value >= max_soft_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{min_soft_key}' must be less than '{max_soft_key}'."
-                    }, 400
+        # Relations-Validierung
+        # min_hard < max_hard
+        for a, b in [
+            ("temperature_min_hard", "temperature_max_hard"),
+            ("humidity_min_hard", "humidity_max_hard"),
+            ("pollen_min_hard", "pollen_max_hard"),
+            ("particulate_matter_min_hard", "particulate_matter_max_hard"),
+        ]:
+            if validated[a] >= validated[b]:
+                raise ValidationError(f"'{a}' must be less than '{b}'.")
 
-            # Validate that min_hard is less than min_soft and max_hard is greater than max_soft
-            minhard_minsoft_pairs = [
-                ("temperature_min_hard", "temperature_min_soft"),
-                ("humidity_min_hard", "humidity_min_soft"),
-                ("pollen_min_hard", "pollen_min_soft"),
-                ("particulate_matter_min_hard", "particulate_matter_min_soft"),
-            ]
-            for min_hard_key, min_soft_key in minhard_minsoft_pairs:
-                min_hard_value = validated_threshold_data[min_hard_key]
-                min_soft_value = validated_threshold_data[min_soft_key]
-                if min_hard_value is not None and min_soft_value is not None and min_hard_value >= min_soft_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{min_hard_key}' must be less than '{min_soft_key}'."
-                    }, 400
+        # min_soft < max_hard
+        for a, b in [
+            ("temperature_min_soft", "temperature_max_hard"),
+            ("humidity_min_soft", "humidity_max_hard"),
+            ("pollen_min_soft", "pollen_max_hard"),
+            ("particulate_matter_min_soft", "particulate_matter_max_hard"),
+        ]:
+            if validated[a] >= validated[b]:
+                raise ValidationError(f"'{a}' must be less than '{b}'.")
 
-            maxhard_maxsoft_pairs = [
-                ("temperature_max_hard", "temperature_max_soft"),
-                ("humidity_max_hard", "humidity_max_soft"),
-                ("pollen_max_hard", "pollen_max_soft"),
-                ("particulate_matter_max_hard", "particulate_matter_max_soft"),
-            ]
-            for max_hard_key, max_soft_key in maxhard_maxsoft_pairs:
-                max_hard_value = validated_threshold_data[max_hard_key]
-                max_soft_value = validated_threshold_data[max_soft_key]
-                if max_hard_value is not None and max_soft_value is not None and max_hard_value <= max_soft_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{max_hard_key}' must be greater than '{max_soft_key}'."
-                    }, 400
-            
-            # Validate that min_hard is less than max_soft
-            minhard_maxsoft_pairs = [
-                ("temperature_min_hard", "temperature_max_soft"),
-                ("humidity_min_hard", "humidity_max_soft"),
-                ("pollen_min_hard", "pollen_max_soft"),
-                ("particulate_matter_min_hard", "particulate_matter_max_soft"),
-            ]
+        # min_soft < max_soft
+        for a, b in [
+            ("temperature_min_soft", "temperature_max_soft"),
+            ("humidity_min_soft", "humidity_max_soft"),
+            ("pollen_min_soft", "pollen_max_soft"),
+            ("particulate_matter_min_soft", "particulate_matter_max_soft"),
+        ]:
+            if validated[a] >= validated[b]:
+                raise ValidationError(f"'{a}' must be less than '{b}'.")
 
-            for min_hard_key, max_soft_key in minhard_maxsoft_pairs:
-                min_hard_value = validated_threshold_data[min_hard_key]
-                max_soft_value = validated_threshold_data[max_soft_key]
+        # min_hard < min_soft
+        for a, b in [
+            ("temperature_min_hard", "temperature_min_soft"),
+            ("humidity_min_hard", "humidity_min_soft"),
+            ("pollen_min_hard", "pollen_min_soft"),
+            ("particulate_matter_min_hard", "particulate_matter_min_soft"),
+        ]:
+            if validated[a] >= validated[b]:
+                raise ValidationError(f"'{a}' must be less than '{b}'.")
 
-                if min_hard_value is not None and max_soft_value is not None and min_hard_value >= max_soft_value:
-                    return {
-                        "status": "error",
-                        "message": f"'{min_hard_key}' must be less than '{max_soft_key}'."
-                    }, 400
+        # max_hard > max_soft
+        for a, b in [
+            ("temperature_max_hard", "temperature_max_soft"),
+            ("humidity_max_hard", "humidity_max_soft"),
+            ("pollen_max_hard", "pollen_max_soft"),
+            ("particulate_matter_max_hard", "particulate_matter_max_soft"),
+        ]:
+            if validated[a] <= validated[b]:
+                raise ValidationError(f"'{a}' must be greater than '{b}'.")
 
+        # Persistieren (kann DatabaseError raisen -> zentraler Handler)
+        update_thresholds_in_db(validated)
+        logger.info("Thresholds updated.")
 
-
-            # Update the thresholds in the database
-            update_thresholds_in_db(validated_threshold_data)
-
-            return {
-                "status": "success",
-                "message": "Thresholds updated successfully."
-            }, 200
-       
-        except psycopg2.Error as e:
-            print(f"Database error in Thresholds POST: {e}")
-            return {
-                "status": "error",
-                "message": "A database error occurred while processing your request."
-            }, 500
-       
-        except Exception as e:
-            print(f"An unexpected error occurred in Thresholds POST: {e}")
-            return {
-                "status": "error",
-                "message": "An unexpected error occurred while processing your request."
-            }, 500
+        return {
+            "status": "success",
+            "message": "Thresholds updated successfully."
+        }, 200
 
 
             

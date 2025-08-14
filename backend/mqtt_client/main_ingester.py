@@ -4,7 +4,14 @@ import psycopg2
 from mqtt_client.mqtt_config import MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS, DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 from mqtt_client.handler import handle_metric
 import logging
-from mqtt_client.logging_setup import setup_logging
+from logging_configure import configure_logging
+from exceptions import (
+    AppError,
+    ValidationError,
+    DatabaseError,
+    DatabaseConnectionError,
+    MQTTConnectionError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,14 +54,34 @@ def on_message(client, userdata, msg):
         )
         return
 
+    # Process the payload
     try:
         payload = json.loads(msg.payload.decode())
         handle_metric(metric_name, msg.topic, payload, db_conn)
-    except Exception as e:
-        logger.error("Failed to process message from topic=%s: %s", msg.topic, str(e))
+
+    # Handle specific exceptions
+    except ValidationError as e:
+        logger.warning("MQTT ValidationError topic=%s: %s", msg.topic, str(e))
+
+    # Handle database errors
+    except DatabaseError as e:
+        logger.error("MQTT DatabaseError topic=%s: %s", msg.topic, str(e))
+
+    # Handle application errors
+    except AppError as e:
+        logger.error("MQTT AppError topic=%s type=%s: %s", msg.topic, e.__class__.__name__, str(e))
+
+    # Handle exceptions
+    except Exception:
+        logger.exception("MQTT Unhandled exception topic=%s", msg.topic)
+
 
 # Database connection helper
 def connect_db():
+    """
+    Connect to the PostgreSQL database.
+    """
+
     try:
         conn = psycopg2.connect(
             host=DB_HOST,
@@ -64,31 +91,38 @@ def connect_db():
             port=DB_PORT
         )
         conn.autocommit = False
-        logger.info("Connected to database: host=%s, db=%s", DB_HOST, DB_NAME)
         return conn
-    except Exception as e:
-        logger.error("Failed to connect to database: %s", str(e))
-        return None
+    except psycopg2.OperationalError as e:
+        raise DatabaseConnectionError(f"Failed to connect to database: {e}")
+    except psycopg2.Error as e:
+        raise DatabaseError(e.pgerror or f"Unexpected database error: {e}")
+
 
 # Main entry point
 if __name__ == "__main__":
-    setup_logging()  # initalize logging
+    configure_logging(service_name="mqtt")
     logger.info("Launching MQTT ingester...")
 
-    db_connection = connect_db()
-    if not db_connection:
-        logger.critical("Database connection failed. Exiting.")
-        exit(1)
+    try:
+        db_connection = connect_db()
+    except AppError as e:
+        logger.critical("Startup failed: %s", str(e))
+        raise
 
+    # Create MQTT client
     client = mqtt.Client(userdata={"db_connection": db_connection})
     client.on_connect = on_connect
     client.on_message = on_message
 
+    # Start the MQTT client
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         client.loop_forever()
     except KeyboardInterrupt:
         logger.info("Interrupted by user.")
+    except Exception:
+        logger.exception("Fatal error in MQTT loop")
+        raise
     finally:
         if db_connection:
             db_connection.close()

@@ -1,6 +1,7 @@
 from mqtt_client.db_writer import insert_sensor_data
 from datetime import datetime
 import logging
+from exceptions import ValidationError, DatabaseError
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ VALID_RANGES = {
 def parse_payload(payload: dict):
     """
     Extract device_id, timestamp (as datetime), and value from payload dict.
+    Raises ValidationError on invalid payload.
     """
     try:
         value = payload.get("value")
@@ -22,63 +24,41 @@ def parse_payload(payload: dict):
         meta = payload.get("meta", {})
         device_id = meta.get("device_id")
 
-        # Check valid
         if device_id is None or timestamp_str is None or value is None:
-            logger.error("Missing required fields in payload.")
-            raise ValueError("Missing required fields in payload.")
+            raise ValidationError("Missing required fields: device_id, timestamp, value")
 
         timestamp = datetime.fromtimestamp(int(timestamp_str))
         return device_id, timestamp, value
 
+    except ValidationError:
+        raise
     except Exception as e:
-        logger.error("Parsing payload failed, error=%s.", str(e))
-        return None, None, None
+        raise ValidationError(f"Invalid payload: {e}")
 
 
 def handle_metric(metric_name: str, topic: str, payload_dict: dict, db_conn):
     """
     Validate and write the metric value into the database.
+    Raises ValidationError for bad input and DatabaseError for DB issues.
     """
     device_id, timestamp, value = parse_payload(payload_dict)
 
-    # Check device_id exists
-    if device_id is None:
-        logger.warning(
-            "[INVALID_PAYLOAD] device_id missing. Skipping. topic=%s, raw_payload=%s",
-            topic, payload_dict
-        )
-        return
-    # Check timestamp exists
-    if timestamp is None:
-        logger.warning(
-            "[INVALID_PAYLOAD] timestamp missing. Skipping. topic=%s, raw_payload=%s",
-            topic, payload_dict
-        )
-        return
-    
-        # Check if metric is recognized
+    # Metric name validation
     if metric_name not in VALID_RANGES:
-        logger.warning(
-            "[UNKNOWN_METRIC] Metric '%s' is not recognized. Skipping. topic=%s, payload=%s",
-            metric_name, topic, payload_dict
-        )
-        return
+        raise ValidationError(f"Unknown metric '{metric_name}'")
 
-    # Validate value range
+    # Value validation
     min_val, max_val = VALID_RANGES[metric_name]
     if not isinstance(value, (int, float)):
-        logger.warning(
-            "[INVALID_VALUE_TYPE] Non-numeric value for Metric '%s'. device_id=%s, value=%s, timestamp=%s, raw_payload=%s",
-            metric_name, device_id, value, timestamp, payload_dict
-        )
-        return
+        raise ValidationError(f"Non-numeric value for '{metric_name}'")
     if not (min_val <= value <= max_val):
-        logger.warning(
-            "[OUT_OF_RANGE] %s value out of range. device_id=%s, value=%s, expected=(%s-%s), timestamp=%s, raw_payload=%s",
-            metric_name, device_id, value, min_val, max_val, timestamp, payload_dict
-        )
-        return
+        raise ValidationError(f"Value out of range for '{metric_name}': {value} not in [{min_val}, {max_val}]")
 
     # Write to DB
-    kwargs = {metric_name: value}
-    insert_sensor_data(db_conn, device_id, timestamp, **kwargs)
+    try:
+        kwargs = {metric_name: value}
+        insert_sensor_data(db_conn, device_id, timestamp, **kwargs)
+    except DatabaseError:
+        raise
+    except Exception as e:
+        raise DatabaseError(f"Insert failed: {e}")

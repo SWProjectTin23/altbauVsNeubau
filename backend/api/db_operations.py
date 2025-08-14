@@ -82,7 +82,8 @@ def device_exists(device_id):
     # Query to check if the device exists
     query = "SELECT EXISTS(SELECT 1 FROM sensor_data WHERE device_id = %s);"
     cursor.execute(query, (device_id,)) # Execute the query 
-    exists = cursor.fetchone()[0] # Fetch the result
+    result = cursor.fetchone()
+    exists = result[0] if result is not None else False  # Fetch the result safely
 
     # Close the cursor and connection
     cursor.close()
@@ -270,13 +271,14 @@ def get_latest_device_data_from_db(device_id):
 
     # If a row is found, serialize it; otherwise, return an empty list
     if row:
+        row_dict = serialize_row(dict(row))
         return {
-            "device_id": serialize_row(row)["device_id"],
-            "unix_timestamp_seconds": serialize_row(row)["unix_timestamp_seconds"],
-            "humidity": serialize_row(row)["humidity"],
-            "temperature": serialize_row(row)["temperature"],
-            "pollen": serialize_row(row)["pollen"],
-            "particulate_matter": serialize_row(row)["particulate_matter"]
+            "device_id": row_dict["device_id"],
+            "unix_timestamp_seconds": row_dict["unix_timestamp_seconds"],
+            "humidity": row_dict["humidity"],
+            "temperature": row_dict["temperature"],
+            "pollen": row_dict["pollen"],
+            "particulate_matter": row_dict["particulate_matter"]
         }
     else:
         return []  # Return an empty list if no data is found
@@ -312,7 +314,8 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
         """
     count_params = (device_id1, device_id2, start, end)
     cursor.execute(count_query, count_params)
-    total_raw_entries = cursor.fetchone()[0]
+    count_result = cursor.fetchone()
+    total_raw_entries = count_result[0] if count_result is not None else 0
     print(f"[DEBUG] total_raw_entries in time range: {total_raw_entries}")
     print(f"[DEBUG] num_buckets: {num_buckets}")
 
@@ -350,18 +353,22 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
         conn.close()
 
         # Format the result
-        result = {f"device_{device_id1}": [], f"device_{device_id2}": []}
+        result = {
+            "data": {
+                f"device_{device_id1}": [],
+                f"device_{device_id2}": []
+            },
+            "message": None,
+            "status": "success"
+        }
         for row in rows:
             entry = {
                 "timestamp": int(row["unix_timestamp_seconds"]),
                 "value": float(row[metric]) if row[metric] is not None else None
             }
-            result[f"device_{row['device_id']}"].append(entry)
-        if num_buckets > total_raw_entries:
+            result["data"][f"device_{row['device_id']}"].append(entry)
+        if num_buckets is not None and total_raw_entries is not None and num_buckets > total_raw_entries:
             result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries})."
-        else:
-            result["message"]= None
-        result["status"] = "success"
         print(f"[DEBUG] Result with all data: {result}")
         return result # Return the result with all data
 
@@ -373,7 +380,12 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
             FROM sensor_data
             WHERE device_id = %s OR device_id = %s
         """, (device_id1, device_id2))
-        start, end = cursor.fetchone()
+        result = cursor.fetchone()
+        if result is None or result[0] is None or result[1] is None:
+            cursor.close()
+            conn.close()
+            raise ValueError("No data found for the specified devices and time range.")
+        start, end = result
 
     # Calculate bucket size
     bucket_size = max(1, int((end - start) / num_buckets))
@@ -405,15 +417,20 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     conn.close()
 
     # Format the result
-    result = {f"device_{device_id1}": [], f"device_{device_id2}": []}
+    result = {
+        "data": {
+            f"device_{device_id1}": [],
+            f"device_{device_id2}": []
+        },
+        "message": None,
+        "status": "success"
+    }
     for row in rows:
         entry = {
             "timestamp": int(row["bucket_start"]),
             "value": float(row["avg_value"]) if row["avg_value"] is not None else None
         }
-        result[f"device_{row['device_id']}"].append(entry)
-        result["message"]= None
-        result["status"] = "success"
+        result["data"][f"device_{row['device_id']}"].append(entry)
 
     if num_buckets > total_raw_entries:
         result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries}). Data may be averaged over larger intervals."

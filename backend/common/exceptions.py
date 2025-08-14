@@ -86,6 +86,20 @@ class DatabaseTimeoutError(DatabaseError):
         super().__init__(message, error_code="DB_TIMEOUT", details=details)
 
 
+ # --New--
+class DatabaseQueryTimeoutError(DatabaseError):
+    """Database query exceeded configured timeout."""
+    def __init__(self, message: str, *, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(message, error_code="DB_QUERY_TIMEOUT", details=details)
+
+class DatabaseOperationalError(DatabaseError):
+    """Low-level operational failure (connection dropped, DNS fail, etc.)."""
+    def __init__(self, message: str, *, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(message, error_code="DB_OPERATIONAL_ERROR", details=details)
+
+# ---- New, ingestion-focused errors (non-HTTP, NO status_code) ----
+
+
 class MQTTError(AppError):
     """Generic MQTT error (non-HTTP)."""
     pass
@@ -100,7 +114,6 @@ class MQTTTimeoutError(MQTTError):
     def __init__(self, message: str, *, details: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(message, error_code="MQTT_TIMEOUT", details=details)
 
-# ---- New, ingestion-focused errors (non-HTTP, NO status_code) ----
 
 class IngestError(AppError):
     """Base class for MQTT ingestion domain errors."""

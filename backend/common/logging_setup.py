@@ -37,16 +37,8 @@ def _json_sink(message):
         "env": record["extra"].get("env", "dev"),
     }
 
-    # duration_ms is optional: include only when provided
-    if "duration_ms" in record["extra"] and record["extra"]["duration_ms"] is not None:
-        try:
-            payload["duration_ms"] = int(record["extra"]["duration_ms"])
-        except Exception:
-            # If a non-int sneaks in, omit to keep schema clean
-            pass
-
     # Merge domain-specific fields from `extra` while avoiding baseline keys
-    baseline_keys = {"service", "module", "env", "event", "duration_ms"}
+    baseline_keys = {"service", "module", "env", "event"}
     for k, v in record["extra"].items():
         if k in baseline_keys:
             continue

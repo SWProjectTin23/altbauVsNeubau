@@ -13,7 +13,7 @@ from mqtt_client.handler import handle_metric
 from mqtt_client.logging_setup import setup_logger, log_event
 
 # Structured logger bound to this module/service
-logger = setup_logger(service="ingestor", module="main_ingester")
+logger = setup_logger(service="ingester", module="main_ingester")
 
 # Metric mapping from topic suffix to database column
 metric_map = {

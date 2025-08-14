@@ -64,7 +64,7 @@ def setup_logger(service: str, module: str, env: Optional[str] = None, level: st
     Configure Loguru to emit v0-compliant JSON logs to stdout.
     Returns a bound logger which already carries `service`, `module`, and `env`.
 
-    - service: logical service name, e.g., "ingestor" or "api"
+    - service: logical service name, e.g., "ingester" or "api"
     - module: source component within the service, e.g., "handler" or "routes"
     - env: "dev" | "staging" | "prod" (default reads APP_ENV or falls back to "dev")
     - level: minimal level to emit (default "INFO")

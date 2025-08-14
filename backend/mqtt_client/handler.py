@@ -18,7 +18,7 @@ from exceptions.exceptions import (
 )
 
 # Bind a logger for this module; every log line carries service/module/env automatically.
-logger = setup_logger(service="ingestor", module="handler")
+logger = setup_logger(service="ingester", module="handler")
 
 # Allowed ranges for each metric (inclusive).
 VALID_RANGES = {

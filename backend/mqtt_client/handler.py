@@ -6,7 +6,7 @@ from typing import Any, Dict, Tuple
 
 from mqtt_client.db_writer import insert_sensor_data
 from logging_setup import setup_logger, log_event, DurationTimer
-from exceptions import (
+from exceptions.exceptions import (
     AppError,
     PayloadValidationError,
     UnknownMetricError,

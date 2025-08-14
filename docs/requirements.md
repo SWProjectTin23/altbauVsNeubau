@@ -81,17 +81,20 @@
 
 
 ---
+
+
 | **Systemelement**        | **Funktion**                                | **Fehlermöglichkeit**                       | **Ursache**                                | **Auswirkung**                             |
 |--------------------------|---------------------------------------------|---------------------------------------------|---------------------------------------------|---------------------------------------------|
-| Arduino                  | Erfassen von Sensordaten                    | Sensor liefert keine Daten                  | Sensor defekt, Kabelbruch, Stromversorgung  | Keine Daten in DB / auf Website             |
+| Arduino                  | Erfassen von Sensordaten                    | Sensor liefert keine Daten                  | Sensor defekt, Kabelbruch, Stromversorgung  | Keine Daten in DB / auf Website, Beinflussung anderer Sensor |
 | Temperatursensor         | Messen der Temperatur                       | Temperatur wird nicht korrekt gemessen      | Sensor falsch kalibriert / beschädigt       | Falsche Anzeige auf Website                 |
-| Luftqualitätssensor      | Messen der Luftqualität                     | Keine oder falsche Messwerte                | Sensor zu alt, falsch konfiguriert          | Irreführende Daten auf Website              |
+| Luftqualitätssensor      | Messen der Luftqualität                     | Keine oder falsche Messwerte                | Sensor falsch kalibriert / beschädigt       | Falsche Anzeige auf Website             |
 | MQTT-Verbindung          | Übertragen der Daten vom Arduino zum Server | Verbindung bricht ab                        | Netzwerkausfall, Broker nicht erreichbar    | Datenverlust / keine Anzeige                |
 | MQTT-Broker              | Empfang der Messdaten                       | Broker ist nicht erreichbar                 | Serverausfall                               | Daten gehen verloren, System nicht nutzbar  |
-| Datenbank                | Speichern der Daten                         | Daten werden nicht gespeichert              | Datenbankserver überlastet / fehlerhaft     | Keine Historie / Anzeige auf Website        |
-| Website                  | Anzeigen der Messdaten                      | Seite ist nicht verfügbar                   | Server down, DNS-Probleme, Backendfehler    | Nutzer kann Daten nicht sehen               |
+| Datenbank                | Speichern der Daten                         | Daten werden nicht gespeichert              | Datenbankserver nicht erreichbar / fehlerhaft     | Keine Historie / Anzeige auf Website        |
+| Website                  | Anzeigen der Messdaten                      | Seite ist nicht verfügbar Verbindung zum Backend nicht möglich                   | Server down, DNS-Probleme, Backendfehler    | Nutzer kann Daten nicht sehen               |
 | Webserver                | Hosten der Website                          | Webserver ist offline                       | Stromausfall, Hosting-Probleme              | Keine Datenanzeige                          |
 
+_Stand: 14.08.2025_
 
 ---
 # Qualitätsmerkmale 

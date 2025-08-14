@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './Warnings.css';
+import { api } from "../utils/api";              
+import { feLogger } from "../logging/logger"; 
 
 const levelLabels = {
   redLow: "Warnwert niedrig rot",
@@ -9,12 +11,11 @@ const levelLabels = {
   redHigh: "Warnwert hoch rot",
 };
 
-const API_BASE = "http://localhost:5001/api";
-
 export default function Warnings() {
   const [warnings, setWarnings] = useState(null);
   const [originalWarnings, setOriginalWarnings] = useState(null); 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
@@ -70,9 +71,9 @@ const mapUiToApi = (uiData) => ({
 
   useEffect(() => {
     const fetchThresholds = async () => {
+      feLogger.info("warnings", "fetch-start", {});
       try {
-        const response = await fetch(`${API_BASE}/thresholds`);
-        const result = await response.json();
+        const result = await api.get("/thresholds");
         if (
           result.status === "success" &&
           Array.isArray(result.data) &&
@@ -80,18 +81,19 @@ const mapUiToApi = (uiData) => ({
         ) {
           const mapped = mapApiToUi(result.data[0]);
           setWarnings(mapped);
-          setOriginalWarnings(mapped); // Originalwerte speichern
+          setOriginalWarnings(mapped);
+          feLogger.info("warnings", "fetch-success", { count: result.data.length });
         } else {
           setSaveError("Warnwerte konnten nicht geladen werden.");
+          feLogger.warn("warnings", "fetch-empty", { result });
         }
       } catch (error) {
-        console.error("Fehler beim Laden:", error);
         setSaveError("Fehler beim Abrufen der Warnwerte.");
+        feLogger.error("warnings", "fetch-failed", { error: String(error) });
       } finally {
         setLoading(false);
       }
     };
-
     fetchThresholds();
   }, []);
 
@@ -115,20 +117,23 @@ const mapUiToApi = (uiData) => ({
 };
 
   const handleChange = (metric, level, value) => {
-    setWarnings((prev) => ({
-      ...prev,
-      [metric]: {
-        ...prev[metric],
-        [level]: Number(value),
-      },
-    }));
+    setWarnings((prev) => {
+      const next = {
+        ...prev,
+        [metric]: { ...prev[metric], [level]: Number(value) },
+      };
+      feLogger.debug("warnings", "field-change", { metric, level, value: Number(value) });
+      return next;
+    });
   };
 
   const handleBack = () => {
     setBackError(null);
     if (isDirty()) {
       setBackError("Es gibt ungespeicherte Änderungen. Bitte speichern oder Änderungen verwerfen.");
+      feLogger.warn("warnings", "back-blocked-unsaved", {});
     } else {
+      feLogger.info("warnings", "navigate-back", {});
       navigate("/");
     }
   };
@@ -140,32 +145,40 @@ const mapUiToApi = (uiData) => ({
     const validationError = validateWarnings(warnings);
     if (validationError) {
       setSaveError(validationError);
+      feLogger.warn("warnings", "validation-failed", { validationError, warnings });
       return;
     }
 
+    setSaving(true);
+    feLogger.info("warnings", "save-start", {});
+
+
     try {
       const payload = mapUiToApi(warnings);
-      const response = await fetch(`${API_BASE}/thresholds`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const result = await response.json();
+      const result = await api.post("/thresholds", payload);  
       if (result.status === "success") {
-        setOriginalWarnings(warnings); 
+        setOriginalWarnings(warnings);
+        feLogger.info("warnings", "save-success", { warnings });
         navigate("/");
       } else {
-        setSaveError(result.message || "Fehler beim Speichern der Warnwerte.");
-        console.error("Fehler beim Speichern:", result);
+        const msg = result.message || "Fehler beim Speichern der Warnwerte.";
+        setSaveError(msg);
+        feLogger.warn("warnings", "save-error", { result });
       }
     } catch (error) {
-      console.error("Fehler beim Speichern:", error);
       setSaveError("Ein Fehler ist beim Speichern aufgetreten.");
-    }
+      feLogger.error("warnings", "save-failed", { error: String(error) });
+    } finally {
+      setSaving(false);
+    } 
   };
 
   if (loading || !warnings) {
-    return <div className="warnings-wrapper"><p>Lade Warnwerte...</p></div>;
+    return (
+      <div className="warnings-wrapper">
+        <p>Lade Warnwerte...</p>
+      </div>
+    );
   }
 
   return (
@@ -187,9 +200,7 @@ const mapUiToApi = (uiData) => ({
                       type="number"
                       className="input-field"
                       value={value}
-                      onChange={(e) =>
-                        handleChange(metric, level, e.target.value)
-                      }
+                      onChange={(e) => handleChange(metric, level, e.target.value)}
                     />
                   </div>
                 ))}
@@ -197,24 +208,22 @@ const mapUiToApi = (uiData) => ({
             </div>
           ))}
           <div className="button-group">
-            <button type="button" className="btn" onClick={saveThresholds}>
-              Speichern
+            <button
+              type="button"
+              className="btn"
+              onClick={saveThresholds}
+              disabled={!isDirty() || saving}          // + deaktivieren wenn unverändert/saving
+              aria-busy={saving ? "true" : "false"}
+            >
+              {saving ? "Speichern..." : "Speichern"}
             </button>
             <button type="button" className="btn" onClick={handleBack}>
               Zurück zum Dashboard
             </button>
           </div>
         </form>
-        {saveError && (
-        <div className="save-error" style={{ marginTop: 16 }}>
-            {saveError}
-          </div>
-        )}
-        {backError && (
-        <div className="save-error" style={{ marginTop: 16 }}>
-            {backError}
-          </div>
-        )}
+        {saveError && <div className="save-error" style={{ marginTop: 16 }}>{saveError}</div>}
+        {backError && <div className="save-error" style={{ marginTop: 16 }}>{backError}</div>}
       </div>
     </div>
   );

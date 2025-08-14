@@ -11,17 +11,17 @@ import {
 } from "recharts";
 import './Dashboard.css';
 
-// Define the base API URL
-const API_BASE = "http://localhost:5001/api";
+import { api } from "../utils/api";
+import { feLogger } from "../logging/logger";
 
 // Define the metrics and intervals
-const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinstaub"];
 
 const metricUnits = {
   Temperatur: "°C",
   Luftfeuchtigkeit: "%",
   Pollen: "µg/m³",
-  Feinpartikel: "µg/m³",
+  Feinstaub: "µg/m³",
 };
 
 const intervals = ["3h", "1d", "1w", "1m"];
@@ -46,7 +46,7 @@ const mapApiToUi = (data) => ({
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
-  Feinpartikel: {
+  Feinstaub: {
     redLow: data.particulate_matter_min_hard,
     yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
@@ -188,6 +188,16 @@ export default function Dashboard() {
   const gapMap = { "3h": 600, "1d": 3600, "1w": 10800, "1m": 43200 };
   const gapSeconds = gapMap[selectedInterval] || 600;
 
+  const timeAsync = async (label, fn) => {
+    const t0 = performance.now();
+    try {
+      return await fn();
+    } finally {
+      const ms = +(performance.now() - t0).toFixed(0);
+      feLogger.debug("dashboard", "timing", { label, ms });
+    }
+  };
+
   function CustomLegend() {
     const legendItems = [
       { value: "Altbau", color: "#e2001a" },
@@ -229,26 +239,35 @@ export default function Dashboard() {
   }
 
   function handleLegendClick({ dataKey }) {
-    setVisibleLines((prev) => ({
-      ...prev,
-      [dataKey]: !prev[dataKey],
-    }));
+    setVisibleLines((prev) => {
+      const next = { ...prev, [dataKey]: !prev[dataKey] };
+      feLogger.info("dashboard", "legend-toggle", { line: dataKey, enabled: next[dataKey] });
+      return next;
+    });
   }
+
+  // Log interval changes
+  useEffect(() => {
+    feLogger.debug("dashboard", "interval-change", { selectedInterval });
+  }, [selectedInterval]);
 
   // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/thresholds`);
-        const json = await res.json();
-        if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
-          setWarningThresholds(mapApiToUi(json.data[0]));
-        } else {
-          console.error("No thresholds available.");
+      feLogger.debug("dashboard", "thresholds-fetch-start", {});
+      await timeAsync("thresholds", async () => {
+        try {
+          const json = await api.get("/thresholds");
+          if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
+            setWarningThresholds(mapApiToUi(json.data[0]));
+            feLogger.info("dashboard", "thresholds-loaded", { count: json.data.length });
+          } else {
+            feLogger.warn("dashboard", "no-thresholds", { json });
+          }
+        } catch (err) {
+          feLogger.error("dashboard", "thresholds-failed", { error: String(err) });
         }
-      } catch (err) {
-        console.error("Error loading warning thresholds:", err);
-      }
+      });
     };
     fetchThresholds();
   }, []);
@@ -257,18 +276,21 @@ export default function Dashboard() {
   useEffect(() => {
     let intervalId;
     const fetchData = async () => {
+      feLogger.debug("dashboard", "current-fetch-start", {});
+      await timeAsync("current-latest", async () => {
       try {
         setCurrentError(null);
-        const [altbauRes, neubauRes] = await Promise.all([
-          fetch(`${API_BASE}/devices/1/latest`),
-          fetch(`${API_BASE}/devices/2/latest`),
+        const [altbauJson, neubauJson] = await Promise.all([
+          api.get("/devices/1/latest"),
+          api.get("/devices/2/latest"),
         ]);
-
-        const altbauJson = await altbauRes.json();
-        const neubauJson = await neubauRes.json();
 
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
+          feLogger.warn("dashboard", "current-error", {
+            altbau: altbauJson,
+            neubau: neubauJson,
+          });
           return;
         }
 
@@ -277,21 +299,27 @@ export default function Dashboard() {
             Temperatur: parseFloat(altbauJson.data.temperature),
             Luftfeuchtigkeit: parseFloat(altbauJson.data.humidity),
             Pollen: altbauJson.data.pollen,
-            Feinpartikel: altbauJson.data.particulate_matter,
+            Feinstaub: altbauJson.data.particulate_matter,
             timestamp: altbauJson.data.unix_timestamp_seconds,
           },
           Neubau: {
             Temperatur: parseFloat(neubauJson.data.temperature),
             Luftfeuchtigkeit: parseFloat(neubauJson.data.humidity),
             Pollen: neubauJson.data.pollen,
-            Feinpartikel: neubauJson.data.particulate_matter,
+            Feinstaub: neubauJson.data.particulate_matter,
             timestamp: neubauJson.data.unix_timestamp_seconds,
           },
         };
         setCurrentData(mapped);
-      } catch (err) {
-        setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
-      }
+        feLogger.debug("dashboard", "current-fetched", {
+          altbauTs: mapped.Altbau.timestamp,
+          neubauTs: mapped.Neubau.timestamp,
+        });
+        } catch (err) {
+          setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
+          feLogger.error("dashboard", "current-failed", { error: String(err) });
+        }
+      });
     };
 
     fetchData();
@@ -304,45 +332,58 @@ export default function Dashboard() {
     let intervalId;
   
     async function fetchChartData() {
-      try {
-        setChartError(null);
-        const newChartData = {};
-        let errorMessage = null;
-        for (const metric of metrics) {
-          const apiMetric = {
-            Temperatur: "temperature",
-            Luftfeuchtigkeit: "humidity",
-            Pollen: "pollen",
-            Feinpartikel: "particulate_matter"
-          }[metric];
-          const { start, end } = getIntervalRange(selectedInterval);
-
-          const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`;
-          const res = await fetch(url);
-          const json = await res.json();
-
-          if (json.status === "success") {
-            // Separat die Daten für jedes Gerät verarbeiten
-            const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
-            const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
-            
-            newChartData[metric] = { altbauData, neubauData };
-          } else {
-            errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
-            newChartData[metric] = { altbauData: [], neubauData: [] };
-          }
-        }
-        if (errorMessage) {
-          setChartError(errorMessage);
-        } else {
+      feLogger.debug("dashboard", "chart-fetch-start", { selectedInterval });
+      await timeAsync("chart-" + selectedInterval, async () => {
+        try {
           setChartError(null);
+          const newChartData = {};
+          let errorMessage = null;
+
+          for (const metric of metrics) {
+            const apiMetric = {
+              Temperatur: "temperature",
+              Luftfeuchtigkeit: "humidity",
+              Pollen: "pollen",
+              Feinstaub: "particulate_matter"
+            }[metric];
+
+            const { start, end } = getIntervalRange(selectedInterval);
+            const json = await api.get(
+              `/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`
+            );
+
+            if (json.status === "success") {
+              const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
+              const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
+              newChartData[metric] = { altbauData, neubauData };
+
+              const nullsAlt = altbauData.filter(d => d.value == null).length;
+              const nullsNeu = neubauData.filter(d => d.value == null).length;
+              feLogger.debug("dashboard", "chart-series", {
+                metric,
+                altbauPoints: altbauData.length,
+                neubauPoints: neubauData.length,
+                altbauNulls: nullsAlt,
+                neubauNulls: nullsNeu
+              });
+            } else {
+              errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
+              newChartData[metric] = { altbauData: [], neubauData: [] };
+              feLogger.warn("dashboard", "chart-error", { metric, json });
+            }
+          }
+
+          setChartError(errorMessage || null);
+          setChartData(newChartData);
+          window.selectedInterval = selectedInterval;
+          feLogger.info("dashboard", "chart-fetched", { metrics: metrics.length, selectedInterval });
+        } catch (err) {
+          setChartError("Diagrammdaten konnten nicht geladen werden.");
+          feLogger.error("dashboard", "chart-failed", { error: String(err), selectedInterval });
         }
-        setChartData(newChartData);
-        window.selectedInterval = selectedInterval;
-      } catch (err) {
-        setChartError("Diagrammdaten konnten nicht geladen werden.");
-      }
+      });
     }
+
     fetchChartData();
     intervalId = setInterval(fetchChartData, 30000);
     return () => clearInterval(intervalId);
@@ -433,7 +474,7 @@ export default function Dashboard() {
 
             return (
               <div key={metric} className="chart-card"
-                onClick={() => setOpenChart(metric)}
+                onClick={() => { feLogger.info("dashboard", "modal-open", { metric }); setOpenChart(metric); }}
                 style={{ cursor: "pointer" }}
                 title="Für Großansicht klicken"
               >
@@ -492,7 +533,7 @@ export default function Dashboard() {
           <div className="chart-modal-content" onClick={e => e.stopPropagation()}>
             <button
             className="chart-modal-close"
-            onClick={() => setOpenChart(null)}
+            onClick={() => { feLogger.info("dashboard", "modal-close", { metric: openChart }); setOpenChart(null); }}
             aria-label="Schließen"
             >
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none">

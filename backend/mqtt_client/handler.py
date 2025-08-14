@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 
 from mqtt_client.db_writer import insert_sensor_data
-from logging_setup import setup_logger, log_event, DurationTimer
-from exceptions.exceptions import (
+from common.logging_setup import setup_logger, log_event, DurationTimer
+from common.exceptions import (
     AppError,
     PayloadValidationError,
     UnknownMetricError,

@@ -10,7 +10,7 @@ from mqtt_client.mqtt_config import (
     DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 )
 from mqtt_client.handler import handle_metric
-from mqtt_client.logging_setup import setup_logger, log_event
+from common.logging_setup import setup_logger, log_event
 
 # Structured logger bound to this module/service
 logger = setup_logger(service="ingester", module="main_ingester")

@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from exceptions.exceptions import (
+from common.exceptions import (
     DatabaseError,
     DatabaseTimeoutError,
     DatabaseConnectionError,

@@ -22,7 +22,7 @@ services:
       - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (5000)
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -67,7 +67,7 @@ services:
       - pg-network
     healthcheck:
       # IMPORTANT: Health check inside the container must use the internal port (3000)
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -108,21 +108,41 @@ services:
       - pg-network
     restart: unless-stopped
 
+
   uptime-kuma:
     build:
       context: ./kuma-data
       dockerfile: Dockerfile
     container_name: uptime-kuma
     ports:
-      - "3002:3001"
-    networks:
-      - pg-network
+      - "${KUMA_PORT}:3001"
+    environment:
+      KUMA_ADMIN_USERNAME: ${KUMA_ADMIN_USERNAME}
+      KUMA_ADMIN_PASSWORD: ${KUMA_ADMIN_PASSWORD}
+      KUMA_FORCE_SET_PASSWORD: "true"
     restart: unless-stopped
 
+  kuma-seed:
+    build:
+      context: ./kuma-data
+      dockerfile: Dockerfile.seed
+    container_name: kuma-seed
+    depends_on:
+      uptime-kuma:
+        condition: service_healthy
+    environment:
+      KUMA_URL: http://uptime-kuma:3001
+      KUMA_USER: ${KUMA_ADMIN_USERNAME}
+      KUMA_PASS: ${KUMA_ADMIN_PASSWORD}
+    restart: "no"
+
+
+secrets:
+  kuma_admin_password:
+    file: ./kuma_admin_password.secret   # lege diese Datei mit NUR dem Passwort an
 
 volumes: # This section must be at the same level as 'services'
   db_data:
-  kuma-data: 
 
 networks: # Definition of networks
   pg-network:

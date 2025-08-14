@@ -1,0 +1,43 @@
+{
+  "version": "1.23.16",
+  "monitorList": [
+    {
+      "name": "Frontend",
+      "type": "http",
+      "url": "http://frontend:80",
+      "method": "GET",
+      "interval": 60,
+      "timeout": 48,
+      "accepted_statuscodes": ["200-299"],
+      "active": true
+    },
+    {
+      "name": "Backend-API",
+      "type": "http",
+      "url": "http://backend-api:5000/",
+      "method": "GET",
+      "interval": 60,
+      "timeout": 48,
+      "accepted_statuscodes": ["200-299"],
+      "active": true
+    },
+    {
+      "name": "Database",
+      "type": "port",
+      "hostname": "db",
+      "port": 5432,
+      "interval": 60,
+      "timeout": 48,
+      "active": true
+    },
+    {
+      "name": "MQTT",
+      "type": "port",
+      "hostname": "isd-gerold.de",
+      "port": 1883,
+      "interval": 60,
+      "timeout": 48,
+      "active": true
+    }
+  ]
+}

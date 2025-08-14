@@ -1,0 +1,436 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1755084496746,2234,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-1,,true,,581561,917,3,3,null,0,0,16
+1755084496809,2172,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-1,text,true,,581561,917,3,3,http://altbau_vs_neubau_frontend/,21,0,16
+1755084496809,24,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-1,text,true,,1103,130,3,3,http://altbau_vs_neubau_frontend/,21,0,16
+1755084496873,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-1,bin,true,,15650,145,3,3,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084496874,1949,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-1,text,true,,1076,162,3,3,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1948,0,1391
+1755084498942,35,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-1,text,true,,1148,166,3,3,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",35,0,0
+1755084498979,1,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-1,text,true,,556795,156,3,3,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084498980,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-1,text,true,,5789,158,3,3,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,1,0,0
+1755084499150,324,SET metrics,200,OK,Users 1-1,text,true,,0,0,3,3,null,0,0,0
+1755084497743,1823,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-2,,true,,581561,917,3,3,null,0,0,0
+1755084497744,1822,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-2,text,true,,581561,917,3,3,http://altbau_vs_neubau_frontend/,1,0,0
+1755084497744,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-2,text,true,,1103,130,3,3,http://altbau_vs_neubau_frontend/,1,0,0
+1755084497746,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-2,bin,true,,15650,145,3,3,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084497747,1783,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-2,text,true,,1076,162,3,3,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1783,0,1218
+1755084499530,31,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-2,text,true,,1148,166,3,3,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",31,0,0
+1755084499562,3,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-2,text,true,,556795,156,3,3,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084499565,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-2,text,true,,5789,158,3,3,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084499566,2,SET metrics,200,OK,Users 1-2,text,true,,0,0,3,3,null,0,0,0
+1755084499568,126,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-2,,true,,10587,915,3,3,null,0,0,2
+1755084499475,219,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-1,,true,,10587,915,3,3,null,0,0,3
+1755084499570,31,comparison temperature (3h),200,OK,Users 1-2,text,true,,2680,229,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073699&end=1755084499&buckets=360,31,0,0
+1755084499602,28,comparison humidity (3h),200,OK,Users 1-2,text,true,,2629,226,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073699&end=1755084499&buckets=360,28,0,0
+1755084499563,32,comparison temperature (3h),200,OK,Users 1-1,text,true,,2680,229,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073699&end=1755084499&buckets=360,32,0,1
+1755084499631,31,comparison pollen (3h),200,OK,Users 1-2,text,true,,2625,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073699&end=1755084499&buckets=360,31,0,1
+1755084499598,32,comparison humidity (3h),200,OK,Users 1-1,text,true,,2629,226,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073699&end=1755084499&buckets=360,32,0,0
+1755084499663,31,comparison particulate_matter (3h),200,OK,Users 1-2,text,true,,2653,236,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073699&end=1755084499&buckets=360,31,0,1
+1755084499631,31,comparison pollen (3h),200,OK,Users 1-1,text,true,,2625,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073699&end=1755084499&buckets=360,31,0,1
+1755084499663,31,comparison particulate_matter (3h),200,OK,Users 1-1,text,true,,2653,236,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073699&end=1755084499&buckets=360,31,0,1
+1755084499695,146,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-1,,true,,10587,895,4,4,null,0,0,3
+1755084499712,31,comparison temperature (1d),200,OK,Users 1-1,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998099&end=1755084499&buckets=360,31,0,1
+1755084499744,32,comparison humidity (1d),200,OK,Users 1-1,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998099&end=1755084499&buckets=360,32,0,1
+1755084499777,31,comparison pollen (1d),200,OK,Users 1-1,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998099&end=1755084499&buckets=360,31,0,0
+1755084499809,32,comparison particulate_matter (1d),200,OK,Users 1-1,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998099&end=1755084499&buckets=360,32,0,1
+1755084499694,147,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-2,,true,,10587,895,4,4,null,0,0,3
+1755084499712,31,comparison temperature (1d),200,OK,Users 1-2,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998099&end=1755084499&buckets=360,31,0,1
+1755084499744,32,comparison humidity (1d),200,OK,Users 1-2,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998099&end=1755084499&buckets=360,32,0,1
+1755084499777,31,comparison pollen (1d),200,OK,Users 1-2,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998099&end=1755084499&buckets=360,31,0,0
+1755084499809,32,comparison particulate_matter (1d),200,OK,Users 1-2,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998099&end=1755084499&buckets=360,32,0,1
+1755084499842,146,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-2,,true,,10587,895,4,4,null,0,0,3
+1755084499859,32,comparison temperature (1w),200,OK,Users 1-2,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479699&end=1755084499&buckets=360,32,0,1
+1755084499892,31,comparison humidity (1w),200,OK,Users 1-2,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479699&end=1755084499&buckets=360,31,0,0
+1755084499924,32,comparison pollen (1w),200,OK,Users 1-2,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479699&end=1755084499&buckets=360,32,0,1
+1755084499957,31,comparison particulate_matter (1w),200,OK,Users 1-2,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479699&end=1755084499&buckets=360,31,0,1
+1755084499841,147,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-1,,true,,10587,895,4,4,null,0,0,4
+1755084499859,33,comparison temperature (1w),200,OK,Users 1-1,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479699&end=1755084499&buckets=360,32,0,1
+1755084499892,31,comparison humidity (1w),200,OK,Users 1-1,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479699&end=1755084499&buckets=360,31,0,1
+1755084499924,33,comparison pollen (1w),200,OK,Users 1-1,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479699&end=1755084499&buckets=360,33,0,1
+1755084499957,31,comparison particulate_matter (1w),200,OK,Users 1-1,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479699&end=1755084499&buckets=360,31,0,1
+1755084499988,142,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-2,,true,,10587,895,4,4,null,0,0,2
+1755084500003,30,comparison temperature (1m),200,OK,Users 1-2,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492500&end=1755084500&buckets=360,30,0,0
+1755084499989,141,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-1,,true,,10587,895,4,4,null,0,0,2
+1755084500003,30,comparison temperature (1m),200,OK,Users 1-1,text,true,,2680,224,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492500&end=1755084500&buckets=360,30,0,0
+1755084500034,32,comparison humidity (1m),200,OK,Users 1-1,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492500&end=1755084500&buckets=360,32,0,1
+1755084500067,31,comparison pollen (1m),200,OK,Users 1-1,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492500&end=1755084500&buckets=360,31,0,1
+1755084500099,31,comparison particulate_matter (1m),200,OK,Users 1-1,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492500&end=1755084500&buckets=360,31,0,0
+1755084500034,32,comparison humidity (1m),200,OK,Users 1-2,text,true,,2629,221,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492500&end=1755084500&buckets=360,32,0,1
+1755084500067,31,comparison pollen (1m),200,OK,Users 1-2,text,true,,2625,219,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492500&end=1755084500&buckets=360,31,0,1
+1755084500099,31,comparison particulate_matter (1m),200,OK,Users 1-2,text,true,,2653,231,4,4,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492500&end=1755084500&buckets=360,31,0,0
+1755084498743,1797,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-3,,true,,581561,917,2,2,null,0,0,0
+1755084498744,1796,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-3,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084498744,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-3,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084498746,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-3,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084498747,1757,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-3,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1757,0,1195
+1755084500504,32,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-3,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",32,0,0
+1755084500536,3,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-3,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084500539,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-3,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,1,0,0
+1755084500540,1,SET metrics,200,OK,Users 1-3,text,true,,0,0,2,2,null,0,0,0
+1755084500541,123,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-3,,true,,10587,915,2,2,null,0,0,3
+1755084500542,30,comparison temperature (3h),200,OK,Users 1-3,text,true,,2680,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073700&end=1755084500&buckets=360,30,0,0
+1755084500573,31,comparison humidity (3h),200,OK,Users 1-3,text,true,,2629,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073700&end=1755084500&buckets=360,31,0,1
+1755084500604,30,comparison pollen (3h),200,OK,Users 1-3,text,true,,2625,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073700&end=1755084500&buckets=360,30,0,1
+1755084500635,29,comparison particulate_matter (3h),200,OK,Users 1-3,text,true,,2653,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073700&end=1755084500&buckets=360,29,0,1
+1755084500665,122,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-3,,true,,10587,895,3,3,null,0,0,0
+1755084500666,30,comparison temperature (1d),200,OK,Users 1-3,text,true,,2680,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998100&end=1755084500&buckets=360,30,0,0
+1755084500697,30,comparison humidity (1d),200,OK,Users 1-3,text,true,,2629,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998100&end=1755084500&buckets=360,30,0,0
+1755084500728,29,comparison pollen (1d),200,OK,Users 1-3,text,true,,2625,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998100&end=1755084500&buckets=360,29,0,0
+1755084500758,29,comparison particulate_matter (1d),200,OK,Users 1-3,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998100&end=1755084500&buckets=360,29,0,0
+1755084500787,125,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-3,,true,,10587,895,3,3,null,0,0,2
+1755084500788,30,comparison temperature (1w),200,OK,Users 1-3,text,true,,2680,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479700&end=1755084500&buckets=360,30,0,1
+1755084500819,30,comparison humidity (1w),200,OK,Users 1-3,text,true,,2629,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479700&end=1755084500&buckets=360,30,0,1
+1755084500850,31,comparison pollen (1w),200,OK,Users 1-3,text,true,,2625,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479700&end=1755084500&buckets=360,31,0,0
+1755084500882,30,comparison particulate_matter (1w),200,OK,Users 1-3,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479700&end=1755084500&buckets=360,30,0,0
+1755084500912,130,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-3,,true,,10587,895,3,3,null,0,0,3
+1755084500913,30,comparison temperature (1m),200,OK,Users 1-3,text,true,,2680,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492500&end=1755084500&buckets=360,30,0,0
+1755084500944,32,comparison humidity (1m),200,OK,Users 1-3,text,true,,2629,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492500&end=1755084500&buckets=360,31,0,1
+1755084500976,32,comparison pollen (1m),200,OK,Users 1-3,text,true,,2625,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492500&end=1755084500&buckets=360,32,0,1
+1755084501009,33,comparison particulate_matter (1m),200,OK,Users 1-3,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492501&end=1755084501&buckets=360,33,0,1
+1755084499742,1772,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-4,,true,,581561,917,2,2,null,0,0,0
+1755084499743,1771,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-4,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084499743,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-4,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084499745,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-4,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084499746,1733,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-4,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1733,0,1174
+1755084501480,31,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-4,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",31,0,0
+1755084501511,3,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-4,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084501514,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-4,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084501515,0,SET metrics,200,OK,Users 1-4,text,true,,0,0,2,2,null,0,0,0
+1755084501515,125,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-4,,true,,10587,915,2,2,null,0,0,3
+1755084501516,31,comparison temperature (3h),200,OK,Users 1-4,text,true,,2680,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073701&end=1755084501&buckets=360,31,0,1
+1755084501548,29,comparison humidity (3h),200,OK,Users 1-4,text,true,,2629,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073701&end=1755084501&buckets=360,29,0,0
+1755084501578,31,comparison pollen (3h),200,OK,Users 1-4,text,true,,2625,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073701&end=1755084501&buckets=360,31,0,1
+1755084501610,30,comparison particulate_matter (3h),200,OK,Users 1-4,text,true,,2653,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073701&end=1755084501&buckets=360,30,0,1
+1755084501640,124,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-4,,true,,10587,895,3,3,null,0,0,3
+1755084501641,30,comparison temperature (1d),200,OK,Users 1-4,text,true,,2680,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998101&end=1755084501&buckets=360,30,0,1
+1755084501672,30,comparison humidity (1d),200,OK,Users 1-4,text,true,,2629,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998101&end=1755084501&buckets=360,30,0,0
+1755084501703,29,comparison pollen (1d),200,OK,Users 1-4,text,true,,2625,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998101&end=1755084501&buckets=360,29,0,1
+1755084501733,31,comparison particulate_matter (1d),200,OK,Users 1-4,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998101&end=1755084501&buckets=360,31,0,1
+1755084501764,125,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-4,,true,,10587,895,3,3,null,0,0,1
+1755084501765,30,comparison temperature (1w),200,OK,Users 1-4,text,true,,2680,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479701&end=1755084501&buckets=360,30,0,0
+1755084501795,30,comparison humidity (1w),200,OK,Users 1-4,text,true,,2629,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479701&end=1755084501&buckets=360,30,0,1
+1755084501826,31,comparison pollen (1w),200,OK,Users 1-4,text,true,,2625,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479701&end=1755084501&buckets=360,31,0,0
+1755084501858,30,comparison particulate_matter (1w),200,OK,Users 1-4,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479701&end=1755084501&buckets=360,30,0,0
+1755084501889,122,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-4,,true,,10587,895,3,3,null,0,0,2
+1755084501889,30,comparison temperature (1m),200,OK,Users 1-4,text,true,,2680,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492501&end=1755084501&buckets=360,30,0,1
+1755084501920,29,comparison humidity (1m),200,OK,Users 1-4,text,true,,2629,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492501&end=1755084501&buckets=360,29,0,0
+1755084501950,29,comparison pollen (1m),200,OK,Users 1-4,text,true,,2625,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492501&end=1755084501&buckets=360,29,0,0
+1755084501980,31,comparison particulate_matter (1m),200,OK,Users 1-4,text,true,,2653,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492501&end=1755084501&buckets=360,31,0,1
+1755084500742,1815,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-5,,true,,581561,917,2,2,null,0,0,0
+1755084500742,1815,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-5,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084500742,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-5,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084500743,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-5,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084500744,1777,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-5,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1777,0,1215
+1755084502520,34,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-5,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",33,0,0
+1755084502554,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-5,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084502556,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-5,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084502557,0,SET metrics,200,OK,Users 1-5,text,true,,0,0,2,2,null,0,0,0
+1755084502557,123,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-5,,true,,10757,915,2,2,null,0,0,3
+1755084502558,31,comparison temperature (3h),200,OK,Users 1-5,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073702&end=1755084502&buckets=360,31,0,1
+1755084502590,30,comparison humidity (3h),200,OK,Users 1-5,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073702&end=1755084502&buckets=360,29,0,1
+1755084502621,29,comparison pollen (3h),200,OK,Users 1-5,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073702&end=1755084502&buckets=360,29,0,0
+1755084502651,29,comparison particulate_matter (3h),200,OK,Users 1-5,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073702&end=1755084502&buckets=360,29,0,1
+1755084502681,126,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-5,,true,,10757,895,3,3,null,0,0,3
+1755084502681,32,comparison temperature (1d),200,OK,Users 1-5,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998102&end=1755084502&buckets=360,32,0,1
+1755084502714,30,comparison humidity (1d),200,OK,Users 1-5,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998102&end=1755084502&buckets=360,30,0,1
+1755084502745,33,comparison pollen (1d),200,OK,Users 1-5,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998102&end=1755084502&buckets=360,32,0,0
+1755084502778,29,comparison particulate_matter (1d),200,OK,Users 1-5,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998102&end=1755084502&buckets=360,29,0,1
+1755084502808,125,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-5,,true,,10757,895,3,3,null,0,0,2
+1755084502809,30,comparison temperature (1w),200,OK,Users 1-5,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479702&end=1755084502&buckets=360,30,0,0
+1755084502840,30,comparison humidity (1w),200,OK,Users 1-5,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479702&end=1755084502&buckets=360,30,0,0
+1755084502871,31,comparison pollen (1w),200,OK,Users 1-5,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479702&end=1755084502&buckets=360,31,0,1
+1755084502902,31,comparison particulate_matter (1w),200,OK,Users 1-5,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479702&end=1755084502&buckets=360,31,0,1
+1755084502933,124,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-5,,true,,10757,895,3,3,null,0,0,2
+1755084502934,30,comparison temperature (1m),200,OK,Users 1-5,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492502&end=1755084502&buckets=360,30,0,0
+1755084502965,30,comparison humidity (1m),200,OK,Users 1-5,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492502&end=1755084502&buckets=360,30,0,0
+1755084502995,31,comparison pollen (1m),200,OK,Users 1-5,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492502&end=1755084502&buckets=360,31,0,1
+1755084503027,30,comparison particulate_matter (1m),200,OK,Users 1-5,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492503&end=1755084503&buckets=360,29,0,1
+1755084501742,1762,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-6,,true,,581561,917,2,2,null,0,0,0
+1755084501742,1762,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-6,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084501742,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-6,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084501744,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-6,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084501744,1725,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-6,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1725,0,1162
+1755084503468,32,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-6,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",32,0,0
+1755084503501,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-6,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084503503,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-6,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084503504,1,SET metrics,200,OK,Users 1-6,text,true,,0,0,2,2,null,0,0,0
+1755084503505,122,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-6,,true,,10757,915,2,2,null,0,0,1
+1755084503506,30,comparison temperature (3h),200,OK,Users 1-6,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073703&end=1755084503&buckets=360,30,0,0
+1755084503537,29,comparison humidity (3h),200,OK,Users 1-6,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073703&end=1755084503&buckets=360,29,0,0
+1755084503567,29,comparison pollen (3h),200,OK,Users 1-6,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073703&end=1755084503&buckets=360,29,0,0
+1755084503597,30,comparison particulate_matter (3h),200,OK,Users 1-6,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073703&end=1755084503&buckets=360,30,0,1
+1755084503627,124,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-6,,true,,10757,895,3,3,null,0,0,4
+1755084503628,30,comparison temperature (1d),200,OK,Users 1-6,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998103&end=1755084503&buckets=360,30,0,1
+1755084503658,30,comparison humidity (1d),200,OK,Users 1-6,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998103&end=1755084503&buckets=360,30,0,1
+1755084503689,30,comparison pollen (1d),200,OK,Users 1-6,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998103&end=1755084503&buckets=360,30,0,1
+1755084503719,32,comparison particulate_matter (1d),200,OK,Users 1-6,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998103&end=1755084503&buckets=360,32,0,1
+1755084503752,122,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-6,,true,,10757,895,3,3,null,0,0,3
+1755084503752,31,comparison temperature (1w),200,OK,Users 1-6,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479703&end=1755084503&buckets=360,31,0,1
+1755084503783,30,comparison humidity (1w),200,OK,Users 1-6,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479703&end=1755084503&buckets=360,30,0,1
+1755084503814,30,comparison pollen (1w),200,OK,Users 1-6,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479703&end=1755084503&buckets=360,30,0,1
+1755084503845,29,comparison particulate_matter (1w),200,OK,Users 1-6,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479703&end=1755084503&buckets=360,29,0,0
+1755084503874,125,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-6,,true,,10757,895,3,3,null,0,0,3
+1755084503875,29,comparison temperature (1m),200,OK,Users 1-6,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492503&end=1755084503&buckets=360,29,0,0
+1755084503905,32,comparison humidity (1m),200,OK,Users 1-6,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492503&end=1755084503&buckets=360,31,0,1
+1755084503937,31,comparison pollen (1m),200,OK,Users 1-6,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492503&end=1755084503&buckets=360,31,0,1
+1755084503969,30,comparison particulate_matter (1m),200,OK,Users 1-6,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492503&end=1755084503&buckets=360,30,0,1
+1755084502740,1783,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-7,,true,,581561,917,2,2,null,0,0,0
+1755084502741,1782,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-7,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084502741,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-7,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084502742,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-7,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084502743,1746,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-7,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1746,0,1189
+1755084504489,31,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-7,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",31,0,0
+1755084504520,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-7,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084504523,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-7,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084504523,1,SET metrics,200,OK,Users 1-7,text,true,,0,0,2,2,null,0,0,0
+1755084504524,126,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-7,,true,,10757,915,2,2,null,0,0,2
+1755084504524,32,comparison temperature (3h),200,OK,Users 1-7,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073704&end=1755084504&buckets=360,32,0,1
+1755084504557,30,comparison humidity (3h),200,OK,Users 1-7,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073704&end=1755084504&buckets=360,29,0,0
+1755084504587,32,comparison pollen (3h),200,OK,Users 1-7,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073704&end=1755084504&buckets=360,32,0,1
+1755084504620,30,comparison particulate_matter (3h),200,OK,Users 1-7,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073704&end=1755084504&buckets=360,30,0,0
+1755084504650,122,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-7,,true,,10757,895,3,3,null,0,0,2
+1755084504651,29,comparison temperature (1d),200,OK,Users 1-7,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998104&end=1755084504&buckets=360,29,0,0
+1755084504680,30,comparison humidity (1d),200,OK,Users 1-7,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998104&end=1755084504&buckets=360,30,0,1
+1755084504711,30,comparison pollen (1d),200,OK,Users 1-7,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998104&end=1755084504&buckets=360,30,0,0
+1755084504741,31,comparison particulate_matter (1d),200,OK,Users 1-7,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998104&end=1755084504&buckets=360,31,0,1
+1755084504772,123,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-7,,true,,10757,895,3,3,null,0,0,1
+1755084504773,31,comparison temperature (1w),200,OK,Users 1-7,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479704&end=1755084504&buckets=360,31,0,1
+1755084504805,29,comparison humidity (1w),200,OK,Users 1-7,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479704&end=1755084504&buckets=360,29,0,0
+1755084504835,29,comparison pollen (1w),200,OK,Users 1-7,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479704&end=1755084504&buckets=360,29,0,0
+1755084504865,30,comparison particulate_matter (1w),200,OK,Users 1-7,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479704&end=1755084504&buckets=360,29,0,0
+1755084504895,123,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-7,,true,,10757,895,3,3,null,0,0,1
+1755084504896,30,comparison temperature (1m),200,OK,Users 1-7,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492504&end=1755084504&buckets=360,30,0,0
+1755084504927,30,comparison humidity (1m),200,OK,Users 1-7,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492504&end=1755084504&buckets=360,30,0,0
+1755084504958,30,comparison pollen (1m),200,OK,Users 1-7,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492504&end=1755084504&buckets=360,30,0,0
+1755084504988,30,comparison particulate_matter (1m),200,OK,Users 1-7,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492504&end=1755084504&buckets=360,30,0,1
+1755084503739,1790,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-8,,true,,581561,917,2,2,null,0,0,1
+1755084503739,1790,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-8,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,1
+1755084503739,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-8,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,1
+1755084503741,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-8,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084503742,1751,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-8,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1751,0,1193
+1755084505493,33,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-8,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",33,0,0
+1755084505526,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-8,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084505529,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-8,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084505529,1,SET metrics,200,OK,Users 1-8,text,true,,0,0,2,2,null,0,0,0
+1755084505530,125,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-8,,true,,10757,915,2,2,null,0,0,2
+1755084505531,31,comparison temperature (3h),200,OK,Users 1-8,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073705&end=1755084505&buckets=360,31,0,0
+1755084505563,29,comparison humidity (3h),200,OK,Users 1-8,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073705&end=1755084505&buckets=360,29,0,0
+1755084505593,30,comparison pollen (3h),200,OK,Users 1-8,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073705&end=1755084505&buckets=360,30,0,1
+1755084505624,31,comparison particulate_matter (3h),200,OK,Users 1-8,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073705&end=1755084505&buckets=360,31,0,1
+1755084505655,123,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-8,,true,,10757,895,3,3,null,0,0,1
+1755084505656,29,comparison temperature (1d),200,OK,Users 1-8,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998105&end=1755084505&buckets=360,29,0,0
+1755084505686,30,comparison humidity (1d),200,OK,Users 1-8,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998105&end=1755084505&buckets=360,30,0,0
+1755084505717,30,comparison pollen (1d),200,OK,Users 1-8,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998105&end=1755084505&buckets=360,30,0,0
+1755084505747,31,comparison particulate_matter (1d),200,OK,Users 1-8,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998105&end=1755084505&buckets=360,31,0,1
+1755084505778,128,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-8,,true,,10757,895,3,3,null,0,0,4
+1755084505779,32,comparison temperature (1w),200,OK,Users 1-8,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479705&end=1755084505&buckets=360,31,0,1
+1755084505811,29,comparison humidity (1w),200,OK,Users 1-8,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479705&end=1755084505&buckets=360,29,0,1
+1755084505841,30,comparison pollen (1w),200,OK,Users 1-8,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479705&end=1755084505&buckets=360,30,0,1
+1755084505871,35,comparison particulate_matter (1w),200,OK,Users 1-8,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479705&end=1755084505&buckets=360,35,0,1
+1755084505906,135,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-8,,true,,10757,895,3,3,null,0,0,2
+1755084505907,35,comparison temperature (1m),200,OK,Users 1-8,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492505&end=1755084505&buckets=360,35,0,0
+1755084505943,33,comparison humidity (1m),200,OK,Users 1-8,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492505&end=1755084505&buckets=360,33,0,1
+1755084505977,32,comparison pollen (1m),200,OK,Users 1-8,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492505&end=1755084505&buckets=360,32,0,1
+1755084506010,31,comparison particulate_matter (1m),200,OK,Users 1-8,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492506&end=1755084506&buckets=360,31,0,0
+1755084504739,1796,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-9,,true,,581561,917,2,2,null,0,0,1
+1755084504740,1795,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-9,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,1
+1755084504740,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-9,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,1
+1755084504741,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-9,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084504742,1759,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-9,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1759,0,1199
+1755084506501,31,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-9,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",31,0,0
+1755084506533,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-9,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084506535,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-9,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084506535,1,SET metrics,200,OK,Users 1-9,text,true,,0,0,2,2,null,0,0,0
+1755084506536,127,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-9,,true,,10757,915,2,2,null,0,0,2
+1755084506537,29,comparison temperature (3h),200,OK,Users 1-9,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073706&end=1755084506&buckets=360,29,0,0
+1755084506567,33,comparison humidity (3h),200,OK,Users 1-9,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073706&end=1755084506&buckets=360,33,0,1
+1755084506601,31,comparison pollen (3h),200,OK,Users 1-9,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073706&end=1755084506&buckets=360,31,0,0
+1755084506632,31,comparison particulate_matter (3h),200,OK,Users 1-9,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073706&end=1755084506&buckets=360,31,0,1
+1755084506663,130,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-9,,true,,10757,895,3,3,null,0,0,2
+1755084506664,35,comparison temperature (1d),200,OK,Users 1-9,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998106&end=1755084506&buckets=360,35,0,1
+1755084506700,29,comparison humidity (1d),200,OK,Users 1-9,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998106&end=1755084506&buckets=360,29,0,0
+1755084506730,31,comparison pollen (1d),200,OK,Users 1-9,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998106&end=1755084506&buckets=360,31,0,0
+1755084506762,31,comparison particulate_matter (1d),200,OK,Users 1-9,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998106&end=1755084506&buckets=360,31,0,1
+1755084506794,123,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-9,,true,,10757,895,3,3,null,0,0,1
+1755084506795,29,comparison temperature (1w),200,OK,Users 1-9,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479706&end=1755084506&buckets=360,29,0,0
+1755084506825,30,comparison humidity (1w),200,OK,Users 1-9,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479706&end=1755084506&buckets=360,30,0,0
+1755084506856,30,comparison pollen (1w),200,OK,Users 1-9,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479706&end=1755084506&buckets=360,30,0,0
+1755084506887,30,comparison particulate_matter (1w),200,OK,Users 1-9,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479706&end=1755084506&buckets=360,30,0,1
+1755084506918,121,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-9,,true,,10757,895,3,3,null,0,0,4
+1755084506918,29,comparison temperature (1m),200,OK,Users 1-9,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492506&end=1755084506&buckets=360,29,0,1
+1755084506948,31,comparison humidity (1m),200,OK,Users 1-9,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492506&end=1755084506&buckets=360,31,0,1
+1755084506980,29,comparison pollen (1m),200,OK,Users 1-9,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492506&end=1755084506&buckets=360,29,0,1
+1755084507010,29,comparison particulate_matter (1m),200,OK,Users 1-9,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492507&end=1755084507&buckets=360,29,0,1
+1755084505739,1807,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-10,,true,,581561,917,2,2,null,0,0,0
+1755084505740,1806,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-10,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084505740,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-10,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084505741,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-10,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084505742,1767,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-10,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1767,0,1205
+1755084507510,34,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-10,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",34,0,0
+1755084507544,3,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-10,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084507547,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-10,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084507547,1,SET metrics,200,OK,Users 1-10,text,true,,0,0,2,2,null,0,0,0
+1755084507548,122,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-10,,true,,10757,915,2,2,null,0,0,1
+1755084507549,30,comparison temperature (3h),200,OK,Users 1-10,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073707&end=1755084507&buckets=360,30,0,0
+1755084507579,30,comparison humidity (3h),200,OK,Users 1-10,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073707&end=1755084507&buckets=360,30,0,1
+1755084507610,29,comparison pollen (3h),200,OK,Users 1-10,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073707&end=1755084507&buckets=360,29,0,0
+1755084507640,30,comparison particulate_matter (3h),200,OK,Users 1-10,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073707&end=1755084507&buckets=360,30,0,0
+1755084507670,123,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-10,,true,,10757,895,3,3,null,0,0,2
+1755084507671,29,comparison temperature (1d),200,OK,Users 1-10,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998107&end=1755084507&buckets=360,29,0,0
+1755084507700,30,comparison humidity (1d),200,OK,Users 1-10,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998107&end=1755084507&buckets=360,30,0,1
+1755084507730,30,comparison pollen (1d),200,OK,Users 1-10,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998107&end=1755084507&buckets=360,30,0,1
+1755084507761,32,comparison particulate_matter (1d),200,OK,Users 1-10,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998107&end=1755084507&buckets=360,32,0,0
+1755084507794,124,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-10,,true,,10757,895,3,3,null,0,0,2
+1755084507794,31,comparison temperature (1w),200,OK,Users 1-10,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479707&end=1755084507&buckets=360,31,0,1
+1755084507826,30,comparison humidity (1w),200,OK,Users 1-10,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479707&end=1755084507&buckets=360,30,0,0
+1755084507857,31,comparison pollen (1w),200,OK,Users 1-10,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479707&end=1755084507&buckets=360,31,0,0
+1755084507888,30,comparison particulate_matter (1w),200,OK,Users 1-10,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479707&end=1755084507&buckets=360,30,0,1
+1755084507918,125,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-10,,true,,10757,895,3,3,null,0,0,0
+1755084507919,29,comparison temperature (1m),200,OK,Users 1-10,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492507&end=1755084507&buckets=360,29,0,0
+1755084507949,32,comparison humidity (1m),200,OK,Users 1-10,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492507&end=1755084507&buckets=360,32,0,0
+1755084507982,30,comparison pollen (1m),200,OK,Users 1-10,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492507&end=1755084507&buckets=360,30,0,0
+1755084508013,30,comparison particulate_matter (1m),200,OK,Users 1-10,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492508&end=1755084508&buckets=360,30,0,0
+1755084506739,1800,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-11,,true,,581561,917,2,2,null,0,0,0
+1755084506740,1799,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-11,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084506740,0,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-11,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084506741,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-11,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084506742,1761,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-11,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1761,0,1200
+1755084508504,33,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-11,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",33,0,0
+1755084508537,3,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-11,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,1,0,0
+1755084508540,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-11,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084508541,0,SET metrics,200,OK,Users 1-11,text,true,,0,0,2,2,null,0,0,0
+1755084508541,126,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-11,,true,,10757,915,2,2,null,0,0,1
+1755084508542,30,comparison temperature (3h),200,OK,Users 1-11,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073708&end=1755084508&buckets=360,30,0,0
+1755084508573,31,comparison humidity (3h),200,OK,Users 1-11,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073708&end=1755084508&buckets=360,31,0,0
+1755084508605,31,comparison pollen (3h),200,OK,Users 1-11,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073708&end=1755084508&buckets=360,31,0,1
+1755084508637,30,comparison particulate_matter (3h),200,OK,Users 1-11,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073708&end=1755084508&buckets=360,29,0,0
+1755084508667,122,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-11,,true,,10757,895,3,3,null,0,0,1
+1755084508668,29,comparison temperature (1d),200,OK,Users 1-11,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998108&end=1755084508&buckets=360,29,0,0
+1755084508697,31,comparison humidity (1d),200,OK,Users 1-11,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998108&end=1755084508&buckets=360,31,0,1
+1755084508729,30,comparison pollen (1d),200,OK,Users 1-11,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998108&end=1755084508&buckets=360,30,0,0
+1755084508760,29,comparison particulate_matter (1d),200,OK,Users 1-11,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998108&end=1755084508&buckets=360,29,0,0
+1755084508790,123,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-11,,true,,10757,895,3,3,null,0,0,1
+1755084508790,31,comparison temperature (1w),200,OK,Users 1-11,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479708&end=1755084508&buckets=360,31,0,1
+1755084508822,30,comparison humidity (1w),200,OK,Users 1-11,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479708&end=1755084508&buckets=360,30,0,0
+1755084508853,29,comparison pollen (1w),200,OK,Users 1-11,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479708&end=1755084508&buckets=360,29,0,0
+1755084508883,30,comparison particulate_matter (1w),200,OK,Users 1-11,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479708&end=1755084508&buckets=360,30,0,0
+1755084508913,122,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-11,,true,,10757,895,3,3,null,0,0,1
+1755084508914,31,comparison temperature (1m),200,OK,Users 1-11,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492508&end=1755084508&buckets=360,31,0,0
+1755084508946,29,comparison humidity (1m),200,OK,Users 1-11,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492508&end=1755084508&buckets=360,29,0,0
+1755084508976,29,comparison pollen (1m),200,OK,Users 1-11,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492508&end=1755084508&buckets=360,29,0,1
+1755084509006,29,comparison particulate_matter (1m),200,OK,Users 1-11,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492509&end=1755084509&buckets=360,29,0,0
+1755084507741,1763,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-12,,true,,581561,917,2,2,null,0,0,0
+1755084507742,1762,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-12,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084507742,0,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-12,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084507743,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-12,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084507744,1725,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-12,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1725,0,1162
+1755084509470,32,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-12,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",32,0,0
+1755084509502,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-12,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084509504,0,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-12,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,0,0,0
+1755084509505,0,SET metrics,200,OK,Users 1-12,text,true,,0,0,2,2,null,0,0,0
+1755084509505,124,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-12,,true,,10757,915,2,2,null,0,0,1
+1755084509506,31,comparison temperature (3h),200,OK,Users 1-12,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073709&end=1755084509&buckets=360,31,0,0
+1755084509538,29,comparison humidity (3h),200,OK,Users 1-12,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073709&end=1755084509&buckets=360,29,0,0
+1755084509568,29,comparison pollen (3h),200,OK,Users 1-12,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073709&end=1755084509&buckets=360,29,0,1
+1755084509598,31,comparison particulate_matter (3h),200,OK,Users 1-12,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073709&end=1755084509&buckets=360,31,0,0
+1755084509629,124,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-12,,true,,10757,895,3,3,null,0,0,2
+1755084509630,29,comparison temperature (1d),200,OK,Users 1-12,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998109&end=1755084509&buckets=360,29,0,1
+1755084509660,30,comparison humidity (1d),200,OK,Users 1-12,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998109&end=1755084509&buckets=360,30,0,0
+1755084509691,30,comparison pollen (1d),200,OK,Users 1-12,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998109&end=1755084509&buckets=360,30,0,1
+1755084509722,31,comparison particulate_matter (1d),200,OK,Users 1-12,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998109&end=1755084509&buckets=360,31,0,0
+1755084509754,121,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-12,,true,,10757,895,3,3,null,0,0,2
+1755084509754,31,comparison temperature (1w),200,OK,Users 1-12,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479709&end=1755084509&buckets=360,30,0,1
+1755084509785,30,comparison humidity (1w),200,OK,Users 1-12,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479709&end=1755084509&buckets=360,30,0,1
+1755084509816,29,comparison pollen (1w),200,OK,Users 1-12,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479709&end=1755084509&buckets=360,29,0,0
+1755084509846,29,comparison particulate_matter (1w),200,OK,Users 1-12,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479709&end=1755084509&buckets=360,29,0,0
+1755084509876,125,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-12,,true,,10757,895,3,3,null,0,0,2
+1755084509876,31,comparison temperature (1m),200,OK,Users 1-12,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492509&end=1755084509&buckets=360,31,0,1
+1755084509908,31,comparison humidity (1m),200,OK,Users 1-12,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492509&end=1755084509&buckets=360,31,0,0
+1755084509939,31,comparison pollen (1m),200,OK,Users 1-12,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492509&end=1755084509&buckets=360,31,0,1
+1755084509971,30,comparison particulate_matter (1m),200,OK,Users 1-12,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492509&end=1755084509&buckets=360,30,0,0
+1755084508741,1778,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-13,,true,,581561,917,2,2,null,0,0,0
+1755084508741,1778,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-13,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084508741,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-13,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,1,0,0
+1755084508742,1,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-13,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,1,0,0
+1755084508743,1741,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-13,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1741,0,1176
+1755084510484,32,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-13,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",31,0,0
+1755084510516,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-13,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084510518,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-13,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,1,0,0
+1755084510519,1,SET metrics,200,OK,Users 1-13,text,true,,0,0,2,2,null,0,0,0
+1755084510521,123,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-13,,true,,10757,915,2,2,null,0,0,0
+1755084510522,30,comparison temperature (3h),200,OK,Users 1-13,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073710&end=1755084510&buckets=360,30,0,0
+1755084510553,30,comparison humidity (3h),200,OK,Users 1-13,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073710&end=1755084510&buckets=360,30,0,0
+1755084510584,30,comparison pollen (3h),200,OK,Users 1-13,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073710&end=1755084510&buckets=360,30,0,0
+1755084510615,29,comparison particulate_matter (3h),200,OK,Users 1-13,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073710&end=1755084510&buckets=360,29,0,0
+1755084510645,125,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-13,,true,,10757,895,3,3,null,0,0,4
+1755084510645,31,comparison temperature (1d),200,OK,Users 1-13,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998110&end=1755084510&buckets=360,31,0,1
+1755084510676,30,comparison humidity (1d),200,OK,Users 1-13,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998110&end=1755084510&buckets=360,30,0,1
+1755084510707,32,comparison pollen (1d),200,OK,Users 1-13,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998110&end=1755084510&buckets=360,31,0,1
+1755084510739,31,comparison particulate_matter (1d),200,OK,Users 1-13,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998110&end=1755084510&buckets=360,31,0,1
+1755084510770,123,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-13,,true,,10757,895,3,3,null,0,0,2
+1755084510771,31,comparison temperature (1w),200,OK,Users 1-13,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479710&end=1755084510&buckets=360,30,0,0
+1755084510802,30,comparison humidity (1w),200,OK,Users 1-13,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479710&end=1755084510&buckets=360,30,0,1
+1755084510833,30,comparison pollen (1w),200,OK,Users 1-13,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479710&end=1755084510&buckets=360,30,0,1
+1755084510864,29,comparison particulate_matter (1w),200,OK,Users 1-13,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479710&end=1755084510&buckets=360,29,0,0
+1755084510894,121,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-13,,true,,10757,895,3,3,null,0,0,3
+1755084510894,31,comparison temperature (1m),200,OK,Users 1-13,text,true,,2723,224,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492510&end=1755084510&buckets=360,30,0,1
+1755084510925,30,comparison humidity (1m),200,OK,Users 1-13,text,true,,2671,221,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492510&end=1755084510&buckets=360,30,0,1
+1755084510956,29,comparison pollen (1m),200,OK,Users 1-13,text,true,,2668,219,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492510&end=1755084510&buckets=360,29,0,0
+1755084510986,29,comparison particulate_matter (1m),200,OK,Users 1-13,text,true,,2695,231,3,3,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492510&end=1755084510&buckets=360,29,0,1
+1755084509740,1787,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-14,,true,,581561,917,2,2,null,0,0,0
+1755084509741,1786,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-14,text,true,,581561,917,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084509741,0,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-14,text,true,,1103,130,2,2,http://altbau_vs_neubau_frontend/,0,0,0
+1755084509742,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-14,bin,true,,15650,145,2,2,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084509743,1749,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-14,text,true,,1076,162,2,2,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1748,0,1186
+1755084511492,32,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-14,text,true,,1148,166,2,2,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",32,0,0
+1755084511524,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-14,text,true,,556795,156,2,2,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084511526,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-14,text,true,,5789,158,2,2,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,1,0,0
+1755084511527,0,SET metrics,200,OK,Users 1-14,text,true,,0,0,2,2,null,0,0,0
+1755084511527,126,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-14,,true,,10757,915,2,2,null,0,0,2
+1755084511528,31,comparison temperature (3h),200,OK,Users 1-14,text,true,,2723,229,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073711&end=1755084511&buckets=360,31,0,0
+1755084511559,32,comparison humidity (3h),200,OK,Users 1-14,text,true,,2671,226,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073711&end=1755084511&buckets=360,31,0,1
+1755084511591,31,comparison pollen (3h),200,OK,Users 1-14,text,true,,2668,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073711&end=1755084511&buckets=360,31,0,1
+1755084511623,30,comparison particulate_matter (3h),200,OK,Users 1-14,text,true,,2695,236,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073711&end=1755084511&buckets=360,30,0,0
+1755084511653,121,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-14,,true,,10757,895,2,2,null,0,0,1
+1755084511654,30,comparison temperature (1d),200,OK,Users 1-14,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998111&end=1755084511&buckets=360,30,0,0
+1755084511684,30,comparison humidity (1d),200,OK,Users 1-14,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998111&end=1755084511&buckets=360,30,0,1
+1755084511715,28,comparison pollen (1d),200,OK,Users 1-14,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998111&end=1755084511&buckets=360,28,0,0
+1755084511744,30,comparison particulate_matter (1d),200,OK,Users 1-14,text,true,,2695,231,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998111&end=1755084511&buckets=360,30,0,0
+1755084511774,121,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-14,,true,,10757,895,2,2,null,0,0,2
+1755084511775,29,comparison temperature (1w),200,OK,Users 1-14,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479711&end=1755084511&buckets=360,29,0,0
+1755084511805,29,comparison humidity (1w),200,OK,Users 1-14,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479711&end=1755084511&buckets=360,29,0,0
+1755084511834,30,comparison pollen (1w),200,OK,Users 1-14,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479711&end=1755084511&buckets=360,30,0,1
+1755084511865,30,comparison particulate_matter (1w),200,OK,Users 1-14,text,true,,2695,231,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479711&end=1755084511&buckets=360,30,0,1
+1755084511895,124,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-14,,true,,10757,895,2,2,null,0,0,1
+1755084511896,31,comparison temperature (1m),200,OK,Users 1-14,text,true,,2723,224,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492511&end=1755084511&buckets=360,31,0,1
+1755084511928,30,comparison humidity (1m),200,OK,Users 1-14,text,true,,2671,221,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492511&end=1755084511&buckets=360,30,0,0
+1755084511959,29,comparison pollen (1m),200,OK,Users 1-14,text,true,,2668,219,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492511&end=1755084511&buckets=360,29,0,0
+1755084511989,30,comparison particulate_matter (1m),200,OK,Users 1-14,text,true,,2695,231,2,2,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492511&end=1755084511&buckets=360,30,0,0
+1755084510740,1805,Initial Page TTLB,200,"Number of samples in transaction : 1, number of failing samples : 0",Users 1-15,,true,,581561,917,1,1,null,0,0,0
+1755084510740,1805,GET http://altbau_vs_neubau_frontend/,200,OK,Users 1-15,text,true,,581561,917,1,1,http://altbau_vs_neubau_frontend/,1,0,0
+1755084510740,1,GET http://altbau_vs_neubau_frontend/-0,200,OK,Users 1-15,text,true,,1103,130,1,1,http://altbau_vs_neubau_frontend/,1,0,0
+1755084510741,0,GET http://altbau_vs_neubau_frontend/-1,200,OK,Users 1-15,bin,true,,15650,145,1,1,http://altbau_vs_neubau_frontend/favicon-new.ico,0,0,0
+1755084510742,1755,GET http://altbau_vs_neubau_frontend/-2,200,OK,Users 1-15,text,true,,1076,162,1,1,"https://fonts.googleapis.com/css?family=Inter:400,700&display=swap",1755,0,1198
+1755084512497,45,GET http://altbau_vs_neubau_frontend/-3,200,OK,Users 1-15,text,true,,1148,166,1,1,"https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap",43,0,0
+1755084512542,2,GET http://altbau_vs_neubau_frontend/-4,200,OK,Users 1-15,text,true,,556795,156,1,1,http://altbau_vs_neubau_frontend/static/js/main.9281dd28.js,0,0,0
+1755084512544,1,GET http://altbau_vs_neubau_frontend/-5,200,OK,Users 1-15,text,true,,5789,158,1,1,http://altbau_vs_neubau_frontend/static/css/main.92c909e7.css,1,0,0
+1755084512545,0,SET metrics,200,OK,Users 1-15,text,true,,0,0,1,1,null,0,0,0
+1755084512546,123,Click 3h,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-15,,true,,10757,915,1,1,null,0,0,1
+1755084512547,30,comparison temperature (3h),200,OK,Users 1-15,text,true,,2723,229,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1755073711&end=1755084511&buckets=360,30,0,0
+1755084512578,29,comparison humidity (3h),200,OK,Users 1-15,text,true,,2671,226,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1755073711&end=1755084511&buckets=360,29,0,0
+1755084512608,30,comparison pollen (3h),200,OK,Users 1-15,text,true,,2668,224,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1755073711&end=1755084511&buckets=360,30,0,0
+1755084512639,30,comparison particulate_matter (3h),200,OK,Users 1-15,text,true,,2695,236,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1755073711&end=1755084511&buckets=360,30,0,1
+1755084512670,122,Click 1d,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-15,,true,,10757,895,1,1,null,0,0,1
+1755084512670,30,comparison temperature (1d),200,OK,Users 1-15,text,true,,2723,224,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754998111&end=1755084511&buckets=360,30,0,1
+1755084512701,30,comparison humidity (1d),200,OK,Users 1-15,text,true,,2671,221,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754998111&end=1755084511&buckets=360,30,0,0
+1755084512732,29,comparison pollen (1d),200,OK,Users 1-15,text,true,,2668,219,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754998111&end=1755084511&buckets=360,29,0,0
+1755084512762,30,comparison particulate_matter (1d),200,OK,Users 1-15,text,true,,2695,231,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754998111&end=1755084511&buckets=360,29,0,0
+1755084512792,126,Click 1w,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-15,,true,,10757,895,1,1,null,0,0,2
+1755084512792,31,comparison temperature (1w),200,OK,Users 1-15,text,true,,2723,224,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1754479711&end=1755084511&buckets=360,31,0,1
+1755084512823,33,comparison humidity (1w),200,OK,Users 1-15,text,true,,2671,221,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1754479711&end=1755084511&buckets=360,32,0,1
+1755084512856,30,comparison pollen (1w),200,OK,Users 1-15,text,true,,2668,219,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1754479711&end=1755084511&buckets=360,30,0,0
+1755084512887,31,comparison particulate_matter (1w),200,OK,Users 1-15,text,true,,2695,231,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1754479711&end=1755084511&buckets=360,31,0,0
+1755084512918,122,Click 1m,200,"Number of samples in transaction : 4, number of failing samples : 0",Users 1-15,,true,,10757,895,1,1,null,0,0,0
+1755084512919,29,comparison temperature (1m),200,OK,Users 1-15,text,true,,2723,224,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=temperature&start=1752492512&end=1755084512&buckets=360,29,0,0
+1755084512949,29,comparison humidity (1m),200,OK,Users 1-15,text,true,,2671,221,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=humidity&start=1752492512&end=1755084512&buckets=360,29,0,0
+1755084512979,30,comparison pollen (1m),200,OK,Users 1-15,text,true,,2668,219,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=pollen&start=1752492512&end=1755084512&buckets=360,29,0,0
+1755084513010,30,comparison particulate_matter (1m),200,OK,Users 1-15,text,true,,2695,231,1,1,http://altbau_vs_neubau_api:5000/api/comparison?device_1=1&device_2=2&metric=particulate_matter&start=1752492512&end=1755084512&buckets=360,30,0,0

@@ -1,0 +1,8 @@
+FROM python:3.12-alpine
+
+RUN pip install --no-cache-dir uptime-kuma-api
+
+WORKDIR /app
+COPY monitors/ /app/
+
+ENTRYPOINT ["python", "/app/seed_monitors.py"]

@@ -63,6 +63,7 @@ const getWarningClass = (thresholds, metric, value) => {
   return "";
 };
 
+// Function to format the X-axis label from a timestamp
 function formatXAxisLabelFromTimestamp(ts) {
   if (!ts) return "";
   const date = new Date(ts * 1000);
@@ -75,6 +76,7 @@ function formatXAxisLabelFromTimestamp(ts) {
   return `${datum}, ${zeit}`;
 }
 
+// Function to format the current timestamp
 function formatCurrentTimestamp(ts) {
   if (!ts) return "";
   const date = new Date(ts * 1000);
@@ -87,7 +89,10 @@ function formatCurrentTimestamp(ts) {
   });
 }
 
+// Function to render the custom tooltip
 function CustomTooltip({ active, payload, label, unit, metric }) {
+
+  // Render the tooltip content
   if (active && payload && payload.length) {
     const dateLabel = formatCurrentTimestamp(label);
 
@@ -111,6 +116,7 @@ function CustomTooltip({ active, payload, label, unit, metric }) {
   return null;
 }
 
+// Function to get the interval range based on the selected interval
 function getIntervalRange(selectedInterval) {
   const end = Math.floor(Date.now() / 1000);
   let start;
@@ -125,12 +131,7 @@ function getIntervalRange(selectedInterval) {
   return { start, end };
 }
 
-/**
- * Verarbeitet die Daten eines einzelnen Geräts und fügt bei Zeitlücken null-Punkte ein.
- * @param {Array<Object>} data - Das Daten-Array eines einzelnen Geräts.
- * @param {number} gapSeconds - Die Schwellenwert-Zeitlücke in Sekunden.
- * @returns {Array<Object>} - Das aufbereitete Daten-Array.
- */
+// Function to insert gaps in the data of a single device
 function insertGapsInSingleDeviceData(data, gapSeconds) {
   if (!data || data.length === 0) return [];
   const result = [];
@@ -138,16 +139,15 @@ function insertGapsInSingleDeviceData(data, gapSeconds) {
     if (i > 0) {
       const diff = d.timestamp - data[i - 1].timestamp;
       if (diff > gapSeconds) {
-        console.log(`Gap eingefügt bei ${d.timestamp}: Abstand ${diff} Sekunden`);
         result.push({ timestamp: data[i - 1].timestamp + gapSeconds, value: null });
       }
-      console.log(`Abstand zwischen ${data[i - 1].timestamp} und ${d.timestamp}: ${diff} Sekunden`);
     }
     result.push({ timestamp: d.timestamp, value: d.value });
   });
   return result;
-}
+} 
 
+// Function to get the minimum and maximum values from the data
 function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
   let min = Infinity;
   let max = -Infinity;

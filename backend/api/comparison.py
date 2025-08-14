@@ -31,7 +31,11 @@ class Comparison(Resource):
             data = compare_devices_over_time(device_id1, device_id2, metric, start, end, num_buckets)
 
             # If no data is found, return an empty list
-            if not data or (not data.get('device_1') and not data.get('device_2')):
+            devices_data = data.get("data") if isinstance(data, dict) else {}
+            device_1_data = devices_data.get(f"device_{device_id1}") if isinstance(devices_data, dict) else []
+            device_2_data = devices_data.get(f"device_{device_id2}") if isinstance(devices_data, dict) else []
+
+            if not device_1_data and not device_2_data:
                 return {
                     "device_1": [],
                     "device_2": [],
@@ -44,13 +48,13 @@ class Comparison(Resource):
 
             # Return the data in the expected format
             return {
-                "device_1": data.get('device_1', []),
-                "device_2": data.get('device_2', []),
+                "device_1": device_1_data,
+                "device_2": device_2_data,
                 "metric": metric,
                 "start": start,
                 "end": end,
-                "status": "success",
-                "message": data.get('message')  # Get the warning or None from the result
+                "status": data.get("status", "success") if isinstance(data, dict) else "success",
+                "message": data.get("message") if isinstance(data, dict) else None
             }, 200
 
         # Handle database connection errors

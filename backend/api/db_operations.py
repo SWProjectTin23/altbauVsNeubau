@@ -293,66 +293,72 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     Returns a dictionary with the comparison data.
     """
 
-    print(f"[DEBUG] compare_devices_over_time called with device_id1={device_id1}, device_id2={device_id2}, metric={metric}, start={start}, end={end}, num_buckets={num_buckets}")
-   
+    if start is not None:
+        try:
+            start = int(start)
+        except Exception:
+            print(f"[ERROR] start not convertible to int: {start}")
+            start = None
+    if end is not None:
+        try:
+            end = int(end)
+        except Exception:
+            print(f"[ERROR] end not convertible to int: {end}")
+            end = None
 
-    # Check if metric is specified
-    if metric not in ['humidity', 'temperature', 'pollen', 'particulate_matter']:
-        raise ValueError("Invalid metric. Must be one of: 'humidity', 'temperature', 'pollen', 'particulate_matter'.")
+    if start is None or end is None:
+        return {
+            "status": "error",
+            "message": "Start and end timestamps must be provided and convertible to integer."
+        }
 
-    # Get a database connection
+    # Log available range
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor) # Create a cursor with dictionary support
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
+    cursor.execute("""
+        SELECT MIN(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')) AS min_ts,
+               MAX(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')) AS max_ts
+        FROM sensor_data
+        WHERE device_id IN (%s, %s)
+    """, (device_id1, device_id2))
+    range_row = cursor.fetchone()
+    print(f"[DEBUG] DB range for devices: {range_row}")
 
     # Count the total number of raw entries for each device in the specified time range
     # This is used to check if num_buckets exceeds the total number of raw entries
     count_query = """
         SELECT COUNT(*) FROM sensor_data
         WHERE (device_id = %s OR device_id = %s)
-        AND EXTRACT(EPOCH FROM timestamp) >= %s
-        AND EXTRACT(EPOCH FROM timestamp) <= %s;
+        AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+        AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC';
         """
     count_params = (device_id1, device_id2, start, end)
+    print(f"[DEBUG] count_query: {count_query} | params: {count_params}")
     cursor.execute(count_query, count_params)
     count_result = cursor.fetchone()
     total_raw_entries = count_result[0] if count_result is not None else 0
     print(f"[DEBUG] total_raw_entries in time range: {total_raw_entries}")
-    print(f"[DEBUG] num_buckets: {num_buckets}")
-
 
     # If num_buckets is None, fetch all data for both devices
     if num_buckets is None or num_buckets > total_raw_entries:
         # Query to get all data for the specified devices and metric
         query = f"""
-            SELECT device_id, 
-            EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
-            {metric}
+            SELECT device_id,
+                   EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
+                   {metric}
             FROM sensor_data
             WHERE device_id IN (%s, %s)
+              AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+              AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+            ORDER BY timestamp ASC
         """
-
-        print(f"[DEBUG] Fetching all data for devices {device_id1} and {device_id2} for metric '{metric}'")
-
-        params = (device_id1, device_id2)
-
-        # Add time range conditions if provided
-        if start:
-            query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-            params += (start,)
-        if end:
-            query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-            params += (end,)
-        
-        # Execute the query with the parameters
+        params = (device_id1, device_id2, start, end)
+        print(f"[DEBUG] data_query: {query} | params: {params}")
         cursor.execute(query, params)
-        # Fetch all rows
         rows = cursor.fetchall()
-
-        # Close the cursor and connection
         cursor.close()
         conn.close()
 
-        # Format the result
         result = {
             "data": {
                 f"device_{device_id1}": [],
@@ -392,31 +398,25 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     print(f"[DEBUG] Calculated bucket_size: {bucket_size}")
 
     # Query to get the average value of the metric for each device in time buckets
-    query = f"""
-        SELECT
-            device_id,
-            FLOOR((EXTRACT(EPOCH FROM timestamp) - %s) / %s) AS bucket,
-            MIN(EXTRACT(EPOCH FROM timestamp)) AS bucket_start,
-            AVG({metric}) AS avg_value
+    bucket_query = f"""
+        SELECT device_id,
+               FLOOR((EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC') - %s) / %s) AS bucket,
+               MIN(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')) AS bucket_start,
+               AVG({metric}) AS avg_value
         FROM sensor_data
         WHERE (device_id = %s OR device_id = %s)
-          AND EXTRACT(EPOCH FROM timestamp) >= %s
-          AND EXTRACT(EPOCH FROM timestamp) <= %s
+          AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+          AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
         GROUP BY device_id, bucket
         ORDER BY device_id, bucket_start
     """
-
-    # Execute the query with the parameters
-    params = [start, bucket_size, device_id1, device_id2, start, end]
-    cursor.execute(query, params)
-    # Fetch all rows
+    bucket_params = [start, bucket_size, device_id1, device_id2, start, end]
+    print(f"[DEBUG] bucket_query: {bucket_query} | params: {bucket_params}")
+    cursor.execute(bucket_query, bucket_params)
     rows = cursor.fetchall()
-
-    # Close the cursor and connection
     cursor.close()
     conn.close()
 
-    # Format the result
     result = {
         "data": {
             f"device_{device_id1}": [],
@@ -432,10 +432,10 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
         }
         result["data"][f"device_{row['device_id']}"].append(entry)
 
-    if num_buckets > total_raw_entries:
-        result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries}). Data may be averaged over larger intervals."
-        print(f"[WARN] {result['message']}")
-    return result # Return the result with averaged data
+    if not rows:
+        result["message"] = "No data found for the specified devices and metric."
+    print(f"[DEBUG] Result with buckets: {result}")
+    return result
 
 # GET thresholds from the database
 # Returns a dict of thresholds

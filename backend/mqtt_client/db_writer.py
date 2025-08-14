@@ -8,7 +8,7 @@ from common.exceptions import (
 def insert_sensor_data(
     conn: Any,
     device_id: int,
-    timestamp: Any,  # timezone-aware datetime or DB-acceptable type
+    timestamp: Any,  
     *,
     temperature: Optional[float] = None,
     humidity: Optional[float] = None,
@@ -21,35 +21,47 @@ def insert_sensor_data(
     - On failure: rollback and raise a domain-specific exception.
     - Returns a small summary for the caller to include in logs.
     """
+    # Prevent inserting None values: skip fields that are None
+    if temperature is None and humidity is None and pollen is None and particulate_matter is None:
+        raise DatabaseError("No valid sensor values to insert (all are None)")
+
+    # Build dynamic query and params
+    fields = []
+    values = []
+    updates = []
+    if temperature is not None:
+        fields.append("temperature")
+        values.append(temperature)
+        updates.append("temperature = EXCLUDED.temperature")
+    if humidity is not None:
+        fields.append("humidity")
+        values.append(humidity)
+        updates.append("humidity = EXCLUDED.humidity")
+    if pollen is not None:
+        fields.append("pollen")
+        values.append(pollen)
+        updates.append("pollen = EXCLUDED.pollen")
+    if particulate_matter is not None:
+        fields.append("particulate_matter")
+        values.append(particulate_matter)
+        updates.append("particulate_matter = EXCLUDED.particulate_matter")
+
+    insert_query = f"""
+    INSERT INTO sensor_data (device_id, timestamp, {', '.join(fields)})
+    VALUES (%s, %s, {', '.join(['%s'] * len(fields))})
+    ON CONFLICT (device_id, timestamp)
+    DO UPDATE SET {', '.join(updates)};
+    """
+
     cursor = conn.cursor()
     try:
-        insert_query = """
-        INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter)
-        VALUES (%s, %s, %s, %s, %s, %s)
-        ON CONFLICT (device_id, timestamp)
-        DO UPDATE SET
-            temperature = COALESCE(EXCLUDED.temperature, sensor_data.temperature),
-            humidity = COALESCE(EXCLUDED.humidity, sensor_data.humidity),
-            pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
-            particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
-        """
-
         cursor.execute(
             insert_query,
-            (device_id, timestamp, temperature, humidity, pollen, particulate_matter),
+            (device_id, timestamp, *values),
         )
         conn.commit()
 
-        updated_fields: Dict[str, Any] = {}
-        if temperature is not None:
-            updated_fields["temperature"] = temperature
-        if humidity is not None:
-            updated_fields["humidity"] = humidity
-        if pollen is not None:
-            updated_fields["pollen"] = pollen
-        if particulate_matter is not None:
-            updated_fields["particulate_matter"] = particulate_matter
-
+        updated_fields: Dict[str, Any] = {k: v for k, v in zip(fields, values)}
         rows_affected = getattr(cursor, "rowcount", 1)
 
         return {

@@ -24,7 +24,7 @@ const metricUnits = {
   Feinstaub: "µg/m³",
 };
 
-const intervals = ["3h", "1d", "1w", "1m"];
+const intervals = ["30min", "1h", "3h", "6h", "12h", "1d", "1w", "1m"];
 
 // Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
@@ -114,7 +114,11 @@ function CustomTooltip({ active, payload, label, unit, metric }) {
 function getIntervalRange(selectedInterval) {
   const end = Math.floor(Date.now() / 1000);
   let start;
-  if (selectedInterval === "3h") start = end - 3 * 3600;
+  if (selectedInterval === "30min") start = end - 1800;
+  else if (selectedInterval === "1h") start = end - 3600;
+  else if (selectedInterval === "3h") start = end - 3 * 3600;
+  else if (selectedInterval === "6h") start = end - 6 * 3600;
+  else if (selectedInterval === "12h") start = end - 12 * 3600;
   else if (selectedInterval === "1d") start = end - 24 * 3600;
   else if (selectedInterval === "1w") start = end - 7 * 24 * 3600;
   else start = end - 30 * 24 * 3600;
@@ -131,9 +135,13 @@ function insertGapsInSingleDeviceData(data, gapSeconds) {
   if (!data || data.length === 0) return [];
   const result = [];
   data.forEach((d, i) => {
-    // Füge einen null-Punkt hinzu, um eine Lücke zu erzeugen, wenn die Zeitlücke zu groß ist
-    if (i > 0 && (d.timestamp - data[i - 1].timestamp) > gapSeconds) {
-      result.push({ timestamp: d.timestamp, value: null });
+    if (i > 0) {
+      const diff = d.timestamp - data[i - 1].timestamp;
+      if (diff > gapSeconds) {
+        console.log(`Gap eingefügt bei ${d.timestamp}: Abstand ${diff} Sekunden`);
+        result.push({ timestamp: data[i - 1].timestamp + gapSeconds, value: null });
+      }
+      console.log(`Abstand zwischen ${data[i - 1].timestamp} und ${d.timestamp}: ${diff} Sekunden`);
     }
     result.push({ timestamp: d.timestamp, value: d.value });
   });
@@ -185,7 +193,16 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // Define dynamic gap seconds for line breaks
-  const gapMap = { "3h": 600, "1d": 3600, "1w": 10800, "1m": 43200 };
+  const gapMap = {
+    "30min": 180,      // 3 Minuten
+    "1h": 300,         // 5 Minuten
+    "3h": 600,         // 10 Minuten
+    "6h": 900,        // 15 Minuten
+    "12h": 1800,       // 30 Minuten
+    "1d": 3600,        // 1 Stunde
+    "1w": 10800,       // 3 Stunden
+    "1m": 43200        // 12 Stunden
+  };
   const gapSeconds = gapMap[selectedInterval] || 600;
 
   const timeAsync = async (label, fn) => {
@@ -459,7 +476,14 @@ export default function Dashboard() {
                 className={`interval-btn ${selectedInterval === key ? "active" : ""}`}
                 onClick={() => setSelectedInterval(key)}
               >
-                {key === "3h" ? "3 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
+                {key === "30min" ? "30 Minuten"
+                  : key === "1h" ? "1 Stunde"
+                  : key === "3h" ? "3 Stunden"
+                  : key === "6h" ? "6 Stunden"
+                  : key === "12h" ? "12 Stunden"
+                  : key === "1d" ? "1 Tag"
+                  : key === "1w" ? "1 Woche"
+                  : "1 Monat"}
               </button>
             ))}
           </div>
@@ -479,10 +503,16 @@ export default function Dashboard() {
                 title="Für Großansicht klicken"
               >
                 <h3 className="chart-title">{metric}</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart>
-                    <XAxis
-                      dataKey="timestamp"
+                {!hasData ? (
+                    <div className="chart-empty">
+                      Keine Daten für den gewählten Zeitraum und die gewählte Metrik.<br />
+                      Bitte Zeitraum oder Metrik ändern.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart>
+                        <XAxis
+                          dataKey="timestamp"
                       type="number"
                       domain={[intervalStart, intervalEnd]}
                       tickFormatter={formatXAxisLabelFromTimestamp}
@@ -521,6 +551,7 @@ export default function Dashboard() {
                     )}
                   </LineChart>
                 </ResponsiveContainer>
+                  )}
               </div>
             );
           })}
@@ -549,6 +580,15 @@ export default function Dashboard() {
             const yAxisDomain = hasData ? getMinMax(data, ["altbauData", "neubauData"], 0.05, openChart) : [0, 100];
             const hasAltbauData = (data.altbauData || []).some(d => typeof d.value === "number");
             const hasNeubauData = (data.neubauData || []).some(d => typeof d.value === "number");
+
+            if (!hasData) {
+              return (
+                <div className="chart-empty">
+                  Keine Daten für den gewählten Zeitraum und die gewählte Metrik.<br />
+                  Bitte Zeitraum oder Metrik ändern.
+                </div>
+              );
+            }
 
             return (
             <ResponsiveContainer width="100%" height={300}>

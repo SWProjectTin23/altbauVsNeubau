@@ -1,0 +1,39 @@
+name: Build and Push Docker Images to GHCR
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: swprojecttin23/altbauvsneubau
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build & Push backend-api
+        run: |
+          docker build -f backend/Dockerfile.api -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend-api:latest ./backend
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend-api:latest
+
+      - name: Build & Push backend-mqtt
+        run: |
+          docker build -f backend/Dockerfile.mqtt -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend-mqtt:latest ./backend
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-backend-mqtt:latest
+
+      - name: Build & Push frontend
+        run: |
+          docker build -f frontend/Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:latest ./frontend
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-frontend:latest

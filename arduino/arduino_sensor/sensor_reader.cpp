@@ -15,15 +15,15 @@ static float temperatureSum = 0.0;
 static unsigned int temperatureCount = 0;
 
 
-static bool validatePacket() {
-  uint8_t sum = 0;
+static bool validatePacket() {              // Validate the packet by checking the checksum
+  uint8_t sum = 0;                          
   for (int i = 0; i < BUFFER_SIZE; i++) {
     sum += buffer[i];
   }
   return (sum & 0xFF) == 0;
 }
 
-static void parsePacket(uint16_t &pm25, uint16_t &pm10) {
+static void parsePacket(uint16_t &pm25, uint16_t &pm10) {     // Parse the packet to extract PM2.5 and PM10 values
             pm25 = (buffer[5] << 8) | buffer[6];
   uint16_t  pm10_raw = (buffer[9] << 8) | buffer[10];
 
@@ -32,7 +32,7 @@ static void parsePacket(uint16_t &pm25, uint16_t &pm10) {
   pm10 = (int)(pm10_raw / factor);
 }
 
-void sensorReadByte() {
+void sensorReadByte() {             // Read the sensor data and write it to the variable
   if (Serial1.available()) {
     uint8_t b = Serial1.read();
     buffer[bufferIndex++] = b;
@@ -50,13 +50,13 @@ void sensorReadByte() {
   }
 }
 
-void readTemperature() {
+void readTemperature() {      // Read the temperature from the sensor
    float c = tempsensor.readTempC();
    temperatureSum += c;
    temperatureCount++;
 }  
 
-void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {
+void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {       // Calculate the averages of PM2.5, PM10, and temperature
   if (packetCount > 0) {
     pm25Avg = pm25Sum / packetCount;
     pm10Avg = pm10Sum / packetCount;
@@ -68,7 +68,7 @@ void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {
   }
 }
 
-void resetAverages() {
+void resetAverages() {    // Reset the averages and counters
   pm25Sum = 0;
   pm10Sum = 0;
   packetCount = 0;
@@ -76,7 +76,7 @@ void resetAverages() {
   temperatureCount = 0;
 }
 
-void tempsensorStartup()
+void tempsensorStartup()    // Initialize the temperature sensor
 {
   if (!tempsensor.begin())
   {

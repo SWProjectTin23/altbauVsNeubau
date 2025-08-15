@@ -152,5 +152,5 @@ class DeviceData(Resource):
             )
             return {
                 "status": "error",
-                "message": "An unexpected error occurred."
+                "message": "A database error occurred while processing your request."
             }, 500

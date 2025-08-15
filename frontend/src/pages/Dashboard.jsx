@@ -24,6 +24,7 @@ const metricUnits = {
   Feinstaub: "µg/m³",
 };
 
+// Define the time intervals
 const intervals = ["30min", "1h", "3h", "6h", "12h", "1d", "1w", "1m"];
 
 // Function to map API data to UI thresholds
@@ -162,6 +163,7 @@ function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
     }
   });
 
+  // Handle case where all values are missing
   if (min === Infinity || max === -Infinity) return [0, 1];
 
   const range = max - min;
@@ -180,7 +182,7 @@ function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
   }
 }
 
-// Haupt-Dashboard-Komponente
+// Dashboard component
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
@@ -194,17 +196,19 @@ export default function Dashboard() {
 
   // Define dynamic gap seconds for line breaks
   const gapMap = {
-    "30min": 180,      // 3 Minuten
-    "1h": 300,         // 5 Minuten
-    "3h": 600,         // 10 Minuten
-    "6h": 900,        // 15 Minuten
-    "12h": 1800,       // 30 Minuten
-    "1d": 3600,        // 1 Stunde
-    "1w": 10800,       // 3 Stunden
-    "1m": 43200        // 12 Stunden
+    "30min": 180,      // 3 Minutes
+    "1h": 300,         // 5 Minutes
+    "3h": 600,         // 10 Minutes
+    "6h": 900,        // 15 Minutes
+    "12h": 1800,       // 30 Minutes
+    "1d": 3600,        // 1 Hour
+    "1w": 10800,       // 3 Hours
+    "1m": 43200        // 12 Hours
   };
-  const gapSeconds = gapMap[selectedInterval] || 600;
+  // Determine the gap seconds for the selected interval
+  const gapSeconds = gapMap[selectedInterval];
 
+  // Timing wrapper for async functions
   const timeAsync = async (label, fn) => {
     const t0 = performance.now();
     try {
@@ -215,6 +219,7 @@ export default function Dashboard() {
     }
   };
 
+  // Custom legend component
   function CustomLegend() {
     const legendItems = [
       { value: "Altbau", color: "#e2001a" },
@@ -255,6 +260,7 @@ export default function Dashboard() {
     );
   }
 
+  // Handle legend item clicks
   function handleLegendClick({ dataKey }) {
     setVisibleLines((prev) => {
       const next = { ...prev, [dataKey]: !prev[dataKey] };
@@ -311,6 +317,7 @@ export default function Dashboard() {
           return;
         }
 
+        // Map the API response to the desired format
         const mapped = {
           Altbau: {
             Temperatur: parseFloat(altbauJson.data.temperature),
@@ -339,6 +346,7 @@ export default function Dashboard() {
       });
     };
 
+    // Fetch initial data
     fetchData();
     intervalId = setInterval(fetchData, 30000);
     return () => clearInterval(intervalId);
@@ -364,6 +372,7 @@ export default function Dashboard() {
               Feinstaub: "particulate_matter"
             }[metric];
 
+            // Get the time range for the selected interval
             const { start, end } = getIntervalRange(selectedInterval);
             const json = await api.get(
               `/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`
@@ -390,6 +399,7 @@ export default function Dashboard() {
             }
           }
 
+          // Handle case where all values are missing
           setChartError(errorMessage || null);
           setChartData(newChartData);
           window.selectedInterval = selectedInterval;
@@ -401,13 +411,16 @@ export default function Dashboard() {
       });
     }
 
+    // Fetch chart data
     fetchChartData();
     intervalId = setInterval(fetchChartData, 30000);
     return () => clearInterval(intervalId);
   }, [selectedInterval, gapSeconds]);
 
+  // Get the time range for the selected interval
   const { start: intervalStart, end: intervalEnd } = getIntervalRange(selectedInterval);
 
+  // Map the API response to the desired format
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
@@ -488,7 +501,8 @@ export default function Dashboard() {
             ))}
           </div>
         <div className="charts-grid">
-          {metrics.map((metric) => {
+          { // Map the metrics to chart components
+          metrics.map((metric) => {
             const data = chartData[metric] || {};
             const allData = [...(data.altbauData || []), ...(data.neubauData || [])];
             const hasData = allData.length > 0;
@@ -559,7 +573,8 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {openChart && (
+      { // Chart modal
+      openChart && (
         <div className="chart-modal" onClick={() => setOpenChart(null)}>
           <div className="chart-modal-content" onClick={e => e.stopPropagation()}>
             <button

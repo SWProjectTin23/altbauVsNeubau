@@ -1,5 +1,6 @@
 import { feLogger } from "./logger";
 
+// Global error handlers
 if (typeof window !== "undefined") {
   window.addEventListener("error", (ev) => {
     feLogger.error("ui", "window.onerror", {
@@ -11,6 +12,7 @@ if (typeof window !== "undefined") {
     });
   });
 
+  // Handle unhandled promise rejections
   window.addEventListener("unhandledrejection", (ev) => {
     feLogger.error("ui", "unhandledrejection", {
       reason: ev.reason && (ev.reason.stack || ev.reason.message || String(ev.reason)),

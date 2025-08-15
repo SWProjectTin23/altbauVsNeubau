@@ -4,6 +4,7 @@ import './Warnings.css';
 import { api } from "../utils/api";              
 import { feLogger } from "../logging/logger"; 
 
+// Define the warning level labels
 const levelLabels = {
   redLow: "Warnwert niedrig rot",
   yellowLow: "Warnwert niedrig gelb",
@@ -11,6 +12,7 @@ const levelLabels = {
   redHigh: "Warnwert hoch rot",
 };
 
+// Warnings component
 export default function Warnings() {
   const [warnings, setWarnings] = useState(null);
   const [originalWarnings, setOriginalWarnings] = useState(null); 
@@ -20,6 +22,7 @@ export default function Warnings() {
   const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
 
+  // Map API response to UI format
   const mapApiToUi = (data) => ({
   Temperatur: {
     redLow: data.temperature_min_hard,    // min_hard = rot
@@ -39,7 +42,7 @@ export default function Warnings() {
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
-  Feinpartikel: {
+  Feinstaub: {
     redLow: data.particulate_matter_min_hard,
     yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
@@ -47,6 +50,7 @@ export default function Warnings() {
   },
 });
 
+// Map the UI format to API format
 const mapUiToApi = (uiData) => ({
   temperature_min_hard: uiData.Temperatur.redLow,
   temperature_min_soft: uiData.Temperatur.yellowLow,
@@ -63,12 +67,13 @@ const mapUiToApi = (uiData) => ({
   pollen_max_soft: uiData.Pollen.yellowHigh,
   pollen_max_hard: uiData.Pollen.redHigh,
 
-  particulate_matter_min_hard: uiData.Feinpartikel.redLow,
-  particulate_matter_min_soft: uiData.Feinpartikel.yellowLow,
-  particulate_matter_max_soft: uiData.Feinpartikel.yellowHigh,
-  particulate_matter_max_hard: uiData.Feinpartikel.redHigh,
+  particulate_matter_min_hard: uiData.Feinstaub.redLow,
+  particulate_matter_min_soft: uiData.Feinstaub.yellowLow,
+  particulate_matter_max_soft: uiData.Feinstaub.yellowHigh,
+  particulate_matter_max_hard: uiData.Feinstaub.redHigh,
 });
 
+  // Fetch initial data
   useEffect(() => {
     const fetchThresholds = async () => {
       feLogger.info("warnings", "fetch-start", {});
@@ -97,10 +102,12 @@ const mapUiToApi = (uiData) => ({
     fetchThresholds();
   }, []);
 
+  // Check if the form is dirty (i.e., has unsaved changes)
   const isDirty = () => {
     return JSON.stringify(warnings) !== JSON.stringify(originalWarnings);
   };
 
+  // Validate the warning thresholds
   const validateWarnings = (warnings) => {
   for (const [metric, levels] of Object.entries(warnings)) {
     if (levels.redLow >= levels.yellowLow) {
@@ -116,6 +123,7 @@ const mapUiToApi = (uiData) => ({
   return null;
 };
 
+  // Handle changes to the warning thresholds
   const handleChange = (metric, level, value) => {
     setWarnings((prev) => {
       const next = {
@@ -127,6 +135,7 @@ const mapUiToApi = (uiData) => ({
     });
   };
 
+  // Handle back navigation
   const handleBack = () => {
     setBackError(null);
     if (isDirty()) {
@@ -138,10 +147,12 @@ const mapUiToApi = (uiData) => ({
     }
   };
 
+  // Save the warning thresholds
   const saveThresholds = async () => {
     setSaveError(null);
     setBackError(null);
 
+    // Validate the warning thresholds
     const validationError = validateWarnings(warnings);
     if (validationError) {
       setSaveError(validationError);
@@ -152,7 +163,7 @@ const mapUiToApi = (uiData) => ({
     setSaving(true);
     feLogger.info("warnings", "save-start", {});
 
-
+    // Map the UI format to API format
     try {
       const payload = mapUiToApi(warnings);
       const result = await api.post("/thresholds", payload);  
@@ -173,6 +184,7 @@ const mapUiToApi = (uiData) => ({
     } 
   };
 
+  // Loading state
   if (loading || !warnings) {
     return (
       <div className="warnings-wrapper">
@@ -181,6 +193,7 @@ const mapUiToApi = (uiData) => ({
     );
   }
 
+  // Render the warning thresholds form
   return (
     <div className="warnings-wrapper">
       <div className="warnings-container">

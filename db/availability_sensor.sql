@@ -24,31 +24,41 @@ SELECT COALESCE((SELECT MIN(timestamp) FROM sensor_data), date_trunc('day', now(
 -- ===== Seit-Beginn: Soll/Ist/Availability je Device =====
 CREATE OR REPLACE VIEW v_totals_since_start_by_device AS
 WITH params AS (SELECT interval_seconds FROM v_params),
-gs AS (SELECT start_ts FROM v_global_start)
+gs AS (SELECT start_ts FROM v_global_start),
+ref AS (
+  -- reference start: first_seen if available, otherwise global start
+  SELECT d.device_id,
+         COALESCE(f.first_seen, (SELECT start_ts FROM gs)) AS ref_start
+  FROM v_devices d
+  LEFT JOIN v_first_seen f USING (device_id)
+),
+calc AS (
+  SELECT
+    r.device_id,
+    r.ref_start,
+    -- expected since the moment AFTER ref_start (no +1, no instant bucket)
+    GREATEST(
+      0,
+      FLOOR(EXTRACT(EPOCH FROM (now() - r.ref_start)) / (SELECT interval_seconds FROM params))
+    )::bigint AS soll_calc
+  FROM ref r
+)
 SELECT
-  d.device_id,
-  -- Referenzbeginn: first_seen (falls vorhanden) sonst globaler Start
-  CASE
-    WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 0::bigint
-    ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params))::bigint
-  END AS soll_total,
-  COUNT(s.*)::bigint AS ist_total,
-  CASE
-    WHEN (CASE WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 0 ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params)) END) = 0
-      THEN NULL
-    ELSE ROUND(
-      100.0 * COUNT(s.*) /
-      (CASE WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 1 ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params)) END),
-      2
-    )
-  END AS availability_pct
-FROM v_devices d
-LEFT JOIN v_first_seen f ON f.device_id = d.device_id
+  c.device_id,
+  c.soll_calc                          AS soll_total,
+  -- count only samples strictly AFTER ref_start (avoid the “first hit = 100%”)
+  COUNT(s.*)::bigint                   AS ist_total,
+CASE WHEN c.soll_calc = 0 THEN 0.0
+     ELSE ROUND(100.0 * COUNT(s.*) / c.soll_calc, 2)
+END AS availability_pct
+
+FROM calc c
 LEFT JOIN sensor_data s
-  ON s.device_id = d.device_id
- AND s.timestamp >= COALESCE(f.first_seen, (SELECT start_ts FROM gs))
-GROUP BY d.device_id, f.first_seen
-ORDER BY d.device_id;
+  ON s.device_id = c.device_id
+ AND s.timestamp > c.ref_start
+GROUP BY c.device_id, c.ref_start, c.soll_calc
+ORDER BY c.device_id;
+
 
 -- ===== Gaps > 10 Minuten (seit Beginn) =====
 CREATE OR REPLACE VIEW v_sensor_gaps AS

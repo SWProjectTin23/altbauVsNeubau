@@ -19,7 +19,7 @@
         "rawSql": "SELECT soll_total AS value FROM v_totals_since_start_by_device WHERE device_id = 1;"
       }],
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
@@ -41,7 +41,7 @@
         "rawSql": "SELECT ist_total  AS value FROM v_totals_since_start_by_device WHERE device_id = 1;"
       }],
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
@@ -92,7 +92,7 @@
         "rawSql": "SELECT soll_total AS value FROM v_totals_since_start_by_device WHERE device_id = 2;"
       }],
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
@@ -114,7 +114,7 @@
         "rawSql": "SELECT ist_total  AS value FROM v_totals_since_start_by_device WHERE device_id = 2;"
       }],
       "options": {
-        "colorMode": "value",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",

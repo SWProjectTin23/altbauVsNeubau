@@ -23,10 +23,10 @@ def test_insert_sensor_data_all_metrics(mocker):
 
     # Validate the parameters passed to each execute call
     expected_calls = [
-        (device_id, timestamp, 21.3, None, None, None),
-        (device_id, timestamp, None, 55, None, None),
-        (device_id, timestamp, None, None, 123, None),
-        (device_id, timestamp, None, None, None, 78),
+        (device_id, timestamp, 21.3),  # Only temperature
+        (device_id, timestamp, 55),   # Only humidity
+        (device_id, timestamp, 123),  # Only pollen
+        (device_id, timestamp, 78),   # Only particulate_matter
     ]
     actual_calls = mock_cursor.execute.call_args_list
 

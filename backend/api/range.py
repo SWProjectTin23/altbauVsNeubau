@@ -1,4 +1,5 @@
 from flask_restful import Resource
+from psycopg2 import Error as PsycopgError
 
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer
@@ -75,6 +76,11 @@ class TimeRange(Resource):
                 "status": "error",
                 "message": "database error"
             }, 500
+
+        except PsycopgError as e:
+            log_event(logger, "ERROR", "range.db_psycopg2_error",
+                      duration_ms=timer.stop_ms())
+            return {"status": "error", "message": "A database error occurred while processing your request."}, 500
 
         # generic app-level errors (if any bubbled up)
         except AppError as e:

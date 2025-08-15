@@ -1,5 +1,7 @@
 from flask_restful import Resource
 from flask import request
+from psycopg2 import Error as PsycopgError
+
 
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer
@@ -130,6 +132,12 @@ class Comparison(Resource):
                 duration_ms=timer.stop_ms(), **e.to_log_fields()
             )
             return {"status": "error", "message": "database error"}, 500
+
+        except PsycopgError as e:
+            log_event(logger, "ERROR", "device_latest.db_psycopg2_error",
+                      device_1=device_id1, device_2=device_id2, metric=metric,
+                duration_ms=timer.stop_ms())
+            return {"status": "error", "message": "A database error occurred while processing your request."}, 500
 
         # app-layer errors
         except AppError as e:

@@ -1,5 +1,6 @@
 from flask_restful import Resource
 from flask import request
+from psycopg2 import Error as PsycopgError
 
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer, save_invalid_payload
@@ -62,6 +63,11 @@ class Thresholds(Resource):
             log_event(logger, "ERROR", "thresholds.get.db_error",
                       duration_ms=timer.stop_ms(), **e.to_log_fields())
             return {"status": "error", "message": "database error"}, 500
+        
+        except PsycopgError as e:
+            log_event(logger, "ERROR", "thersholds.db_psycopg2_error",
+                      duration_ms=timer.stop_ms())
+            return {"status": "error", "message": "A database error occurred while processing your request."}, 500
 
         except AppError as e:
             log_event(logger, "ERROR", "thresholds.get.app_error",
@@ -234,6 +240,11 @@ class Thresholds(Resource):
             log_event(logger, "ERROR", "thresholds.post.db_error",
                       duration_ms=timer.stop_ms(), **e.to_log_fields())
             return {"status": "error", "message": "database error"}, 500
+        
+        except PsycopgError as e:
+            log_event(logger, "ERROR", "thersholds.db_psycopg2_error",
+                      duration_ms=timer.stop_ms())
+            return {"status": "error", "message": "A database error occurred while processing your request."}, 500
 
         except AppError as e:
             log_event(logger, "ERROR", "thresholds.post.app_error",

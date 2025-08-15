@@ -1,0 +1,153 @@
+name: Frontend JMeter Smoke
+
+on:
+  # Run workflow on pull requests to main branch
+  pull_request:
+    branches: [ main ]
+  # Allow manual execution from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  jmeter-frontend:
+    runs-on: ubuntu-latest  
+
+    env:
+      # SLO thresholds (Service Level Objectives) in milliseconds and results directory location
+      SLO_INITIAL_P95_MS: "2000"   # 95th percentile limit for initial page load
+      SLO_INTERVAL_P95_MS: "600"   # 95th percentile limit for interval clicks
+      JM_RESULTS_DIR: frontend-loadtest/results
+
+      # Docker Compose environment variables (from repository secrets)
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_NAME: ${{ secrets.DB_NAME }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT }}
+      MQTT_BROKER: ${{ secrets.MQTT_BROKER }}
+      MQTT_PORT: ${{ secrets.MQTT_PORT }}
+      PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
+      PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
+
+      # JMeter and test runner environment variables
+      NO_OPEN: "1"                         # Do not auto-open browser in CI
+      TARGET_URL: ${{ secrets.TARGET_URL }} # Frontend base URL
+      API_BASE:  ${{ secrets.API_BASE }}    # Backend API base URL
+      USERS:     ${{ secrets.USERS }}       # Number of virtual users
+      RAMP:      ${{ secrets.RAMP }}        # Ramp-up time
+      COMPOSE_NETWORK: ${{ secrets.COMPOSE_NETWORK }} # Optional Docker network name
+
+    steps:
+      # Checkout repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Enable Docker Buildx (for advanced Docker builds)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Start the full app stack (backend, frontend, database, etc.)
+      - name: Start app stack (backend, frontend, db)
+        run: |
+          docker compose up -d --wait
+          docker compose ps
+
+      # Normalize line endings to LF to avoid CRLF issues in CI
+      - name: Normalize LF (runner + optional .env)
+        run: |
+          sed -i 's/\r$//' frontend-loadtest/run-jmeter.sh || true
+          sed -i 's/\r$//' frontend-loadtest/.env || true
+          chmod +x frontend-loadtest/run-jmeter.sh
+
+      # Quick sanity check: verify frontend and backend are reachable
+      - name: Quick reachability checks
+        run: |
+          curl -f http://localhost:3000/ || (echo "Frontend not reachable" && exit 1)
+          curl -f http://localhost:5001/health || (echo "Backend health failed" && exit 1)
+
+      # Run JMeter smoke test (without opening browser)
+      - name: Run JMeter smoke (no browser open)
+        working-directory: frontend-loadtest
+        run: ./run-jmeter.sh
+        shell: bash
+
+      # Upload JMeter HTML report and raw result files as artifacts
+      - name: Upload JMeter artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jmeter-report
+          path: |
+            frontend-loadtest/results/report/**
+            frontend-loadtest/results/results.jtl
+            frontend-loadtest/results/jmeter.log
+
+      # Check if performance results meet the SLOs
+      # If any p95 latency exceeds its threshold, the build fails
+      - name: Evaluate SLOs (fail build if thresholds exceeded)
+        run: |
+          python3 - <<'PY'
+          import csv, os, sys, math
+          jtl = os.path.join(os.getenv("JM_RESULTS_DIR"), "results.jtl")
+          if not os.path.exists(jtl):
+              print("No JTL file found at", jtl); sys.exit(1)
+
+          rows = []
+          with open(jtl, newline='') as f:
+              reader = csv.DictReader(f)
+              for r in reader:
+                  try:
+                      elapsed = float(r.get('elapsed','nan'))
+                      label   = r.get('label','')
+                  except:
+                      continue
+                  if elapsed == elapsed:  # not NaN
+                      rows.append((label, elapsed))
+
+          def percentile(vals, q):
+              if not vals: return float('nan')
+              vals = sorted(vals)
+              k = (len(vals)-1) * (q/100.0)
+              f = math.floor(k); c = math.ceil(k)
+              if f == c: return float(vals[int(k)])
+              return vals[f] + (vals[c]-vals[f])*(k-f)
+
+          by = {}
+          for label, elapsed in rows:
+              by.setdefault(label, []).append(elapsed)
+
+          slo_init = float(os.getenv("SLO_INITIAL_P95_MS","2000"))
+          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS","600"))
+
+          failures = []
+          def check(label, limit):
+              if label in by:
+                  p95 = percentile(by[label], 95)
+                  print(f"{label} p95 = {p95:.0f} ms (SLO < {limit} ms)")
+                  if p95 > limit:
+                      failures.append(f"{label} p95 {p95:.0f} > {limit}")
+              else:
+                  print(f"WARNING: label '{label}' not found in JTL")
+
+          check("Initial Page TTLB", slo_init)
+          for lab in ["Click 3h","Click 1d","Click 1w","Click 1m"]:
+              check(lab, slo_int)
+
+          if failures:
+              print("SLO FAIL:", "; ".join(failures)); sys.exit(1)
+          print("SLO PASS")
+          PY
+
+      # Always display service logs, even if the job failed
+      - name: Show logs (always)
+        if: always()
+        run: |
+          echo "--- Backend API Logs ---"
+          docker compose logs backend-api || true
+          echo "--- Frontend Logs ---"
+          docker compose logs frontend || true
+          echo "--- DB Logs ---"
+          docker compose logs db || true
+
+      # Tear down the Docker stack and remove volumes
+      - name: Tear down
+        if: always()
+        run: docker compose down -v --remove-orphans

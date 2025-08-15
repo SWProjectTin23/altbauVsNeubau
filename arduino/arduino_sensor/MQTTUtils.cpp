@@ -22,7 +22,7 @@ bool mqttReconnect() {
 
 
 void mqttPublish(const char* topic, const char* payload) {
-  if (!client.connected()) {
+  if (!client.connected()) {                                          // Check if the MQTT client is connected
     Serial.println("MQTT nicht verbunden – versuche Verbindung...");
     if (!mqttReconnect()) {
       Serial.println("MQTT-Verbindung fehlgeschlagen. Nachricht wird nicht gesendet.");
@@ -30,7 +30,7 @@ void mqttPublish(const char* topic, const char* payload) {
     }
   }
 
-  if (client.publish(topic, payload)) {
+  if (client.publish(topic, payload)) {     // Send the data to the mqtt broker
     Serial.print("Nachricht gesendet an ");
     Serial.print(topic);
     Serial.print(": ");

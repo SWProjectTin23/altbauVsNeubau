@@ -83,7 +83,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./db/init.sql:/docker-entrypoint-initdb.d/010_init.sql:ro
+      - ./db/availability_sensor.sql:/docker-entrypoint-initdb.d/020_availability_sensor.sql:ro
       - db_data:/var/lib/postgresql/data
     networks:
       - pg-network
@@ -118,6 +119,27 @@ services:
     networks:
       - pg-network
     restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: altbau_vs_neubau_grafana
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3003:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - pg-network
+    restart: unless-stopped
+
 
 
 volumes: # This section must be at the same level as 'services'

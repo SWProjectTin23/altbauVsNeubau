@@ -103,4 +103,4 @@ class TimeRange(Resource):
             return {
                 "status": "error",
                 "message": "An unexpected error occurred."
-            }, 500
+            }, 400

@@ -16,59 +16,45 @@ def insert_sensor_data(
     particulate_matter: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
-    Upsert a row into sensor_data.
+    Insert a row into sensor_data only if all sensor values are provided.
     - No logging here (logging is done by the caller).
     - On failure: rollback and raise a domain-specific exception.
     - Returns a small summary for the caller to include in logs.
     """
     # Prevent inserting None values: skip fields that are None
-    if temperature is None and humidity is None and pollen is None and particulate_matter is None:
-        raise DatabaseError("No valid sensor values to insert (all are None)")
+    if temperature is None or humidity is None or pollen is None or particulate_matter is None:
+        raise DatabaseError("Incomplete sensor data: all sensor values must be provided")
 
-    # Build dynamic query and params
-    fields = []
-    values = []
-    updates = []
-    if temperature is not None:
-        fields.append("temperature")
-        values.append(temperature)
-        updates.append("temperature = EXCLUDED.temperature")
-    if humidity is not None:
-        fields.append("humidity")
-        values.append(humidity)
-        updates.append("humidity = EXCLUDED.humidity")
-    if pollen is not None:
-        fields.append("pollen")
-        values.append(pollen)
-        updates.append("pollen = EXCLUDED.pollen")
-    if particulate_matter is not None:
-        fields.append("particulate_matter")
-        values.append(particulate_matter)
-        updates.append("particulate_matter = EXCLUDED.particulate_matter")
-
-    insert_query = f"""
-    INSERT INTO sensor_data (device_id, timestamp, {', '.join(fields)})
-    VALUES (%s, %s, {', '.join(['%s'] * len(fields))})
+    # Build query and params
+    insert_query = """
+    INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter)
+    VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (device_id, timestamp)
-    DO UPDATE SET {', '.join(updates)};
+    DO UPDATE SET 
+        temperature = EXCLUDED.temperature,
+        humidity = EXCLUDED.humidity,
+        pollen = EXCLUDED.pollen,
+        particulate_matter = EXCLUDED.particulate_matter;
     """
 
     cursor = conn.cursor()
     try:
         cursor.execute(
             insert_query,
-            (device_id, timestamp, *values),
+            (device_id, timestamp, temperature, humidity, pollen, particulate_matter),
         )
         conn.commit()
-
-        updated_fields: Dict[str, Any] = {k: v for k, v in zip(fields, values)}
-        rows_affected = getattr(cursor, "rowcount", 1)
 
         return {
             "device_id": device_id,
             "timestamp": timestamp,
-            "updated_fields": updated_fields,
-            "rows_affected": rows_affected,
+            "updated_fields": {
+                "temperature": temperature,
+                "humidity": humidity,
+                "pollen": pollen,
+                "particulate_matter": particulate_matter,
+            },
+            "rows_affected": getattr(cursor, "rowcount", 1),
         }
 
     except Exception as e:

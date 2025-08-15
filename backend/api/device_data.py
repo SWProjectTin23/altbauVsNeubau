@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import request
-import psycopg2
+from psycopg2 import Error as PsycopgError
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer
 
@@ -105,16 +105,6 @@ class DeviceData(Resource):
                 "status": "error",
                 "message": "database temporarily unavailable"
             }, 503
-        except psycopg2.Error as e:
-            log_event(
-                logger, "ERROR", "device_data.db_error",
-                device_id=device_id, start=start, end=end, metric=metric or "ALL",
-                duration_ms=timer.stop_ms()
-            )
-            return {
-                "status": "error",
-                "message": "A database error occurred while processing your request."
-            }, 500
         except DatabaseError as e:
             log_event(
                 logger, "ERROR", "device_data.db_error",
@@ -125,7 +115,11 @@ class DeviceData(Resource):
                 "status": "error",
                 "message": "A database error occurred while processing your request."
             }, 500
-                
+        except PsycopgError as e:
+            log_event(logger, "ERROR", "device_data.db_psycopg2_error",
+                    duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+            return {"status": "error", "message": "A database error occurred while processing your request."}, 500
+     
         # app-layer errors (if bubbled up)
         except AppError as e:
             log_event(

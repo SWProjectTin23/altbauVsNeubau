@@ -115,9 +115,9 @@ class DeviceData(Resource):
             )
             return {
                 "status": "error",
-                "message": "database error"
+                "message": "A database error occurred while processing your request."
             }, 500
-
+                
         # app-layer errors (if bubbled up)
         except AppError as e:
             log_event(

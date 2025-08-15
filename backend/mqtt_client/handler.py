@@ -91,6 +91,9 @@ def handle_metric(metric_name: str, topic: str, payload_dict: Dict[str, Any], db
         # 2) Metric checks
         if metric_name not in VALID_RANGES:
             raise UnknownMetricError(metric_name)
+        
+        if value is None:
+            raise PayloadValidationError("value is None", details={"metric": metric_name})
 
         if not isinstance(value, (int, float)):
             raise NonNumericMetricError(metric_name, type(value).__name__)

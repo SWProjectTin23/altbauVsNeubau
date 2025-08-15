@@ -158,6 +158,13 @@
   animation: fadeInError 0.5s;
 }
 
+.chart-empty {
+  color: #888;
+  font-size: 1.1em;
+  text-align: center;
+  margin: 2em 0;
+}
+
 /* Responsive for smaller screens */
 @media (max-width: 768px) {
   .charts-grid {

@@ -11,20 +11,21 @@ import {
 } from "recharts";
 import './Dashboard.css';
 
-// Define the base API URL
-const API_BASE = "http://localhost:5001/api";
+import { api } from "../utils/api";
+import { feLogger } from "../logging/logger";
 
 // Define the metrics and intervals
-const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinpartikel"];
+const metrics = ["Temperatur", "Luftfeuchtigkeit", "Pollen", "Feinstaub"];
 
 const metricUnits = {
   Temperatur: "°C",
   Luftfeuchtigkeit: "%",
   Pollen: "µg/m³",
-  Feinpartikel: "µg/m³",
+  Feinstaub: "µg/m³",
 };
 
-const intervals = ["3h", "1d", "1w", "1m"];
+// Define the time intervals
+const intervals = ["30min", "1h", "3h", "6h", "12h", "1d", "1w", "1m"];
 
 // Function to map API data to UI thresholds
 const mapApiToUi = (data) => ({
@@ -46,7 +47,7 @@ const mapApiToUi = (data) => ({
     yellowHigh: data.pollen_max_soft,
     redHigh: data.pollen_max_hard,
   },
-  Feinpartikel: {
+  Feinstaub: {
     redLow: data.particulate_matter_min_hard,
     yellowLow: data.particulate_matter_min_soft,
     yellowHigh: data.particulate_matter_max_soft,
@@ -63,6 +64,7 @@ const getWarningClass = (thresholds, metric, value) => {
   return "";
 };
 
+// Function to format the X-axis label from a timestamp
 function formatXAxisLabelFromTimestamp(ts) {
   if (!ts) return "";
   const date = new Date(ts * 1000);
@@ -75,6 +77,7 @@ function formatXAxisLabelFromTimestamp(ts) {
   return `${datum}, ${zeit}`;
 }
 
+// Function to format the current timestamp
 function formatCurrentTimestamp(ts) {
   if (!ts) return "";
   const date = new Date(ts * 1000);
@@ -87,7 +90,10 @@ function formatCurrentTimestamp(ts) {
   });
 }
 
+// Function to render the custom tooltip
 function CustomTooltip({ active, payload, label, unit, metric }) {
+
+  // Render the tooltip content
   if (active && payload && payload.length) {
     const dateLabel = formatCurrentTimestamp(label);
 
@@ -111,35 +117,38 @@ function CustomTooltip({ active, payload, label, unit, metric }) {
   return null;
 }
 
+// Function to get the interval range based on the selected interval
 function getIntervalRange(selectedInterval) {
   const end = Math.floor(Date.now() / 1000);
   let start;
-  if (selectedInterval === "3h") start = end - 3 * 3600;
+  if (selectedInterval === "30min") start = end - 1800;
+  else if (selectedInterval === "1h") start = end - 3600;
+  else if (selectedInterval === "3h") start = end - 3 * 3600;
+  else if (selectedInterval === "6h") start = end - 6 * 3600;
+  else if (selectedInterval === "12h") start = end - 12 * 3600;
   else if (selectedInterval === "1d") start = end - 24 * 3600;
   else if (selectedInterval === "1w") start = end - 7 * 24 * 3600;
   else start = end - 30 * 24 * 3600;
   return { start, end };
 }
 
-/**
- * Verarbeitet die Daten eines einzelnen Geräts und fügt bei Zeitlücken null-Punkte ein.
- * @param {Array<Object>} data - Das Daten-Array eines einzelnen Geräts.
- * @param {number} gapSeconds - Die Schwellenwert-Zeitlücke in Sekunden.
- * @returns {Array<Object>} - Das aufbereitete Daten-Array.
- */
+// Function to insert gaps in the data of a single device
 function insertGapsInSingleDeviceData(data, gapSeconds) {
   if (!data || data.length === 0) return [];
   const result = [];
   data.forEach((d, i) => {
-    // Füge einen null-Punkt hinzu, um eine Lücke zu erzeugen, wenn die Zeitlücke zu groß ist
-    if (i > 0 && (d.timestamp - data[i - 1].timestamp) > gapSeconds) {
-      result.push({ timestamp: d.timestamp, value: null });
+    if (i > 0) {
+      const diff = d.timestamp - data[i - 1].timestamp;
+      if (diff > gapSeconds) {
+        result.push({ timestamp: data[i - 1].timestamp + gapSeconds, value: null });
+      }
     }
     result.push({ timestamp: d.timestamp, value: d.value });
   });
   return result;
-}
+} 
 
+// Function to get the minimum and maximum values from the data
 function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
   let min = Infinity;
   let max = -Infinity;
@@ -154,6 +163,7 @@ function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
     }
   });
 
+  // Handle case where all values are missing
   if (min === Infinity || max === -Infinity) return [0, 1];
 
   const range = max - min;
@@ -172,7 +182,7 @@ function getMinMax(data, keys, padding = 0.05, metric = "Temperatur") {
   }
 }
 
-// Haupt-Dashboard-Komponente
+// Dashboard component
 export default function Dashboard() {
   const [selectedInterval, setSelectedInterval] = useState("3h");
   const [currentData, setCurrentData] = useState(null);
@@ -185,9 +195,31 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // Define dynamic gap seconds for line breaks
-  const gapMap = { "3h": 600, "1d": 3600, "1w": 10800, "1m": 43200 };
-  const gapSeconds = gapMap[selectedInterval] || 600;
+  const gapMap = {
+    "30min": 180,      // 3 Minutes
+    "1h": 300,         // 5 Minutes
+    "3h": 600,         // 10 Minutes
+    "6h": 900,        // 15 Minutes
+    "12h": 1800,       // 30 Minutes
+    "1d": 3600,        // 1 Hour
+    "1w": 10800,       // 3 Hours
+    "1m": 43200        // 12 Hours
+  };
+  // Determine the gap seconds for the selected interval
+  const gapSeconds = gapMap[selectedInterval];
 
+  // Timing wrapper for async functions
+  const timeAsync = async (label, fn) => {
+    const t0 = performance.now();
+    try {
+      return await fn();
+    } finally {
+      const ms = +(performance.now() - t0).toFixed(0);
+      feLogger.debug("dashboard", "timing", { label, ms });
+    }
+  };
+
+  // Custom legend component
   function CustomLegend() {
     const legendItems = [
       { value: "Altbau", color: "#e2001a" },
@@ -228,27 +260,37 @@ export default function Dashboard() {
     );
   }
 
+  // Handle legend item clicks
   function handleLegendClick({ dataKey }) {
-    setVisibleLines((prev) => ({
-      ...prev,
-      [dataKey]: !prev[dataKey],
-    }));
+    setVisibleLines((prev) => {
+      const next = { ...prev, [dataKey]: !prev[dataKey] };
+      feLogger.info("dashboard", "legend-toggle", { line: dataKey, enabled: next[dataKey] });
+      return next;
+    });
   }
+
+  // Log interval changes
+  useEffect(() => {
+    feLogger.debug("dashboard", "interval-change", { selectedInterval });
+  }, [selectedInterval]);
 
   // Fetch warning thresholds from the API
   useEffect(() => {
     const fetchThresholds = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/thresholds`);
-        const json = await res.json();
-        if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
-          setWarningThresholds(mapApiToUi(json.data[0]));
-        } else {
-          console.error("No thresholds available.");
+      feLogger.debug("dashboard", "thresholds-fetch-start", {});
+      await timeAsync("thresholds", async () => {
+        try {
+          const json = await api.get("/thresholds");
+          if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
+            setWarningThresholds(mapApiToUi(json.data[0]));
+            feLogger.info("dashboard", "thresholds-loaded", { count: json.data.length });
+          } else {
+            feLogger.warn("dashboard", "no-thresholds", { json });
+          }
+        } catch (err) {
+          feLogger.error("dashboard", "thresholds-failed", { error: String(err) });
         }
-      } catch (err) {
-        console.error("Error loading warning thresholds:", err);
-      }
+      });
     };
     fetchThresholds();
   }, []);
@@ -257,43 +299,54 @@ export default function Dashboard() {
   useEffect(() => {
     let intervalId;
     const fetchData = async () => {
+      feLogger.debug("dashboard", "current-fetch-start", {});
+      await timeAsync("current-latest", async () => {
       try {
         setCurrentError(null);
-        const [altbauRes, neubauRes] = await Promise.all([
-          fetch(`${API_BASE}/devices/1/latest`),
-          fetch(`${API_BASE}/devices/2/latest`),
+        const [altbauJson, neubauJson] = await Promise.all([
+          api.get("/devices/1/latest"),
+          api.get("/devices/2/latest"),
         ]);
-
-        const altbauJson = await altbauRes.json();
-        const neubauJson = await neubauRes.json();
 
         if (altbauJson.status !== "success" || neubauJson.status !== "success") {
           setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
+          feLogger.warn("dashboard", "current-error", {
+            altbau: altbauJson,
+            neubau: neubauJson,
+          });
           return;
         }
 
+        // Map the API response to the desired format
         const mapped = {
           Altbau: {
             Temperatur: parseFloat(altbauJson.data.temperature),
             Luftfeuchtigkeit: parseFloat(altbauJson.data.humidity),
             Pollen: altbauJson.data.pollen,
-            Feinpartikel: altbauJson.data.particulate_matter,
+            Feinstaub: altbauJson.data.particulate_matter,
             timestamp: altbauJson.data.unix_timestamp_seconds,
           },
           Neubau: {
             Temperatur: parseFloat(neubauJson.data.temperature),
             Luftfeuchtigkeit: parseFloat(neubauJson.data.humidity),
             Pollen: neubauJson.data.pollen,
-            Feinpartikel: neubauJson.data.particulate_matter,
+            Feinstaub: neubauJson.data.particulate_matter,
             timestamp: neubauJson.data.unix_timestamp_seconds,
           },
         };
         setCurrentData(mapped);
-      } catch (err) {
-        setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
-      }
+        feLogger.debug("dashboard", "current-fetched", {
+          altbauTs: mapped.Altbau.timestamp,
+          neubauTs: mapped.Neubau.timestamp,
+        });
+        } catch (err) {
+          setCurrentError("Aktuelle Messwerte konnten nicht geladen werden.");
+          feLogger.error("dashboard", "current-failed", { error: String(err) });
+        }
+      });
     };
 
+    // Fetch initial data
     fetchData();
     intervalId = setInterval(fetchData, 30000);
     return () => clearInterval(intervalId);
@@ -304,52 +357,70 @@ export default function Dashboard() {
     let intervalId;
   
     async function fetchChartData() {
-      try {
-        setChartError(null);
-        const newChartData = {};
-        let errorMessage = null;
-        for (const metric of metrics) {
-          const apiMetric = {
-            Temperatur: "temperature",
-            Luftfeuchtigkeit: "humidity",
-            Pollen: "pollen",
-            Feinpartikel: "particulate_matter"
-          }[metric];
-          const { start, end } = getIntervalRange(selectedInterval);
-
-          const url = `${API_BASE}/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`;
-          const res = await fetch(url);
-          const json = await res.json();
-
-          if (json.status === "success") {
-            // Separat die Daten für jedes Gerät verarbeiten
-            const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
-            const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
-            
-            newChartData[metric] = { altbauData, neubauData };
-          } else {
-            errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
-            newChartData[metric] = { altbauData: [], neubauData: [] };
-          }
-        }
-        if (errorMessage) {
-          setChartError(errorMessage);
-        } else {
+      feLogger.debug("dashboard", "chart-fetch-start", { selectedInterval });
+      await timeAsync("chart-" + selectedInterval, async () => {
+        try {
           setChartError(null);
+          const newChartData = {};
+          let errorMessage = null;
+
+          for (const metric of metrics) {
+            const apiMetric = {
+              Temperatur: "temperature",
+              Luftfeuchtigkeit: "humidity",
+              Pollen: "pollen",
+              Feinstaub: "particulate_matter"
+            }[metric];
+
+            // Get the time range for the selected interval
+            const { start, end } = getIntervalRange(selectedInterval);
+            const json = await api.get(
+              `/comparison?device_1=1&device_2=2&metric=${apiMetric}&start=${start}&end=${end}&buckets=360`
+            );
+
+            if (json.status === "success") {
+              const altbauData = insertGapsInSingleDeviceData(json.device_1, gapSeconds);
+              const neubauData = insertGapsInSingleDeviceData(json.device_2, gapSeconds);
+              newChartData[metric] = { altbauData, neubauData };
+
+              const nullsAlt = altbauData.filter(d => d.value == null).length;
+              const nullsNeu = neubauData.filter(d => d.value == null).length;
+              feLogger.debug("dashboard", "chart-series", {
+                metric,
+                altbauPoints: altbauData.length,
+                neubauPoints: neubauData.length,
+                altbauNulls: nullsAlt,
+                neubauNulls: nullsNeu
+              });
+            } else {
+              errorMessage = json.message || "Diagrammdaten konnten nicht geladen werden.";
+              newChartData[metric] = { altbauData: [], neubauData: [] };
+              feLogger.warn("dashboard", "chart-error", { metric, json });
+            }
+          }
+
+          // Handle case where all values are missing
+          setChartError(errorMessage || null);
+          setChartData(newChartData);
+          window.selectedInterval = selectedInterval;
+          feLogger.info("dashboard", "chart-fetched", { metrics: metrics.length, selectedInterval });
+        } catch (err) {
+          setChartError("Diagrammdaten konnten nicht geladen werden.");
+          feLogger.error("dashboard", "chart-failed", { error: String(err), selectedInterval });
         }
-        setChartData(newChartData);
-        window.selectedInterval = selectedInterval;
-      } catch (err) {
-        setChartError("Diagrammdaten konnten nicht geladen werden.");
-      }
+      });
     }
+
+    // Fetch chart data
     fetchChartData();
     intervalId = setInterval(fetchChartData, 30000);
     return () => clearInterval(intervalId);
   }, [selectedInterval, gapSeconds]);
 
+  // Get the time range for the selected interval
   const { start: intervalStart, end: intervalEnd } = getIntervalRange(selectedInterval);
 
+  // Map the API response to the desired format
   return (
     <div className="dashboard-wrapper">
       <div className="dashboard-container">
@@ -418,12 +489,20 @@ export default function Dashboard() {
                 className={`interval-btn ${selectedInterval === key ? "active" : ""}`}
                 onClick={() => setSelectedInterval(key)}
               >
-                {key === "3h" ? "3 Stunden" : key === "1d" ? "1 Tag" : key === "1w" ? "1 Woche" : "1 Monat"}
+                {key === "30min" ? "30 Minuten"
+                  : key === "1h" ? "1 Stunde"
+                  : key === "3h" ? "3 Stunden"
+                  : key === "6h" ? "6 Stunden"
+                  : key === "12h" ? "12 Stunden"
+                  : key === "1d" ? "1 Tag"
+                  : key === "1w" ? "1 Woche"
+                  : "1 Monat"}
               </button>
             ))}
           </div>
         <div className="charts-grid">
-          {metrics.map((metric) => {
+          { // Map the metrics to chart components
+          metrics.map((metric) => {
             const data = chartData[metric] || {};
             const allData = [...(data.altbauData || []), ...(data.neubauData || [])];
             const hasData = allData.length > 0;
@@ -433,15 +512,21 @@ export default function Dashboard() {
 
             return (
               <div key={metric} className="chart-card"
-                onClick={() => setOpenChart(metric)}
+                onClick={() => { feLogger.info("dashboard", "modal-open", { metric }); setOpenChart(metric); }}
                 style={{ cursor: "pointer" }}
                 title="Für Großansicht klicken"
               >
                 <h3 className="chart-title">{metric}</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart>
-                    <XAxis
-                      dataKey="timestamp"
+                {!hasData ? (
+                    <div className="chart-empty">
+                      Keine Daten für den gewählten Zeitraum und die gewählte Metrik.<br />
+                      Bitte Zeitraum oder Metrik ändern.
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart>
+                        <XAxis
+                          dataKey="timestamp"
                       type="number"
                       domain={[intervalStart, intervalEnd]}
                       tickFormatter={formatXAxisLabelFromTimestamp}
@@ -480,6 +565,7 @@ export default function Dashboard() {
                     )}
                   </LineChart>
                 </ResponsiveContainer>
+                  )}
               </div>
             );
           })}
@@ -487,12 +573,13 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {openChart && (
+      { // Chart modal
+      openChart && (
         <div className="chart-modal" onClick={() => setOpenChart(null)}>
           <div className="chart-modal-content" onClick={e => e.stopPropagation()}>
             <button
             className="chart-modal-close"
-            onClick={() => setOpenChart(null)}
+            onClick={() => { feLogger.info("dashboard", "modal-close", { metric: openChart }); setOpenChart(null); }}
             aria-label="Schließen"
             >
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
@@ -508,6 +595,15 @@ export default function Dashboard() {
             const yAxisDomain = hasData ? getMinMax(data, ["altbauData", "neubauData"], 0.05, openChart) : [0, 100];
             const hasAltbauData = (data.altbauData || []).some(d => typeof d.value === "number");
             const hasNeubauData = (data.neubauData || []).some(d => typeof d.value === "number");
+
+            if (!hasData) {
+              return (
+                <div className="chart-empty">
+                  Keine Daten für den gewählten Zeitraum und die gewählte Metrik.<br />
+                  Bitte Zeitraum oder Metrik ändern.
+                </div>
+              );
+            }
 
             return (
             <ResponsiveContainer width="100%" height={300}>

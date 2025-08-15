@@ -382,12 +382,15 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
     try:
         cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
+    # Count the total number of raw entries for each device in the specified time range
+    # This is used to check if num_buckets exceeds the total number of raw entries
         count_query = """
             SELECT COUNT(*) FROM sensor_data
             WHERE (device_id = %s OR device_id = %s)
-            AND EXTRACT(EPOCH FROM timestamp) >= %s
-            AND EXTRACT(EPOCH FROM timestamp) <= %s;
-        """
+            AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+            AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC';
+            """
+    
         count_params = (device_id1, device_id2, start, end)
         cursor.execute(count_query, count_params)
         count_result = cursor.fetchone()

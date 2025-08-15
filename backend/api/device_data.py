@@ -1,7 +1,6 @@
-# api/device_data.py
 from flask_restful import Resource
 from flask import request
-
+import psycopg2
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer
 
@@ -106,7 +105,16 @@ class DeviceData(Resource):
                 "status": "error",
                 "message": "database temporarily unavailable"
             }, 503
-
+        except psycopg2.Error as e:
+            log_event(
+                logger, "ERROR", "device_data.db_error",
+                device_id=device_id, start=start, end=end, metric=metric or "ALL",
+                duration_ms=timer.stop_ms()
+            )
+            return {
+                "status": "error",
+                "message": "A database error occurred while processing your request."
+            }, 500
         except DatabaseError as e:
             log_event(
                 logger, "ERROR", "device_data.db_error",

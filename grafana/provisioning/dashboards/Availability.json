@@ -1,133 +1,176 @@
 {
-  "title": "Sensor Ingest – Counts & Gaps",
+  "title": "Sensor Availability (seit Beginn) – Cards je Device",
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
   "refresh": "30s",
-  "fiscalYearStartMonth": 0,
-  "liveNow": false,
-  "time": { "from": "now-7d", "to": "now" },
+  "time": { "from": "now-90d", "to": "now" },
   "panels": [
     {
-      "id": 1,
+      "id": 101,
       "type": "stat",
-      "title": "Ist (heute)",
-      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "title": "Device 1 – Soll (seit Beginn)",
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "timescaledb" },
-          "format": "table",
-          "rawSql": "SELECT ist_today AS value FROM v_totals_today;"
-        }
-      ],
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT soll_total AS value FROM v_totals_since_start_by_device WHERE device_id = 1;"
+      }],
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+        "textMode": "value"
       },
       "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
     },
     {
-      "id": 2,
+      "id": 102,
       "type": "stat",
-      "title": "Soll (heute)",
-      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "title": "Device 1 – Ist (seit Beginn)",
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "timescaledb" },
-          "format": "table",
-          "rawSql": "SELECT soll_today AS value FROM v_totals_today;"
-        }
-      ],
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT ist_total  AS value FROM v_totals_since_start_by_device WHERE device_id = 1;"
+      }],
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+        "textMode": "value"
       },
       "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
     },
     {
-      "id": 3,
-      "type": "stat",
-      "title": "Ist (seit Start, gesamt)",
-      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "id": 103,
+      "type": "gauge",
+      "title": "Device 1 – Availability (seit Beginn)",
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "timescaledb" },
-          "format": "table",
-          "rawSql": "SELECT ist_total AS value FROM v_totals_since_start;"
-        }
-      ],
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT availability_pct AS value FROM v_totals_since_start_by_device WHERE device_id = 1;"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 50 },
+            { "color": "green", "value": 70 }
+          ]},
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 201,
+      "type": "stat",
+      "title": "Device 2 – Soll (seit Beginn)",
+      "gridPos": { "x": 0, "y": 5, "w": 8, "h": 5 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT soll_total AS value FROM v_totals_since_start_by_device WHERE device_id = 2;"
+      }],
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+        "textMode": "value"
       },
       "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
     },
     {
-      "id": 4,
+      "id": 202,
       "type": "stat",
-      "title": "Soll (seit Start, gesamt)",
-      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "title": "Device 2 – Ist (seit Beginn)",
+      "gridPos": { "x": 8, "y": 5, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "timescaledb" },
-          "format": "table",
-          "rawSql": "SELECT soll_total AS value FROM v_totals_since_start;"
-        }
-      ],
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT ist_total  AS value FROM v_totals_since_start_by_device WHERE device_id = 2;"
+      }],
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+        "textMode": "value"
       },
       "fieldConfig": { "defaults": { "unit": "none" }, "overrides": [] }
     },
     {
-      "id": 5,
+      "id": 203,
+      "type": "gauge",
+      "title": "Device 2 – Availability (seit Beginn)",
+      "gridPos": { "x": 16, "y": 5, "w": 8, "h": 5 },
+      "datasource": { "type": "postgres", "uid": "timescaledb" },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT availability_pct AS value FROM v_totals_since_start_by_device WHERE device_id = 2;"
+      }],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "orange", "value": 50 },
+            { "color": "green", "value": 70 }
+          ]},
+          "unit": "percent"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 301,
       "type": "table",
-      "title": "Gaps > 10 Minuten (letzte 7 Tage)",
-      "gridPos": { "x": 0, "y": 4, "w": 24, "h": 10 },
+      "title": "Gaps > 10 Minuten (seit Beginn)",
+      "gridPos": { "x": 0, "y": 10, "w": 24, "h": 12 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": { "type": "postgres", "uid": "timescaledb" },
-          "format": "table",
-          "rawSql": "SELECT device_id, gap_start, gap_end, gap_duration\nFROM v_sensor_gaps\nWHERE gap_start >= now() - interval '7 days'\nORDER BY device_id, gap_start DESC;"
-        }
-      ],
-      "options": {
-        "showHeader": true,
-        "footer": { "show": false },
-        "cellHeight": "sm"
-      },
+      "targets": [{
+        "refId": "A",
+        "datasource": { "type": "postgres", "uid": "timescaledb" },
+        "format": "table",
+        "rawSql": "SELECT device_id, gap_start, gap_end, gap_duration FROM v_sensor_gaps ORDER BY device_id, gap_start;"
+      }],
+      "options": { "showHeader": true, "footer": { "show": false }, "cellHeight": "sm" },
       "fieldConfig": {
         "defaults": {},
         "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "gap_duration" },
+          { "matcher": { "id": "byName", "options": "gap_duration" },
             "properties": [{ "id": "unit", "value": "s" }]
           }
         ]

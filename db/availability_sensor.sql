@@ -2,110 +2,101 @@
 CREATE OR REPLACE VIEW v_params AS
 SELECT 30::int AS interval_seconds;
 
--- ===== Erster Messpunkt pro Gerät =====
+-- ===== Geräte-Liste (fix: IDs 1 und 2) =====
+CREATE OR REPLACE VIEW v_devices AS
+SELECT * FROM (VALUES (1),(2)) AS t(device_id);
+
+-- ===== First/Last Seen & Global Start =====
 CREATE OR REPLACE VIEW v_first_seen AS
 SELECT device_id, MIN(timestamp) AS first_seen
 FROM sensor_data
 GROUP BY device_id;
 
--- ===== Tages-Ist je Device =====
-CREATE OR REPLACE VIEW v_counts_daily AS
-SELECT time_bucket('1 day', timestamp) AS day,
-       device_id,
-       COUNT(*)::bigint AS ist_count
+CREATE OR REPLACE VIEW v_last_seen AS
+SELECT device_id, MAX(timestamp) AS last_seen
 FROM sensor_data
-GROUP BY 1,2;
+GROUP BY device_id;
 
--- ===== Tages-Soll je Device (ab first_seen, bis jetzt) =====
-CREATE OR REPLACE VIEW v_expected_daily AS
-WITH
-  params AS (SELECT interval_seconds FROM v_params),
-  fs AS (SELECT * FROM v_first_seen),
-  day_bounds AS (
-    SELECT generate_series(
-             date_trunc('day', (SELECT MIN(first_seen) FROM fs)),
-             date_trunc('day', now()),
-             interval '1 day'
-           ) AS day
-  ),
-  expanded AS (
-    SELECT d.day, f.device_id, f.first_seen
-    FROM day_bounds d
-    CROSS JOIN fs f
-  ),
-  effective_window AS (
-    SELECT
-      e.device_id,
-      e.day,
-      GREATEST(e.day, e.first_seen)          AS start_ts,
-      LEAST(e.day + interval '1 day', now()) AS end_ts
-    FROM expanded e
-  )
-SELECT
-  device_id,
-  day,
-  CASE
-    WHEN end_ts <= start_ts THEN 0::bigint
-    ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (end_ts - start_ts)) / (SELECT interval_seconds FROM v_params))::bigint
-  END AS soll_count
-FROM effective_window;
+-- Globaler Start des Monitorings (oder fallback: heute 00:00, wenn noch keine Daten vorhanden)
+CREATE OR REPLACE VIEW v_global_start AS
+SELECT COALESCE((SELECT MIN(timestamp) FROM sensor_data), date_trunc('day', now())) AS start_ts;
 
-
--- ===== Tages-Gesamt (Ist/Soll) =====
-CREATE OR REPLACE VIEW v_totals_daily AS
-SELECT
-  e.day,
-  SUM(e.soll_count)::bigint AS soll_total,
-  SUM(COALESCE(i.ist_count,0))::bigint AS ist_total
-FROM v_expected_daily e
-LEFT JOIN v_counts_daily i
-  ON i.device_id = e.device_id AND i.day = e.day
-GROUP BY e.day
-ORDER BY e.day;
-
--- ===== Heute (Ist/Soll) =====
-CREATE OR REPLACE VIEW v_totals_today AS
-SELECT
-  (SELECT COALESCE(SUM(soll_count),0) FROM v_expected_daily WHERE day = date_trunc('day', now())) AS soll_today,
-  (SELECT COALESCE(SUM(ist_count),0)  FROM v_counts_daily  WHERE day = date_trunc('day', now())) AS ist_today;
-
--- ===== Seit Start (Ist/Soll, gesamt) =====
-CREATE OR REPLACE VIEW v_totals_since_start AS
+-- ===== Seit-Beginn: Soll/Ist/Availability je Device =====
+CREATE OR REPLACE VIEW v_totals_since_start_by_device AS
 WITH params AS (SELECT interval_seconds FROM v_params),
-per_dev AS (
-  SELECT
-    f.device_id,
-    f.first_seen,
-    COUNT(s.*)::bigint AS ist_count,
-    CASE
-      WHEN now() <= f.first_seen THEN 0::bigint
-      ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - f.first_seen)) / (SELECT interval_seconds FROM params))::bigint
-    END AS soll_count
-  FROM v_first_seen f
-  LEFT JOIN sensor_data s
-    ON s.device_id = f.device_id AND s.timestamp >= f.first_seen
-  GROUP BY f.device_id, f.first_seen
-)
-SELECT SUM(ist_count)::bigint  AS ist_total,
-       SUM(soll_count)::bigint AS soll_total
-FROM per_dev;
+gs AS (SELECT start_ts FROM v_global_start)
+SELECT
+  d.device_id,
+  -- Referenzbeginn: first_seen (falls vorhanden) sonst globaler Start
+  CASE
+    WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 0::bigint
+    ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params))::bigint
+  END AS soll_total,
+  COUNT(s.*)::bigint AS ist_total,
+  CASE
+    WHEN (CASE WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 0 ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params)) END) = 0
+      THEN NULL
+    ELSE ROUND(
+      100.0 * COUNT(s.*) /
+      (CASE WHEN now() <= COALESCE(f.first_seen, (SELECT start_ts FROM gs)) THEN 1 ELSE 1 + FLOOR(EXTRACT(EPOCH FROM (now() - COALESCE(f.first_seen, (SELECT start_ts FROM gs)))) / (SELECT interval_seconds FROM params)) END),
+      2
+    )
+  END AS availability_pct
+FROM v_devices d
+LEFT JOIN v_first_seen f ON f.device_id = d.device_id
+LEFT JOIN sensor_data s
+  ON s.device_id = d.device_id
+ AND s.timestamp >= COALESCE(f.first_seen, (SELECT start_ts FROM gs))
+GROUP BY d.device_id, f.first_seen
+ORDER BY d.device_id;
 
-
--- ===== Gaps > 10 Minuten =====
+-- ===== Gaps > 10 Minuten (seit Beginn) =====
 CREATE OR REPLACE VIEW v_sensor_gaps AS
-WITH ordered AS (
+WITH gs AS (SELECT start_ts FROM v_global_start),
+-- interne Lücken zwischen Messpunkten
+ordered AS (
   SELECT
     device_id,
     timestamp,
     LEAD(timestamp) OVER (PARTITION BY device_id ORDER BY timestamp) AS next_ts
   FROM sensor_data
+),
+internal AS (
+  SELECT
+    device_id,
+    timestamp AS gap_start,
+    next_ts   AS gap_end,
+    (next_ts - timestamp) AS gap_duration
+  FROM ordered
+  WHERE next_ts IS NOT NULL
+    AND next_ts - timestamp > interval '10 minutes'
+),
+-- Head-Gap: von globalem Start bis zum ersten Messpunkt (oder bis jetzt, wenn nie gesendet)
+head AS (
+  SELECT
+    d.device_id,
+    (SELECT start_ts FROM gs) AS gap_start,
+    COALESCE(f.first_seen, now()) AS gap_end,
+    COALESCE(f.first_seen, now()) - (SELECT start_ts FROM gs) AS gap_duration
+  FROM v_devices d
+  LEFT JOIN v_first_seen f ON f.device_id = d.device_id
+  WHERE COALESCE(f.first_seen, now()) - (SELECT start_ts FROM gs) > interval '10 minutes'
+),
+-- Tail-Gap: vom letzten Messpunkt bis jetzt
+tail AS (
+  SELECT
+    d.device_id,
+    l.last_seen AS gap_start,
+    now()       AS gap_end,
+    now() - l.last_seen AS gap_duration
+  FROM v_devices d
+  LEFT JOIN v_last_seen l ON l.device_id = d.device_id
+  WHERE l.last_seen IS NOT NULL
+    AND now() - l.last_seen > interval '10 minutes'
 )
-SELECT
-  device_id,
-  timestamp AS gap_start,
-  next_ts   AS gap_end,
-  (next_ts - timestamp) AS gap_duration
-FROM ordered
-WHERE next_ts IS NOT NULL
-  AND next_ts - timestamp > interval '10 minutes'
+SELECT device_id, gap_start, gap_end, gap_duration FROM internal
+UNION ALL
+SELECT device_id, gap_start, gap_end, gap_duration FROM head
+UNION ALL
+SELECT device_id, gap_start, gap_end, gap_duration FROM tail
 ORDER BY device_id, gap_start;

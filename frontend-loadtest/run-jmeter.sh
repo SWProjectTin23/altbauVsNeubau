@@ -54,7 +54,7 @@ echo "API_BASE=${API_BASE}"
 
 # Run JMeter inside Docker
 docker run --rm \
-  "${NET_ARGS[@]}" "${EXTRA_ARGS[@]}" \
+  ${NET_ARGS:+"${NET_ARGS[@]}"} ${EXTRA_ARGS:+"${EXTRA_ARGS[@]}"} \
   -v "$(pwd)/jmeter:/test" \
   -v "$(pwd)/${RESULTS_DIR}:/results" \
   justb4/jmeter:latest \
@@ -67,6 +67,7 @@ docker run --rm \
   -e -o /results/report \
   -j /results/jmeter.log \
   -Dlog_level.jmeter=INFO
+
 
 # Make files owned by you
 docker run --rm -v "$PWD/${RESULTS_DIR}:/results" alpine sh -c "chown -R $(id -u):$(id -g) /results" || true

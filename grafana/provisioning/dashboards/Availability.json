@@ -1,5 +1,5 @@
 {
-  "title": "Sensor Availability (seit Beginn) – Cards je Device",
+  "title": "Sensor Availability",
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -9,7 +9,7 @@
     {
       "id": 101,
       "type": "stat",
-      "title": "Device 1 – Soll (seit Beginn)",
+      "title": "Device 1 – Expected",
       "gridPos": { "x": 0, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -31,7 +31,7 @@
     {
       "id": 102,
       "type": "stat",
-      "title": "Device 1 – Ist (seit Beginn)",
+      "title": "Device 1 – Actual",
       "gridPos": { "x": 8, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -53,7 +53,7 @@
     {
       "id": 103,
       "type": "gauge",
-      "title": "Device 1 – Availability (seit Beginn)",
+      "title": "Device 1 – Availability",
       "gridPos": { "x": 16, "y": 0, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -72,7 +72,6 @@
           "mappings": [],
           "thresholds": { "mode": "absolute", "steps": [
             { "color": "red", "value": null },
-            { "color": "orange", "value": 50 },
             { "color": "green", "value": 70 }
           ]},
           "unit": "percent"
@@ -83,7 +82,7 @@
     {
       "id": 201,
       "type": "stat",
-      "title": "Device 2 – Soll (seit Beginn)",
+      "title": "Device 2 – Expected",
       "gridPos": { "x": 0, "y": 5, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -105,7 +104,7 @@
     {
       "id": 202,
       "type": "stat",
-      "title": "Device 2 – Ist (seit Beginn)",
+      "title": "Device 2 – Actual",
       "gridPos": { "x": 8, "y": 5, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -127,7 +126,7 @@
     {
       "id": 203,
       "type": "gauge",
-      "title": "Device 2 – Availability (seit Beginn)",
+      "title": "Device 2 – Availability",
       "gridPos": { "x": 16, "y": 5, "w": 8, "h": 5 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -146,7 +145,6 @@
           "mappings": [],
           "thresholds": { "mode": "absolute", "steps": [
             { "color": "red", "value": null },
-            { "color": "orange", "value": 50 },
             { "color": "green", "value": 70 }
           ]},
           "unit": "percent"
@@ -157,7 +155,7 @@
     {
       "id": 301,
       "type": "table",
-      "title": "Gaps > 10 Minuten (seit Beginn)",
+      "title": "Gaps > 10 minutes",
       "gridPos": { "x": 0, "y": 10, "w": 24, "h": 12 },
       "datasource": { "type": "postgres", "uid": "timescaledb" },
       "targets": [{
@@ -170,7 +168,8 @@
       "fieldConfig": {
         "defaults": {},
         "overrides": [
-          { "matcher": { "id": "byName", "options": "gap_duration" },
+          {
+            "matcher": { "id": "byName", "options": "gap_duration" },
             "properties": [{ "id": "unit", "value": "s" }]
           }
         ]

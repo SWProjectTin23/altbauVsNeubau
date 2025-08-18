@@ -1,0 +1,11 @@
+groups:
+- name: sensor_alerts
+  rules:
+  - alert: SensorOffline
+    expr: sensor_seconds_since_last_data > 120
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Sensor {{ $labels.device_id }} ist offline"
+      description: "Der Sensor {{ $labels.device_id }} hat seit mehr als 2 Minuten keine Daten gesendet."

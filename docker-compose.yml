@@ -121,10 +121,55 @@ services:
       - pg-network
     restart: unless-stopped
 
+  prometheus: 
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3003:3000"
+    environment:
+    - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+    - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    - GF_USERS_ALLOW_SIGN_UP=false
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+  sensor-exporter:
+    build:
+      context: ./sensor-exporter
+    container_name: sensor-exporter
+    ports:
+      - "9100:9100"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+    networks:
+      - pg-network
+    depends_on:
+      - db
+    restart: unless-stopped
 
 volumes: # This section must be at the same level as 'services'
   db_data:
-  kuma-data: 
+  kuma-data:
+  grafana-data:
 
 networks: # Definition of networks
   pg-network:

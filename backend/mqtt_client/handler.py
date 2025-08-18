@@ -22,10 +22,10 @@ logger = setup_logger(service="ingester", module="handler")
 
 # Allowed ranges for each metric (inclusive).
 VALID_RANGES = {
-    "temperature": (0, 40),
-    "humidity": (0, 100),
-    "pollen": (0, 700),
-    "particulate_matter": (0, 1000),
+    "temperature": (10, 40),
+    "humidity": (10, 100),
+    "pollen": (10, 700),
+    "particulate_matter": (10, 700),
 }
 
 

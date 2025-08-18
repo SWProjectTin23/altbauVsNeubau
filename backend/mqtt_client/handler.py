@@ -22,10 +22,10 @@ logger = setup_logger(service="ingester", module="handler")
 
 # Allowed ranges for each metric (inclusive).
 VALID_RANGES = {
-    "temperature": (10, 40),
-    "humidity": (10, 100),
-    "pollen": (10, 700),
-    "particulate_matter": (10, 700),
+    "temperature": (0, 40),
+    "humidity": (0, 100),
+    "pollen": (0, 700),
+    "particulate_matter": (0, 1000),
 }
 
 
@@ -85,28 +85,43 @@ def handle_metric(metric_name: str, topic: str, payload_dict: Dict[str, Any], db
     t = DurationTimer().start()
 
     try:
-        # Parse payload
+        # 1) Parse payload
         device_id, timestamp, value = parse_payload(payload_dict)
 
-        # Map metric name to database column
-        metric_map = {
-            "temperature": "temperature",
-            "humidity": "humidity",
-            "pollen": "pollen",
-            "particulate_matter": "particulate_matter",
-        }
-        if metric_name not in metric_map:
-            raise UnknownMetricError(f"Unknown metric: {metric_name}")
+        # 2) Metric checks
+        if metric_name not in VALID_RANGES:
+            raise UnknownMetricError(metric_name)
 
-        # Prepare data for insertion
-        insert_kwargs = {
-            "device_id": device_id,
-            "timestamp": timestamp,
-            metric_map[metric_name]: value,
-        }
+        if not isinstance(value, (int, float)):
+            raise NonNumericMetricError(metric_name, type(value).__name__)
 
-        # Insert into the database
-        insert_sensor_data(db_conn, **insert_kwargs)
+        min_val, max_val = VALID_RANGES[metric_name]
+        if not (min_val <= float(value) <= max_val):
+            raise MetricOutOfRangeError(metric_name, float(value), float(min_val), float(max_val))
+
+        # 3) Type normalization (no kwargs; explicit named args per metric)
+        if metric_name == "temperature":
+            insert_sensor_data(db_conn, device_id, timestamp, temperature=float(value))
+        elif metric_name == "humidity":
+            insert_sensor_data(db_conn, device_id, timestamp, humidity=float(value))
+        elif metric_name == "pollen":
+            # pollen must be an integer; allow 12.0 -> 12 but reject 12.3
+            if isinstance(value, float) and not value.is_integer():
+                raise PayloadValidationError(
+                    "non-integer value for integer metric",
+                    details={"metric": metric_name, "value": value},
+                )
+            insert_sensor_data(db_conn, device_id, timestamp, pollen=int(value))
+        elif metric_name == "particulate_matter":
+            if isinstance(value, float) and not value.is_integer():
+                raise PayloadValidationError(
+                    "non-integer value for integer metric",
+                    details={"metric": metric_name, "value": value},
+                )
+            insert_sensor_data(db_conn, device_id, timestamp, particulate_matter=int(value))
+        else:
+            # Should not happen due to the earlier check, but keep a guard.
+            raise UnknownMetricError(metric_name)
 
         # 4) Success log (single JSON line, v0 fields)
         log_event(

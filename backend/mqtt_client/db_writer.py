@@ -27,10 +27,10 @@ def insert_sensor_data(
     VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (device_id, timestamp)
     DO UPDATE SET 
-        temperature = COALESCE(EXCLUDED.temperature, sensor_data.temperature),
-        humidity = COALESCE(EXCLUDED.humidity, sensor_data.humidity),
-        pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
-        particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
+        temperature = EXCLUDED.temperature,
+        humidity = EXCLUDED.humidity,
+        pollen = EXCLUDED.pollen,
+        particulate_matter = EXCLUDED.particulate_matter;
     """
 
     cursor = conn.cursor()

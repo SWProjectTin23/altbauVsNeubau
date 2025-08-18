@@ -16,25 +16,21 @@ def insert_sensor_data(
     particulate_matter: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
-    Insert a row into sensor_data only if all sensor values are provided.
+    Insert a row into sensor_data, allowing NULL values for missing metrics.
     - No logging here (logging is done by the caller).
     - On failure: rollback and raise a domain-specific exception.
     - Returns a small summary for the caller to include in logs.
     """
-    # Prevent inserting None values: skip fields that are None
-    if temperature is None or humidity is None or pollen is None or particulate_matter is None:
-        raise DatabaseError("Incomplete sensor data: all sensor values must be provided")
-
     # Build query and params
     insert_query = """
     INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter)
     VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (device_id, timestamp)
     DO UPDATE SET 
-        temperature = EXCLUDED.temperature,
-        humidity = EXCLUDED.humidity,
-        pollen = EXCLUDED.pollen,
-        particulate_matter = EXCLUDED.particulate_matter;
+        temperature = COALESCE(EXCLUDED.temperature, sensor_data.temperature),
+        humidity = COALESCE(EXCLUDED.humidity, sensor_data.humidity),
+        pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
+        particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
     """
 
     cursor = conn.cursor()

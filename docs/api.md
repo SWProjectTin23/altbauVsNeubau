@@ -208,10 +208,7 @@ Note: If a device currently sends no data for the requested time range, its arra
     { "timestamp": 1721745600, "value": 10 },
     { "timestamp": 1721745660, "value": 11 }
   ],
-  "device_2": [
-    { "timestamp": 1721745600, "value": null },
-    { "timestamp": 1721745660, "value": null }
-  ],
+  "device_2": []],
   "metric": "pollen",
   "start": 1721745600,
   "end": 1721745660,

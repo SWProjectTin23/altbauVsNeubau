@@ -44,15 +44,20 @@ class Comparison(Resource):
             log_event(logger, "WARNING", "comparison.invalid.metric_missing")
             return {"status": "error", "message": "Metric must be specified."}, 400
 
-        if not device_id1 or not device_id2:
+        if not device_id1 and not device_id2:
             log_event(logger, "WARNING", "comparison.invalid.device_ids_missing",
                       device_1=device_id1, device_2=device_id2)
-            return {"status": "error", "message": "Both device IDs must be provided."}, 400
+            return {"status": "error", "message": "At least one device ID must be provided."}, 400
 
-        if device_id1 <= 0 or device_id2 <= 0:
+        if device_id1 is not None and device_id1 <= 0:
             log_event(logger, "WARNING", "comparison.invalid.device_id_nonpositive",
-                      device_1=device_id1, device_2=device_id2)
-            return {"status": "error", "message": "Device IDs must be positive integers."}, 400
+                      device_1=device_id1)
+            return {"status": "error", "message": "Device ID 1 must be a positive integer."}, 400
+
+        if device_id2 is not None and device_id2 <= 0:
+            log_event(logger, "WARNING", "comparison.invalid.device_id_nonpositive",
+                      device_2=device_id2)
+            return {"status": "error", "message": "Device ID 2 must be a positive integer."}, 400
 
         # optional time range validation (only when any bound provided)
         if start is not None or end is not None:
@@ -68,10 +73,9 @@ class Comparison(Resource):
             # call DB
             result = compare_devices_over_time(device_id1, device_id2, metric, start, end, num_buckets)
 
-            # result shape from db_operations: {"data": {"device_1": [...], "device_2": [...]}, "message": ..., "status": "success"}
             data_obj = (result or {}).get("data", {})
-            dev1_series = data_obj.get("device_1", [])
-            dev2_series = data_obj.get("device_2", [])
+            dev1_series = data_obj.get("device_1", []) if device_id1 else []
+            dev2_series = data_obj.get("device_2", []) if device_id2 else []
             warning_msg = (result or {}).get("message")
 
             if not dev1_series and not dev2_series:
@@ -81,8 +85,8 @@ class Comparison(Resource):
                     duration_ms=timer.stop_ms()
                 )
                 return {
-                    "device_1": [],
-                    "device_2": [],
+                    "device_1": dev1_series,
+                    "device_2": dev2_series,
                     "metric": metric,
                     "start": start,
                     "end": end,

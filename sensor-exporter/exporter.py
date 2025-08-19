@@ -43,9 +43,15 @@ def get_all_sensor_delays():
         cur.close()
         conn.close()
 
-        now = datetime.utcnow().replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+
         for device_id, last_seen in rows:
             if last_seen:
+                # make last_seen timezone-aware (assume DB either naive UTC or with tz)
+                if last_seen.tzinfo is None:
+                    last_seen = last_seen.replace(tzinfo=timezone.utc)
+                else:
+                    last_seen = last_seen.astimezone(timezone.utc)
                 delay = (now - last_seen).total_seconds()
             else:
                 delay = 99999  # Kein Wert → extrem hoch

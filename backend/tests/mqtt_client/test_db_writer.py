@@ -33,10 +33,10 @@ def test_insert_sensor_data_complete_data(mocker):
     VALUES (%s, %s, %s, %s, %s, %s)
     ON CONFLICT (device_id, timestamp)
     DO UPDATE SET 
-        temperature = EXCLUDED.temperature,
-        humidity = EXCLUDED.humidity,
-        pollen = EXCLUDED.pollen,
-        particulate_matter = EXCLUDED.particulate_matter;
+        temperature = COALESCE(EXCLUDED.temperature, sensor_data.temperature),
+        humidity = COALESCE(EXCLUDED.humidity, sensor_data.humidity),
+        pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
+        particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
     """
     expected_params = (device_id, timestamp, 21.3, 55, 123, 78)
     mock_cursor.execute.assert_called_with(expected_query, expected_params)

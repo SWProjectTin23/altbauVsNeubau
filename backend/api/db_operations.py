@@ -94,7 +94,7 @@ def get_db_connection():
             host=DB_CONFIG["host"], db=DB_CONFIG["database"], error_type=e.__class__.__name__
         )
         raise DatabaseOperationalError("database operational error", details={"op": "connect"}) from e
-    
+
     except psycopg2.Error as e:
         # other connection failures
         log_event(
@@ -153,7 +153,7 @@ def get_all_device_time_ranges_from_db():
     try:
         with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
             query = """
-                SELECT device_id, 
+                SELECT device_id,
                 MIN(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT) AS start,
                 MAX(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT) AS end
                 FROM sensor_data
@@ -190,8 +190,7 @@ def get_all_device_time_ranges_from_db():
 def validate_timestamps_and_range(device_id1, device_id2, start, end):
     """
     Validates if the provided start and end Unix timestamps are valid
-    and within the overlapping available data range for the given devices.
-
+    and within the available data range for the given devices.
     Returns:
         tuple: (bool, str|None) True if valid, else False + error message.
     """
@@ -201,7 +200,7 @@ def validate_timestamps_and_range(device_id1, device_id2, start, end):
 
     if start is None or end is None:
         return False, "Start and end timestamps must be provided."
-    
+
     # Check if start is less than end
     if start >= end:
         return False, "Start timestamp must be less than end timestamp."
@@ -210,16 +209,24 @@ def validate_timestamps_and_range(device_id1, device_id2, start, end):
     if not time_ranges:
         return False, "No time ranges available for the devices."
 
-    range1 = next((tr for tr in time_ranges if tr['device_id'] == device_id1), None)
-    range2 = next((tr for tr in time_ranges if tr['device_id'] == device_id2), None)
+    errors = []
+    valid = False
 
-    # Check if both devices have valid time ranges
-    if not range1 or not range2:
-        return False, f"No data found for device ID {device_id1} or {device_id2}."
+    if device_id1:
+        range1 = next((tr for tr in time_ranges if tr['device_id'] == device_id1), None)
+        if not range1 or range1['end'] < start:
+            errors.append(f"No overlapping data available for device ID {device_id1} in the specified time range.")
+        else:
+            valid = True
+    if device_id2:
+        range2 = next((tr for tr in time_ranges if tr['device_id'] == device_id2), None)
+        if not range2 or range2['end'] < start:
+            errors.append(f"No overlapping data available for device ID {device_id2} in the specified time range.")
+        else:
+            valid = True
 
-    # Check if the provided range overlaps with the available data ranges
-    if range1['end'] < start or range2['end'] < start:
-        return False, "No overlapping data available for the specified time range."
+    if not valid:
+        return False, " ".join(errors)
 
     log_event(logger, "DEBUG", "db.validate_range.ok",
               device_id1=device_id1, device_id2=device_id2)
@@ -314,7 +321,7 @@ def get_latest_device_data_from_db(device_id):
 
             # Query to get the latest data for the specified device
             query = """
-                SELECT device_id, 
+                SELECT device_id,
                 EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
                 humidity, temperature, pollen, particulate_matter
                 FROM sensor_data
@@ -390,7 +397,7 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
             AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
             AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC';
             """
-    
+
         count_params = (device_id1, device_id2, start, end)
         cursor.execute(count_query, count_params)
         count_result = cursor.fetchone()
@@ -401,7 +408,7 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
 
         if num_buckets is None or num_buckets > total_raw_entries:
             query = f"""
-                SELECT device_id, 
+                SELECT device_id,
                 EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
                 {metric}
                 FROM sensor_data

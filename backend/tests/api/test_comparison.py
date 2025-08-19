@@ -24,4 +24,4 @@ def test_comparison_endpoint_missing_device_ids(client):
     assert response.status_code == 400
     json_data = response.get_json()
     assert json_data['status'] == 'error'
-    assert json_data['message'] == 'Both device IDs must be provided.'
+    assert json_data['message'] == 'At least one device ID must be provided.'

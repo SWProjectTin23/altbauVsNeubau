@@ -3,7 +3,7 @@ name: Build and Push Docker Images to GHCR
 on:
   push:
     branches:
-      - main  
+      - main
 
 jobs:
   build_and_push:
@@ -18,15 +18,15 @@ jobs:
 
       - name: Build and push backend-api image
         run: |
-          docker build -t ghcr.io/swprojecttin23/altbauvsneubau/backend-api:latest -f ./backend/Dockerfile.api ./backend
-          docker push ghcr.io/swprojecttin23/altbauvsneubau/backend-api:latest
+          docker build -t ghcr.io/geroldj/altbauvsneubau/backend-api:latest -f ./backend/Dockerfile.api ./backend
+          docker push ghcr.io/geroldj/altbauvsneubau/backend-api:latest
 
       - name: Build and push backend-mqtt image
         run: |
-          docker build -t ghcr.io/swprojecttin23/altbauvsneubau/backend-mqtt:latest -f ./backend/Dockerfile.mqtt ./backend
-          docker push ghcr.io/swprojecttin23/altbauvsneubau/backend-mqtt:latest
+          docker build -t ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest -f ./backend/Dockerfile.mqtt ./backend
+          docker push ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest
 
       - name: Build and push frontend image
         run: |
-          docker build -t ghcr.io/swprojecttin23/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile ./frontend
-          docker push ghcr.io/swprojecttin23/altbauvsneubau/frontend:latest
+          docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile ./frontend
+          docker push ghcr.io/geroldj/altbauvsneubau/frontend:latest

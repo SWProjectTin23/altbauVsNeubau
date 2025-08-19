@@ -1,5 +1,6 @@
+import pytest
 from mqtt_client.db_writer import insert_sensor_data
-from common.exceptions import DatabaseError
+from common.exceptions import DatabaseError, DatabaseTimeoutError, DatabaseConnectionError
 
 def test_insert_sensor_data_complete_data(mocker):
     # Shared device ID and timestamp for all inserts
@@ -42,15 +43,77 @@ def test_insert_sensor_data_complete_data(mocker):
     mock_cursor.execute.assert_called_with(expected_query, expected_params)
 
 def test_insert_sensor_data_incomplete_data(mocker):
-    # Shared device ID and timestamp for all inserts
     device_id = 2
     timestamp = "2025-08-06T13:00:00Z"
-
-    # Mock database connection
     mock_conn = mocker.MagicMock()
 
-    # Attempt to insert incomplete data and expect an exception
-    try:
-        insert_sensor_data(mock_conn, device_id, timestamp, temperature=21.3, humidity=55)
-    except DatabaseError as e:
-        assert str(e) == "Incomplete sensor data: all sensor values must be provided"
+    with pytest.raises(DatabaseError) as ei:
+        insert_sensor_data(
+            mock_conn,
+            device_id,
+            timestamp
+        )
+        # no required metrics
+    assert "Incomplete sensor data: all sensor values must be provided" in str(ei.value)
+
+    # no insert
+    mock_conn.cursor.assert_not_called()
+    mock_conn.commit.assert_not_called()
+    mock_conn.rollback.assert_not_called()
+
+def test_commit_failure_rolls_back_and_raises_generic(mocker):
+    """if commit() fails, rollback and raise DatabaseError。"""
+    device_id = 4
+    timestamp = "2025-08-06T15:00:00Z"
+
+    mock_conn = mocker.MagicMock()
+    mock_cursor = mocker.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+    mock_conn.commit.side_effect = Exception("commit timed out")
+
+    with pytest.raises(DatabaseError):
+        insert_sensor_data(
+            mock_conn,
+            device_id,
+            timestamp,
+            temperature=1.1,
+            humidity=2.2,
+            pollen=3,
+            particulate_matter=4,
+        )
+
+    mock_conn.rollback.assert_called_once()
+    mock_cursor.close.assert_called_once()
+
+@pytest.mark.parametrize(
+    "driver_msg,expected_exc",
+    [
+        ("timeout while writing", DatabaseTimeoutError),
+        ("could not connect to server", DatabaseConnectionError),
+        ("some random db error", DatabaseError),
+    ],
+)
+def test_driver_errors_mapped_and_rollback(mocker, driver_msg, expected_exc):
+    device_id = 3
+    timestamp = "2025-08-06T14:00:00Z"
+
+    mock_conn = mocker.MagicMock()
+    mock_cursor = mocker.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    mock_cursor.execute.side_effect = Exception(driver_msg)
+
+    with pytest.raises(expected_exc):
+        insert_sensor_data(
+            mock_conn,
+            device_id,
+            timestamp,
+            temperature=10.0,
+            humidity=20.0,
+            pollen=30,
+            particulate_matter=40,
+        )
+
+    mock_conn.rollback.assert_called_once()
+    mock_conn.commit.assert_not_called()
+    mock_cursor.close.assert_called_once()

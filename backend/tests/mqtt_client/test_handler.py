@@ -22,7 +22,7 @@ def test_valid_metric_calls_insert(mocker):
     assert args[1] == 1  # device_id
     assert kwargs["temperature"] == 22.5
 
-def test_missing_device_id_does_not_call_insert(mocker):
+def test_missing_device_id(mocker):
     mock_insert = mocker.patch("mqtt_client.handler.insert_sensor_data")
     mock_conn = mocker.MagicMock()
 
@@ -32,7 +32,7 @@ def test_missing_device_id_does_not_call_insert(mocker):
     handle_metric("temperature", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
-def test_unknown_metric_does_not_call_insert(mocker):
+def test_unknown_metric(mocker):
     mock_insert = mocker.patch("mqtt_client.handler.insert_sensor_data")
     mock_conn = mocker.MagicMock()
 
@@ -40,7 +40,7 @@ def test_unknown_metric_does_not_call_insert(mocker):
     handle_metric("unknown_metric", "dhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
-def test_non_numeric_value_does_not_call_insert(mocker):
+def test_non_numeric_value(mocker):
     mock_insert = mocker.patch("mqtt_client.handler.insert_sensor_data")
     mock_conn = mocker.MagicMock()
 
@@ -50,7 +50,7 @@ def test_non_numeric_value_does_not_call_insert(mocker):
     handle_metric("temperature", "sdhbw/ai/si2023/01/temperature/01", payload, mock_conn)
     mock_insert.assert_not_called()
 
-def test_value_out_of_range_does_not_call_insert(mocker):
+def test_value_out_of_range(mocker):
     mock_insert = mocker.patch("mqtt_client.handler.insert_sensor_data")
     mock_conn = mocker.MagicMock()
 

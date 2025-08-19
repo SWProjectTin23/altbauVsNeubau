@@ -2,67 +2,77 @@ import pytest
 from mqtt_client.db_writer import insert_sensor_data
 from common.exceptions import DatabaseError, DatabaseTimeoutError, DatabaseConnectionError
 
+
 def test_insert_sensor_data_complete_data(mocker):
-    # Shared device ID and timestamp for all inserts
     device_id = 2
     timestamp = "2025-08-06T13:00:00Z"
 
-    # Mock database connection and cursor
     mock_conn = mocker.MagicMock()
     mock_cursor = mocker.MagicMock()
+    mock_cursor.rowcount = 1
     mock_conn.cursor.return_value = mock_cursor
 
-    # Simulate a complete insert call
-    insert_sensor_data(
-        mock_conn, 
-        device_id, 
-        timestamp, 
-        temperature=21.3, 
-        humidity=55, 
-        pollen=123, 
-        particulate_matter=78
+    result = insert_sensor_data(
+        mock_conn,
+        device_id,
+        timestamp,
+        temperature=21.3,
+        humidity=55,
+        pollen=123,
+        particulate_matter=78,
     )
 
-    # Ensure that execute, commit, and cursor.close were called once
     mock_cursor.execute.assert_called_once()
     mock_conn.commit.assert_called_once()
     mock_cursor.close.assert_called_once()
 
-    # Validate the parameters passed to the execute call
-    expected_query = """
-    INSERT INTO sensor_data (device_id, timestamp, temperature, humidity, pollen, particulate_matter)
-    VALUES (%s, %s, %s, %s, %s, %s)
-    ON CONFLICT (device_id, timestamp)
-    DO UPDATE SET 
-        temperature = COALESCE(EXCLUDED.temperature, sensor_data.temperature),
-        humidity = COALESCE(EXCLUDED.humidity, sensor_data.humidity),
-        pollen = COALESCE(EXCLUDED.pollen, sensor_data.pollen),
-        particulate_matter = COALESCE(EXCLUDED.particulate_matter, sensor_data.particulate_matter);
-    """
-    expected_params = (device_id, timestamp, 21.3, 55, 123, 78)
-    mock_cursor.execute.assert_called_with(expected_query, expected_params)
+    # Validate parameters (avoid brittle exact query string match)
+    _, params = mock_cursor.execute.call_args[0]
+    assert params == (device_id, timestamp, 21.3, 55, 123, 78)
 
-def test_insert_sensor_data_incomplete_data(mocker):
+    # Validate return payload
+    assert result["device_id"] == device_id
+    assert result["timestamp"] == timestamp
+    assert result["updated_fields"] == {
+        "temperature": 21.3,
+        "humidity": 55,
+        "pollen": 123,
+        "particulate_matter": 78,
+    }
+    assert result["rows_affected"] == 1
+
+
+def test_insert_sensor_data_allows_partial_data(mocker):
     device_id = 2
     timestamp = "2025-08-06T13:00:00Z"
     mock_conn = mocker.MagicMock()
+    mock_cursor = mocker.MagicMock()
+    mock_cursor.rowcount = 1
+    mock_conn.cursor.return_value = mock_cursor
 
-    with pytest.raises(DatabaseError) as ei:
-        insert_sensor_data(
-            mock_conn,
-            device_id,
-            timestamp
-        )
-        # no required metrics
-    assert "Incomplete sensor data: all sensor values must be provided" in str(ei.value)
+    result = insert_sensor_data(
+        mock_conn,
+        device_id,
+        timestamp,
+        temperature=21.3,  # other fields omitted on purpose
+    )
 
-    # no insert
-    mock_conn.cursor.assert_not_called()
-    mock_conn.commit.assert_not_called()
-    mock_conn.rollback.assert_not_called()
+    mock_cursor.execute.assert_called_once()
+    mock_conn.commit.assert_called_once()
+    mock_cursor.close.assert_called_once()
 
-def test_commit_failure_rolls_back_and_raises_generic(mocker):
-    """if commit() fails, rollback and raise DatabaseError。"""
+    _, params = mock_cursor.execute.call_args[0]
+    assert params == (device_id, timestamp, 21.3, None, None, None)
+
+    assert result["updated_fields"] == {
+        "temperature": 21.3,
+        "humidity": None,
+        "pollen": None,
+        "particulate_matter": None,
+    }
+
+
+def test_commit_failure_rolls_back_and_maps_timeout(mocker):
     device_id = 4
     timestamp = "2025-08-06T15:00:00Z"
 
@@ -71,7 +81,7 @@ def test_commit_failure_rolls_back_and_raises_generic(mocker):
     mock_conn.cursor.return_value = mock_cursor
     mock_conn.commit.side_effect = Exception("commit timed out")
 
-    with pytest.raises(DatabaseError):
+    with pytest.raises(DatabaseTimeoutError):
         insert_sensor_data(
             mock_conn,
             device_id,
@@ -84,6 +94,7 @@ def test_commit_failure_rolls_back_and_raises_generic(mocker):
 
     mock_conn.rollback.assert_called_once()
     mock_cursor.close.assert_called_once()
+
 
 @pytest.mark.parametrize(
     "driver_msg,expected_exc",
@@ -115,5 +126,28 @@ def test_driver_errors_mapped_and_rollback(mocker, driver_msg, expected_exc):
         )
 
     mock_conn.rollback.assert_called_once()
+    mock_conn.commit.assert_not_called()
+    mock_cursor.close.assert_called_once()
+
+
+def test_rollback_failure_is_swallowed_and_original_error_mapped(mocker):
+    device_id = 5
+    timestamp = "2025-08-06T16:00:00Z"
+
+    mock_conn = mocker.MagicMock()
+    mock_cursor = mocker.MagicMock()
+    mock_conn.cursor.return_value = mock_cursor
+
+    mock_cursor.execute.side_effect = Exception("unhandled db error")
+    mock_conn.rollback.side_effect = Exception("rollback failed")
+
+    with pytest.raises(DatabaseError):
+        insert_sensor_data(
+            mock_conn,
+            device_id,
+            timestamp,
+            temperature=9.9,
+        )
+
     mock_conn.commit.assert_not_called()
     mock_cursor.close.assert_called_once()

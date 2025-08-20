@@ -48,7 +48,8 @@ def test_on_message_unknown_metric_skips(mocker):
     mock_msg.payload = b'{"value": 6, "timestamp": "1722945600", "meta": {"device_id": 1}}'
 
     mock_handle = mocker.patch("mqtt_client.main_ingester.handle_metric")
-    on_message(MagicMock(), {"db_connection": MagicMock()}, mock_msg)
+    db_conn = MagicMock()
+    on_message(MagicMock(), {"db_connection": db_conn}, mock_msg)
 
     mock_handle.assert_not_called()
     

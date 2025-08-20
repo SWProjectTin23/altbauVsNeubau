@@ -1,23 +1,56 @@
-// Lightweight frontend logger
-const LEVELS = ["silent","error","warn","info","debug"];
-const MAP = { error: console.error, warn: console.warn, info: console.info, debug: console.debug };
-const activeLevel = (process.env.REACT_APP_LOG_LEVEL || "warn").toLowerCase();
-const activeIdx = Math.max(0, LEVELS.indexOf(activeLevel));
+const LEVELS = ["debug", "info", "warn", "error"];
 
-function should(level){ return LEVELS.indexOf(level) <= activeIdx && level !== "silent"; }
-function fmt(sys, lvl, msg, meta){
-  const base = `[FE][${lvl.toUpperCase()}][${sys}] ${msg}`;
-  return meta && Object.keys(meta).length ? `${base} | ${JSON.stringify(meta)}` : base;
+const envLevel =
+  (import.meta && import.meta.env && import.meta.env.VITE_LOG_LEVEL) ||
+  process.env.REACT_APP_LOG_LEVEL ||
+  "info";
+
+const minLevelIndex = Math.max(0, LEVELS.indexOf((envLevel || "info").toLowerCase()));
+
+function shouldLog(level) {
+  return LEVELS.indexOf(level) >= minLevelIndex;
 }
 
-export function log(sys, lvl, msg, meta = {}) {
-  if (!should(lvl)) return;
-  (MAP[lvl] || console.log)(fmt(sys,lvl,msg,meta));
+// Optional: Logs an einen Backend-Endpunkt senden (per ENV konfigurierbar)
+function sendRemote(area, event, level, details) {
+  try {
+    const endpoint =
+      (import.meta.env && import.meta.env.VITE_FE_LOG_ENDPOINT) ||
+      process.env.REACT_APP_FE_LOG_ENDPOINT ||
+      null;
+    if (!endpoint) return;
+    const payload = JSON.stringify({
+      ts: new Date().toISOString(),
+      area,
+      event,
+      level,
+      details,
+      ua: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+    });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(endpoint, payload);
+    } else {
+      fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload }).catch(() => {});
+    }
+  } catch {
+    // ignore
+  }
+}
+
+function log(area, event, level, details) {
+  if (!shouldLog(level)) return;
+  const msg = `[${level.toUpperCase()}] [${area}] ${event}`;
+  const data = details !== undefined ? details : "";
+  if (level === "error") console.error(msg, data);
+  else if (level === "warn") console.warn(msg, data);
+  else if (level === "info") console.info(msg, data);
+  else console.debug(msg, data);
+  sendRemote(area, event, level, details);
 }
 
 export const feLogger = {
-  debug:(s,m,meta)=>log(s,"debug",m,meta),
-  info:(s,m,meta)=>log(s,"info",m,meta),
-  warn:(s,m,meta)=>log(s,"warn",m,meta),
-  error:(s,m,meta)=>log(s,"error",m,meta)
+  debug: (area, event, details) => log(area, event, "debug", details),
+  info: (area, event, details) => log(area, event, "info", details),
+  warn: (area, event, details) => log(area, event, "warn", details),
+  error: (area, event, details) => log(area, event, "error", details),
 };

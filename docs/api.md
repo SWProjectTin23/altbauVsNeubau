@@ -187,13 +187,16 @@ Endpoints are under development and may change as needed.
 - Returns the selected metric of two devices over a given time range.
 - The data is aggregated in buckets (e.g., 100 average values per device) for efficient charting.
 
+Note: If a device currently sends no data for the requested time range, its array will be empty. In that case no buckets with "value" entries are returned for that device (the frontend must handle empty arrays).
+
+
 #### Query Parameters
 - `device_1`: ID of first device (e.g., `1`)
 - `device_2`: ID of second device (e.g., `2`)
 - `metric`: one of `temperature`, `humidity`, `pollen`, `particulate_matter`
 - `start`: Unix timestamp (optional)
 - `end`: Unix timestamp (optional)
-- `buckets`: *(optional, default: 100)* Number of buckets (average values) to return per device
+- `buckets`: *(optional, default: 300)* Number of buckets (average values) to return per device
 
 #### Example:
 `http://localhost:5001/api/comparison?device_1=1&device_2=2&metric=pollen&start=1721745600&end=1721745660&buckets=100`
@@ -205,10 +208,7 @@ Endpoints are under development and may change as needed.
     { "timestamp": 1721745600, "value": 10 },
     { "timestamp": 1721745660, "value": 11 }
   ],
-  "device_2": [
-    { "timestamp": 1721745600, "value": 8 },
-    { "timestamp": 1721745660, "value": 9 }
-  ],
+  "device_2": []],
   "metric": "pollen",
   "start": 1721745600,
   "end": 1721745660,

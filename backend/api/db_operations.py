@@ -1,11 +1,27 @@
-import psycopg2
-from psycopg2 import extras
+# api/db_operations.py
+
 import os
 import datetime
+from decimal import Decimal
+
+import psycopg2
+from psycopg2 import extras
+from psycopg2 import OperationalError  # [errors] low-level DB operational failures
+from psycopg2.extensions import QueryCanceledError  # [errors] statement timeout / canceled
 from dotenv import load_dotenv
 
-from decimal import Decimal
-from decimal import Decimal
+# [logging] bring in your log helpers
+from common.logging_setup import setup_logger, log_event, DurationTimer
+# [errors] unified error types exposed to the rest of the app
+from common.exceptions import (
+    DatabaseError,
+    DatabaseConnectionError,
+    DatabaseQueryTimeoutError,   # new
+    DatabaseOperationalError,    # new
+)
+
+# [logging] each module registers its own logger
+logger = setup_logger(service="api", module="db_operations")
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -16,8 +32,9 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME"),
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
-    "port": os.getenv("DB_PORT", "5432") # Default to 5432 if not specified
+    "port": os.getenv("DB_PORT", "5432")  # Default to 5432 if not specified
 }
+
 
 # Function to serialize database rows for JSON compatibility
 def serialize_row(row: dict) -> dict:
@@ -38,7 +55,8 @@ def check_db_config():
     missing = [k for k in ["host", "database", "user", "password"] if not DB_CONFIG[k]]
     if missing:
         msg = f"Missing DB config values: {', '.join(missing)}. Please check your .env file or environment variables."
-        print(msg)
+        # [logging]
+        log_event(logger, "ERROR", "db.config_missing", missing=",".join(missing))
         raise ValueError(msg)
 
 
@@ -47,26 +65,45 @@ def get_db_connection():
     """
     Establishes a connection to the PostgreSQL database.
     Returns a Connection object.
-    Raises psycopg2.Error on connection errors.
+    Raises app-level Database* errors on failure.
     """
     check_db_config()
 
-    # Attempt to connect to the database
+    timer = DurationTimer().start()  # [logging]
     try:
         conn = psycopg2.connect(
             host=DB_CONFIG["host"],
             database=DB_CONFIG["database"],
             user=DB_CONFIG["user"],
             password=DB_CONFIG["password"],
-            port=int(DB_CONFIG["port"]) 
+            port=int(DB_CONFIG["port"])
+        )
+        # [logging]
+        log_event(
+            logger, "INFO", "db.conn_ok",
+            duration_ms=timer.stop_ms(),
+            host=DB_CONFIG["host"], db=DB_CONFIG["database"]
         )
         return conn
-    
-    # Handle connection errors
+
+    except OperationalError as e:
+        # connection-level operational failure
+        log_event(
+            logger, "ERROR", "db.conn_operational_error",
+            duration_ms=timer.stop_ms(),
+            host=DB_CONFIG["host"], db=DB_CONFIG["database"], error_type=e.__class__.__name__
+        )
+        raise DatabaseOperationalError("database operational error", details={"op": "connect"}) from e
+
     except psycopg2.Error as e:
-        # Re-raise the connection error for handling by the caller.
-        print(f"Error while connecting to the database: {e}")
-        raise
+        # other connection failures
+        log_event(
+            logger, "ERROR", "db.conn_fail",
+            duration_ms=timer.stop_ms(),
+            host=DB_CONFIG["host"], db=DB_CONFIG["database"], error_type=e.__class__.__name__
+        )
+        raise DatabaseConnectionError("database connection failed", details={"op": "connect"}) from e
+
 
 # Check if a device exists in the database
 def device_exists(device_id):
@@ -74,130 +111,150 @@ def device_exists(device_id):
     Checks if a device with the given ID exists in the database.
     Returns True if the device exists, False otherwise.
     """
-
-    # Get a database connection
+    timer = DurationTimer().start()  # [logging]
     conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Query to check if the device exists
-    query = "SELECT EXISTS(SELECT 1 FROM sensor_data WHERE device_id = %s);"
-    cursor.execute(query, (device_id,)) # Execute the query 
-    exists = cursor.fetchone()[0] # Fetch the result
-
-    # Close the cursor and connection
-    cursor.close()
-    conn.close()
-
-    return exists # Return True if the device exists, False otherwise
+    try:
+        with conn.cursor() as cursor:
+            query = "SELECT EXISTS(SELECT 1 FROM sensor_data WHERE device_id = %s);"
+            cursor.execute(query, (device_id,))
+            result = cursor.fetchone()
+            exists = result[0] if result is not None else False
+            # [logging]
+            log_event(
+                logger, "INFO", "db.device_exists.ok",
+                duration_ms=timer.stop_ms(),
+                device_id=device_id, exists=bool(exists)
+            )
+            return exists
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.device_exists.timeout",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "device_exists", "device_id": device_id}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.device_exists.operational_error",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "device_exists", "device_id": device_id}) from e
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.device_exists.fail",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "device_exists", "device_id": device_id}) from e
+    finally:
+        conn.close()
 
 
 # Get available time ranges for all devices from the database
-# returns the earliest and latest timestamps for each device
 def get_all_device_time_ranges_from_db():
     """
     Fetches the available time ranges for all devices from the database.
     Returns a list of dictionaries with device_id, start, and end timestamps.
     """
-
-    # Get a database connection
+    timer = DurationTimer().start()  # [logging]
     conn = get_db_connection()
-
     try:
         with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
-
-            # Query to get the start and end timestamps for each device
             query = """
-                SELECT device_id, 
+                SELECT device_id,
                 MIN(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT) AS start,
                 MAX(EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT) AS end
                 FROM sensor_data
                 GROUP BY device_id
                 ORDER BY device_id;
             """
-            # Execute the query
             cursor.execute(query)
-            # Fetch all time ranges
             time_ranges = cursor.fetchall()
+            payload = [serialize_row(dict(row)) for row in time_ranges]
+            # [logging]
+            log_event(
+                logger, "INFO", "db.time_ranges.ok",
+                duration_ms=timer.stop_ms(),
+                device_count=len(payload)
+            )
+            return payload
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.time_ranges.timeout",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "get_all_device_time_ranges_from_db"}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.time_ranges.operational_error",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "get_all_device_time_ranges_from_db"}) from e
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.time_ranges.fail",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "get_all_device_time_ranges_from_db"}) from e
     finally:
-        conn.close() # Close the connection
+        conn.close()
 
-    # Return the time ranges as a list of dictionaries
-    # Each dictionary contains device_id, start, and end timestamps
-    return [serialize_row(dict(row)) for row in time_ranges]  # Convert rows to dictionaries
 
 # Validate timestamps and range for two devices
-# Returns True if valid, else False + error message
-# This function checks if the provided start and end timestamps are valid
-# and if they overlap with the available data range for the given devices.
 def validate_timestamps_and_range(device_id1, device_id2, start, end):
     """
     Validates if the provided start and end Unix timestamps are valid
-    and within the overlapping available data range for the given devices.
-
+    and within the available data range for the given devices.
     Returns:
         tuple: (bool, str|None) True if valid, else False + error message.
     """
-    
-    # Check if both start and end timestamps are provided
+    # [logging] lightweight input event
+    log_event(logger, "DEBUG", "db.validate_range.start",
+              device_id1=device_id1, device_id2=device_id2, start=start, end=end)
+
     if start is None or end is None:
         return False, "Start and end timestamps must be provided."
-    
+
     # Check if start is less than end
     if start >= end:
         return False, "Start timestamp must be less than end timestamp."
-    
-    # Fetch the time ranges for both devices
-    time_ranges = get_all_device_time_ranges_from_db()
 
+    time_ranges = get_all_device_time_ranges_from_db()
     if not time_ranges:
         return False, "No time ranges available for the devices."
-    
-    # Lookup the time ranges for the specified devices
-    range1 = next((tr for tr in time_ranges if tr['device_id'] == device_id1), None)
-    range2 = next((tr for tr in time_ranges if tr['device_id'] == device_id2), None)
 
-    # Check if both devices have valid time ranges
-    if not range1 or not range2:
-        return False, f"No data found for device ID {device_id1} or {device_id2}."
+    errors = []
+    valid = False
 
-    # Check if the provided range overlaps with the available data ranges
-    if range1['end'] < start or range2['end'] < start:
-        return False, "No overlapping data available for the specified time range."
+    if device_id1:
+        range1 = next((tr for tr in time_ranges if tr['device_id'] == device_id1), None)
+        if not range1 or range1['end'] < start:
+            errors.append(f"No overlapping data available for device ID {device_id1} in the specified time range.")
+        else:
+            valid = True
+    if device_id2:
+        range2 = next((tr for tr in time_ranges if tr['device_id'] == device_id2), None)
+        if not range2 or range2['end'] < start:
+            errors.append(f"No overlapping data available for device ID {device_id2} in the specified time range.")
+        else:
+            valid = True
 
-    # return True if all checks pass
+    if not valid:
+        return False, " ".join(errors)
+
+    log_event(logger, "DEBUG", "db.validate_range.ok",
+              device_id1=device_id1, device_id2=device_id2)
     return True, None
 
+
 # Get sensor data by device ID and time range
-# Returns all available data (by default) for a specific device
-# Response format: [{device_id, humidity, temperature, pollen, particulate_matter, timestamp}, ...]
 def get_device_data_from_db(device_id, metric=None, start=None, end=None):
     """
     Fetches sensor data for a specific device within an optional time range.
     If metric is provided, filters by that metric.
     Returns a list of dictionaries with device data.
     """
-
-    # Define valid metrics
     valid_metrics = ['humidity', 'temperature', 'pollen', 'particulate_matter']
 
-    # Validate the metric if provided
     if metric and metric not in valid_metrics:
         raise ValueError(f"Invalid metric '{metric}'. Valid metrics: {', '.join(valid_metrics)}.")
-    
-    # Build SELECT query dynamically based on the metric
+
     base_columns = [
         "device_id",
         "EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds"
     ]
 
-    # If a metric is specified, include it in the SELECT clause
-    # Otherwise, include all valid metrics
     if metric:
         select_columns = base_columns + [metric]
     else:
         select_columns = base_columns + valid_metrics
 
-    # Construct the SQL query
     query = f"""
         SELECT {', '.join(select_columns)}
         FROM sensor_data
@@ -212,30 +269,44 @@ def get_device_data_from_db(device_id, metric=None, start=None, end=None):
     if start:
         conditions.append("timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ")
         params.append(start)
-
     if end:
         conditions.append("timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ")
         params.append(end)
-
     if conditions:
-       query += " AND " + " AND ".join(conditions)
+        query += " AND " + " AND ".join(conditions)
 
-    # Get a database connection
+    timer = DurationTimer().start()  # [logging]
     conn = get_db_connection()
-
     try:
         with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
             cursor.execute(query, tuple(params))
             data = cursor.fetchall()
+
+            result = [serialize_row(dict(row)) for row in data]
+            log_event(
+                logger, "INFO", "db.device_data.ok",
+                duration_ms=timer.stop_ms(),
+                device_id=device_id, metric=metric or "ALL", row_count=len(result)
+            )
+            return result
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.device_data.timeout",
+                  duration_ms=timer.stop_ms(), device_id=device_id, metric=metric or "ALL",
+                  error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "get_device_data_from_db"}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.device_data.operational_error",
+                  duration_ms=timer.stop_ms(), device_id=device_id, metric=metric or "ALL",
+                  error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "get_device_data_from_db"}) from e
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.device_data.fail",
+                  duration_ms=timer.stop_ms(), device_id=device_id, metric=metric or "ALL",
+                  error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "get_device_data_from_db"}) from e
     finally:
-        conn.close() # Close the connection
+        conn.close()
 
-    result = []
-    for row in data:
-        row_dict = serialize_row(dict(row))
-        result.append(row_dict)
-
-    return result  # Return the list of dictionaries with device data
 
 # Get latest data for a device
 def get_latest_device_data_from_db(device_id):
@@ -243,17 +314,14 @@ def get_latest_device_data_from_db(device_id):
     Fetches the latest sensor data for a specific device.
     Returns a dictionary with the latest data or None if no data is found.
     """
-    print(f"Fetching latest data for device ID: {device_id}")
-    
-    # Get a database connection
+    timer = DurationTimer().start()  # [logging]
     conn = get_db_connection()
-    
     try:
         with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
 
             # Query to get the latest data for the specified device
             query = """
-                SELECT device_id, 
+                SELECT device_id,
                 EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
                 humidity, temperature, pollen, particulate_matter
                 FROM sensor_data
@@ -261,204 +329,253 @@ def get_latest_device_data_from_db(device_id):
                 ORDER BY timestamp DESC
                 LIMIT 1;
             """
-
-            # Execute the query with the device ID
             cursor.execute(query, (device_id,))
-            row = cursor.fetchone() # Fetch the latest row
-    finally:
-        conn.close() # Close the connection
+            row = cursor.fetchone()
 
-    # If a row is found, serialize it; otherwise, return an empty list
-    if row:
-        return {
-            "device_id": serialize_row(row)["device_id"],
-            "unix_timestamp_seconds": serialize_row(row)["unix_timestamp_seconds"],
-            "humidity": serialize_row(row)["humidity"],
-            "temperature": serialize_row(row)["temperature"],
-            "pollen": serialize_row(row)["pollen"],
-            "particulate_matter": serialize_row(row)["particulate_matter"]
-        }
-    else:
-        return []  # Return an empty list if no data is found
+            if row:
+                row_dict = serialize_row(dict(row))
+                payload = {
+                    "device_id": row_dict["device_id"],
+                    "unix_timestamp_seconds": row_dict["unix_timestamp_seconds"],
+                    "humidity": row_dict["humidity"],
+                    "temperature": row_dict["temperature"],
+                    "pollen": row_dict["pollen"],
+                    "particulate_matter": row_dict["particulate_matter"]
+                }
+                log_event(
+                    logger, "INFO", "db.latest.ok",
+                    duration_ms=timer.stop_ms(),
+                    device_id=device_id
+                )
+                return payload
+            else:
+                log_event(
+                    logger, "INFO", "db.latest.empty",
+                    duration_ms=timer.stop_ms(),
+                    device_id=device_id
+                )
+                return []
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.latest.timeout",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "get_latest_device_data_from_db"}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.latest.operational_error",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "get_latest_device_data_from_db"}) from e
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.latest.fail",
+                  duration_ms=timer.stop_ms(), device_id=device_id, error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "get_latest_device_data_from_db"}) from e
+    finally:
+        conn.close()
 
 
 # Comparison Between Devices over Time Range
-# Returns the selected metric of two devices over a given time range (by default all)
 def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, end=None, num_buckets=None):
     """
     Compares the specified metric for two devices over a given time range.
     If no metric is specified, compares all metrics.
     Returns a dictionary with the comparison data.
     """
+    timer = DurationTimer().start()  # [logging]
+    log_event(logger, "DEBUG", "db.compare.start",
+              device_id1=device_id1, device_id2=device_id2, metric=metric, start=start, end=end, num_buckets=num_buckets)
 
-    print(f"[DEBUG] compare_devices_over_time called with device_id1={device_id1}, device_id2={device_id2}, metric={metric}, start={start}, end={end}, num_buckets={num_buckets}")
-   
-
-    # Check if metric is specified
     if metric not in ['humidity', 'temperature', 'pollen', 'particulate_matter']:
         raise ValueError("Invalid metric. Must be one of: 'humidity', 'temperature', 'pollen', 'particulate_matter'.")
 
-    # Get a database connection
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor) # Create a cursor with dictionary support
+    try:
+        cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
     # Count the total number of raw entries for each device in the specified time range
     # This is used to check if num_buckets exceeds the total number of raw entries
-    count_query = """
-        SELECT COUNT(*) FROM sensor_data
-        WHERE (device_id = %s OR device_id = %s)
-        AND EXTRACT(EPOCH FROM timestamp) >= %s
-        AND EXTRACT(EPOCH FROM timestamp) <= %s;
-        """
-    count_params = (device_id1, device_id2, start, end)
-    cursor.execute(count_query, count_params)
-    total_raw_entries = cursor.fetchone()[0]
-    print(f"[DEBUG] total_raw_entries in time range: {total_raw_entries}")
-    print(f"[DEBUG] num_buckets: {num_buckets}")
+        count_query = """
+            SELECT COUNT(*) FROM sensor_data
+            WHERE (device_id = %s OR device_id = %s)
+            AND timestamp >= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC'
+            AND timestamp <= TO_TIMESTAMP(%s) AT TIME ZONE 'UTC';
+            """
 
+        count_params = (device_id1, device_id2, start, end)
+        cursor.execute(count_query, count_params)
+        count_result = cursor.fetchone()
+        total_raw_entries = count_result[0] if count_result is not None else 0
 
-    # If num_buckets is None, fetch all data for both devices
-    if num_buckets is None or num_buckets > total_raw_entries:
-        # Query to get all data for the specified devices and metric
+        log_event(logger, "DEBUG", "db.compare.count",
+                  total_raw_entries=total_raw_entries, num_buckets=num_buckets)
+
+        if num_buckets is None or num_buckets > total_raw_entries:
+            query = f"""
+                SELECT device_id,
+                EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
+                {metric}
+                FROM sensor_data
+                WHERE device_id IN (%s, %s)
+            """
+            params = (device_id1, device_id2)
+            if start:
+                query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+                params += (start,)
+            if end:
+                query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
+                params += (end,)
+
+            cursor.execute(query, params)
+            rows = cursor.fetchall()
+
+            result = {
+                "data": {
+                    f"device_{device_id1}": [],
+                    f"device_{device_id2}": []
+                },
+                "message": None,
+                "status": "success"
+            }
+            for row in rows:
+                entry = {
+                    "timestamp": int(row["unix_timestamp_seconds"]),
+                    "value": float(row[metric]) if row[metric] is not None else None
+                }
+                result["data"][f"device_{row['device_id']}"].append(entry)
+
+            if num_buckets is not None and total_raw_entries is not None and num_buckets > total_raw_entries:
+                result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries})."
+
+            log_event(
+                logger, "INFO", "db.compare.all_data.ok",
+                duration_ms=timer.stop_ms(),
+                device_id1=device_id1, device_id2=device_id2,
+                rows=len(rows),
+                warned=bool(result["message"])
+            )
+            cursor.close()
+            conn.close()
+            return result
+
+        # need start/end if bucketing
+        if not start or not end:
+            cursor.execute("""
+                SELECT MIN(EXTRACT(EPOCH FROM timestamp)), MAX(EXTRACT(EPOCH FROM timestamp))
+                FROM sensor_data
+                WHERE device_id = %s OR device_id = %s
+            """, (device_id1, device_id2))
+            rng = cursor.fetchone()
+            if rng is None or rng[0] is None or rng[1] is None:
+                cursor.close()
+                conn.close()
+                raise ValueError("No data found for the specified devices and time range.")
+            start, end = rng
+
+        bucket_size = max(1, int((end - start) / num_buckets))
+
         query = f"""
-            SELECT device_id, 
-            EXTRACT(EPOCH FROM timestamp AT TIME ZONE 'UTC')::BIGINT AS unix_timestamp_seconds,
-            {metric}
+            SELECT
+                device_id,
+                FLOOR((EXTRACT(EPOCH FROM timestamp) - %s) / %s) AS bucket,
+                MIN(EXTRACT(EPOCH FROM timestamp)) AS bucket_start,
+                AVG({metric}) AS avg_value
             FROM sensor_data
-            WHERE device_id IN (%s, %s)
+            WHERE (device_id = %s OR device_id = %s)
+              AND EXTRACT(EPOCH FROM timestamp) >= %s
+              AND EXTRACT(EPOCH FROM timestamp) <= %s
+            GROUP BY device_id, bucket
+            ORDER BY device_id, bucket_start
         """
-
-        print(f"[DEBUG] Fetching all data for devices {device_id1} and {device_id2} for metric '{metric}'")
-
-        params = (device_id1, device_id2)
-
-        # Add time range conditions if provided
-        if start:
-            query += " AND timestamp >= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-            params += (start,)
-        if end:
-            query += " AND timestamp <= TO_TIMESTAMP(%s)::TIMESTAMPTZ"
-            params += (end,)
-        
-        # Execute the query with the parameters
+        params = [start, bucket_size, device_id1, device_id2, start, end]
         cursor.execute(query, params)
-        # Fetch all rows
         rows = cursor.fetchall()
 
-        # Close the cursor and connection
-        cursor.close()
-        conn.close()
-
-        # Format the result
-        result = {f"device_{device_id1}": [], f"device_{device_id2}": []}
+        result = {
+            "data": {
+                f"device_{device_id1}": [],
+                f"device_{device_id2}": []
+            },
+            "message": None,
+            "status": "success"
+        }
         for row in rows:
             entry = {
-                "timestamp": int(row["unix_timestamp_seconds"]),
-                "value": float(row[metric]) if row[metric] is not None else None
+                "timestamp": int(row["bucket_start"]),
+                "value": float(row["avg_value"]) if row["avg_value"] is not None else None
             }
-            result[f"device_{row['device_id']}"].append(entry)
+            result["data"][f"device_{row['device_id']}"].append(entry)
+
         if num_buckets > total_raw_entries:
-            result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries})."
-        else:
-            result["message"]= None
-        result["status"] = "success"
-        print(f"[DEBUG] Result with all data: {result}")
-        return result # Return the result with all data
+            result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries}). Data may be averaged over larger intervals."
 
-    # Determine time range
-    if not start or not end:
-        # If no start/end is specified, take the entire range of both devices
-        cursor.execute("""
-            SELECT MIN(EXTRACT(EPOCH FROM timestamp)), MAX(EXTRACT(EPOCH FROM timestamp))
-            FROM sensor_data
-            WHERE device_id = %s OR device_id = %s
-        """, (device_id1, device_id2))
-        start, end = cursor.fetchone()
+        log_event(
+            logger, "INFO", "db.compare.bucketed.ok",
+            duration_ms=timer.stop_ms(),
+            device_id1=device_id1, device_id2=device_id2,
+            bucket_size=bucket_size, buckets=num_buckets,
+            rows=len(rows),
+            warned=bool(result["message"])
+        )
+        cursor.close()
+        conn.close()
+        return result
 
-    # Calculate bucket size
-    bucket_size = max(1, int((end - start) / num_buckets))
-    print(f"[DEBUG] Calculated bucket_size: {bucket_size}")
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.compare.timeout",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "compare_devices_over_time"}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.compare.operational_error",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "compare_devices_over_time"}) from e
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.compare.fail",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "compare_devices_over_time"}) from e
 
-    # Query to get the average value of the metric for each device in time buckets
-    query = f"""
-        SELECT
-            device_id,
-            FLOOR((EXTRACT(EPOCH FROM timestamp) - %s) / %s) AS bucket,
-            MIN(EXTRACT(EPOCH FROM timestamp)) AS bucket_start,
-            AVG({metric}) AS avg_value
-        FROM sensor_data
-        WHERE (device_id = %s OR device_id = %s)
-          AND EXTRACT(EPOCH FROM timestamp) >= %s
-          AND EXTRACT(EPOCH FROM timestamp) <= %s
-        GROUP BY device_id, bucket
-        ORDER BY device_id, bucket_start
-    """
-
-    # Execute the query with the parameters
-    params = [start, bucket_size, device_id1, device_id2, start, end]
-    cursor.execute(query, params)
-    # Fetch all rows
-    rows = cursor.fetchall()
-
-    # Close the cursor and connection
-    cursor.close()
-    conn.close()
-
-    # Format the result
-    result = {f"device_{device_id1}": [], f"device_{device_id2}": []}
-    for row in rows:
-        entry = {
-            "timestamp": int(row["bucket_start"]),
-            "value": float(row["avg_value"]) if row["avg_value"] is not None else None
-        }
-        result[f"device_{row['device_id']}"].append(entry)
-        result["message"]= None
-        result["status"] = "success"
-
-    if num_buckets > total_raw_entries:
-        result["message"] = f"Warning: The number of buckets ({num_buckets}) exceeds the total number of raw entries ({total_raw_entries}). Data may be averaged over larger intervals."
-        print(f"[WARN] {result['message']}")
-    return result # Return the result with averaged data
 
 # GET thresholds from the database
-# Returns a dict of thresholds
 def get_thresholds_from_db():
     """
     Fetches the thresholds for devices from the database.
     Returns a list of dictionaries with threshold data.
     """
-
+    timer = DurationTimer().start()  # [logging]
     conn = None
-
     try:
-        # Get a database connection
         conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=extras.DictCursor) # Create a cursor with dictionary support
+        cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
-        # Query to get the thresholds
-        query = """
-            SELECT * FROM thresholds LIMIT 1;  -- Assuming only one row of thresholds exists
-        """
-        
-        # Execute the query
+        query = "SELECT * FROM thresholds LIMIT 1;"
         cursor.execute(query)
-        rows = cursor.fetchall()  # Fetch all rows
+        rows = cursor.fetchall()
 
-        cursor.close() # Close the cursor
-        return [serialize_row(dict(row)) for row in rows]  # Convert rows to dictionaries
+        payload = [serialize_row(dict(row)) for row in rows]
+        log_event(
+            logger, "INFO", "db.thresholds.ok",
+            duration_ms=timer.stop_ms(),
+            row_count=len(payload)
+        )
+        cursor.close()
+        return payload
 
-    # Handle database errors
+    except QueryCanceledError as e:
+        log_event(logger, "ERROR", "db.thresholds.timeout",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "get_thresholds_from_db"}) from e
+    except OperationalError as e:
+        log_event(logger, "ERROR", "db.thresholds.operational_error",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "get_thresholds_from_db"}) from e
     except psycopg2.Error as e:
-        print(f"Database error in get_thresholds_from_db: {e}")
-        raise
+        log_event(logger, "ERROR", "db.thresholds.fail",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "get_thresholds_from_db"}) from e
     finally:
         if conn:
-            conn.close() # Close the connection
+            conn.close()
 
 
 # Update thresholds in the database
-# Deletes existing thresholds and inserts new ones
 def update_thresholds_in_db(threshold_data):
+    timer = DurationTimer().start()  # [logging]
     conn = None
     try:
         # Get a database connection
@@ -488,18 +605,29 @@ def update_thresholds_in_db(threshold_data):
             threshold_data['particulate_matter_min_hard'], threshold_data['particulate_matter_min_soft'], threshold_data['particulate_matter_max_soft'], threshold_data['particulate_matter_max_hard']
         ))
 
-        # Commit the changes to the database
         conn.commit()
-        # Close the cursor
         cur.close()
-        return True # Return True if the update was successful
-    
-    # Handle database errors
+        log_event(logger, "INFO", "db.thresholds.update_ok", duration_ms=timer.stop_ms())
+        return True
+
+    except QueryCanceledError as e:
+        if conn:
+            conn.rollback()
+        log_event(logger, "ERROR", "db.thresholds.update_timeout",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseQueryTimeoutError("query timeout", details={"op": "update_thresholds_in_db"}) from e
+    except OperationalError as e:
+        if conn:
+            conn.rollback()
+        log_event(logger, "ERROR", "db.thresholds.update_operational_error",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseOperationalError("database operational error", details={"op": "update_thresholds_in_db"}) from e
     except psycopg2.Error as e:
         if conn:
-            conn.rollback() # Rollback in case of an error
-        print(f"Database error in update_thresholds_in_db: {e}")
-        raise # Re-raise the exception to be caught by the API endpoint
+            conn.rollback()
+        log_event(logger, "ERROR", "db.thresholds.update_fail",
+                  duration_ms=timer.stop_ms(), error_type=e.__class__.__name__)
+        raise DatabaseError("database error", details={"op": "update_thresholds_in_db"}) from e
     finally:
         if conn:
-            conn.close() # Close the connection
+            conn.close()

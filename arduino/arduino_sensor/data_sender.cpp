@@ -4,9 +4,8 @@
 #include "TimeUtils.h"
 #include "secrets.h"
 
-// Template-Funktion für beliebige numerische Werte
 template<typename T>
-void sendSensorData(T value, int startupTime, int timestamp, int sequence, const char* topic) {
+void sendSensorData(T value, int startupTime, int timestamp, int sequence, const char* topic) { // Function to send sensor data, expects the information of to send to the broker
   StaticJsonDocument<256> doc;
   doc["timestamp"] = timestamp;
   doc["value"] = value;
@@ -25,7 +24,7 @@ void sendSensorData(T value, int startupTime, int timestamp, int sequence, const
 
 void sendAverages(int startupTime, int sequence, uint16_t pm25Avg, uint16_t pm10Avg, float temperatureAvg) {
   int timestamp = getUnixTime();
-  sendSensorData<uint16_t>(pm25Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/01");
-  sendSensorData<uint16_t>(pm10Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/02");
-  sendSensorData<float>(temperatureAvg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/temperature/01");
+  sendSensorData<uint16_t>(pm25Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/01");   // Send PM2.5 average data
+  sendSensorData<uint16_t>(pm10Avg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/ikea/02");   // Send PM10 average data
+  sendSensorData<float>(temperatureAvg, startupTime, timestamp, sequence, "dhbw/ai/si2023/01/temperature/01");   // Send temperature average data
 }

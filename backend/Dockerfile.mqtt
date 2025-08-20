@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only mqtt_client code into image
-COPY mqtt_client/ ./mqtt_client
+COPY . .
 
 ENV PYTHONPATH=/app
 

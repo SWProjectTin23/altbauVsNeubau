@@ -1,0 +1,17 @@
+apiVersion: 1
+datasources:
+  - name: TimescaleDB
+    uid: timescaledb        
+    type: postgres
+    access: proxy
+    isDefault: true
+    editable: false
+    url: db:5432
+    user: postgres
+    secureJsonData:
+      password: Svk63ajSYDaQkuVK
+    database: altbau_vs_neubau
+    jsonData:
+      postgresVersion: 1400
+      sslmode: "disable"
+      timescaledb: true

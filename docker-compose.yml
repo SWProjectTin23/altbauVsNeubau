@@ -85,7 +85,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/availability_sensor.sql:/docker-entrypoint-initdb.d/02_availability_sensor.sql:ro
       - db_data:/var/lib/postgresql/data
     networks:
       - pg-network
@@ -131,27 +132,6 @@ services:
       - pg-network
     restart: unless-stopped
 
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3003:3000"
-    environment:
-    - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
-    - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
-    - GF_USERS_ALLOW_SIGN_UP=false
-    - GF_SMTP_ENABLED=true
-    - GF_SMTP_HOST=${GF_SMTP_HOST}
-    - GF_SMTP_USER=${GF_SMTP_USER}
-    - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
-    - GF_SMTP_FROM_ADDRESS=${GF_SMTP_FROM}
-    - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
-
-    volumes:
-      - grafana-data:/var/lib/grafana
-    networks:
-      - pg-network
-    restart: unless-stopped
-
   sensor-exporter:
     build:
       context: ./sensor-exporter
@@ -164,12 +144,40 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-
     networks:
       - pg-network
     depends_on:
       - db
     restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.3 
+    container_name: altbau_vs_neubau_grafana
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3003:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-${GF_SECURITY_ADMIN_USER:-admin}}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-${GF_SECURITY_ADMIN_PASSWORD:-admin}}
+      GF_USERS_DEFAULT_THEME: light
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: ${GF_SMTP_HOST}
+      GF_SMTP_USER: ${GF_SMTP_USER}
+      GF_SMTP_PASSWORD: ${GF_SMTP_PASSWORD}
+      GF_SMTP_FROM_ADDRESS: ${GF_SMTP_FROM}
+      GF_SMTP_FROM_NAME: ${GF_SMTP_FROM_NAME}
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - pg-network
+    restart: unless-stopped
+
 
 volumes: # This section must be at the same level as 'services'
   db_data:

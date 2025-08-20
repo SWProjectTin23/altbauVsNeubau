@@ -14,13 +14,13 @@
           <!-- Base URL of the frontend -->
           <elementProp name="target_url" elementType="Argument">
             <stringProp name="Argument.name">target_url</stringProp>
-            <stringProp name="Argument.value">http://altbau_vs_neubau_frontend</stringProp>
+            <stringProp name="Argument.value">${__P(target_url,${__P(target_url,http://altbau_vs_neubau_frontend)})}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
           <!-- Base URL of the backend API -->
           <elementProp name="api_base" elementType="Argument">
             <stringProp name="Argument.name">api_base</stringProp>
-            <stringProp name="Argument.value">http://altbau_vs_neubau_api:5000/api</stringProp>
+            <stringProp name="Argument.value">${__P(api_base,${__P(api_base,http://altbau_vs_neubau_api:5000/api)})}</stringProp>
             <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
         </collectionProp>

@@ -1,6 +1,3 @@
-# mqtt_client/handler.py
-# All comments in this file are in English by requirement.
-
 from datetime import datetime, timezone
 from typing import Any, Dict, Tuple
 

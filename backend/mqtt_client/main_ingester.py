@@ -1,6 +1,3 @@
-# mqtt_client/main_ingester.py
-# All comments in this file are in English by requirement.
-
 import json
 import psycopg2
 import paho.mqtt.client as mqtt

@@ -49,9 +49,18 @@ def test_on_message_unknown_metric_skips(mocker):
 
     mock_handle = mocker.patch("mqtt_client.main_ingester.handle_metric")
     db_conn = MagicMock()
+    db_conn.closed = False  # <-- Fix: Simulate open connection
+
+    # Patch log_event to capture calls
+    log_calls = []
+    def fake_log_event(logger, level, msg, **kwargs):
+        log_calls.append((level, msg))
+    mocker.patch("mqtt_client.main_ingester.log_event", side_effect=fake_log_event)
+
     on_message(MagicMock(), {"db_connection": db_conn}, mock_msg)
 
     mock_handle.assert_not_called()
+    assert ('WARNING', 'value_out_of_range') in log_calls
     
 
 def test_connect_db_success(mocker):

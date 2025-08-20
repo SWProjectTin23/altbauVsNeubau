@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import './Warnings.css';
 import { api } from "../utils/api";              
 import { feLogger } from "../logging/logger"; 
+import { mapApiToUi, mapUiToApi, validateWarnings } from "../components/warnings/warningsUtils";
+import LoadingIndicator from "../components/warnings/LoadingIndicator";
+import ErrorMessage from "../components/warnings/ErrorMessage";
+import WarningsForm from "../components/warnings/WarningsForm";
 
 // Define the warning level labels
 const levelLabels = {
@@ -13,7 +17,7 @@ const levelLabels = {
 };
 
 // Warnings component
-export default function Warnings() {
+export default function () {
   const [warnings, setWarnings] = useState(null);
   const [originalWarnings, setOriginalWarnings] = useState(null); 
   const [loading, setLoading] = useState(true);
@@ -21,57 +25,6 @@ export default function Warnings() {
   const [saveError, setSaveError] = useState(null);
   const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
-
-  // Map API response to UI format
-  const mapApiToUi = (data) => ({
-  Temperatur: {
-    redLow: data.temperature_min_hard,    // min_hard = rot
-    yellowLow: data.temperature_min_soft, // min_soft = gelb
-    yellowHigh: data.temperature_max_soft,// max_soft = gelb
-    redHigh: data.temperature_max_hard,   // max_hard = rot
-  },
-  Luftfeuchtigkeit: {
-    redLow: data.humidity_min_hard,
-    yellowLow: data.humidity_min_soft,
-    yellowHigh: data.humidity_max_soft,
-    redHigh: data.humidity_max_hard,
-  },
-  Pollen: {
-    redLow: data.pollen_min_hard,
-    yellowLow: data.pollen_min_soft,
-    yellowHigh: data.pollen_max_soft,
-    redHigh: data.pollen_max_hard,
-  },
-  Feinstaub: {
-    redLow: data.particulate_matter_min_hard,
-    yellowLow: data.particulate_matter_min_soft,
-    yellowHigh: data.particulate_matter_max_soft,
-    redHigh: data.particulate_matter_max_hard,
-  },
-});
-
-// Map the UI format to API format
-const mapUiToApi = (uiData) => ({
-  temperature_min_hard: uiData.Temperatur.redLow,
-  temperature_min_soft: uiData.Temperatur.yellowLow,
-  temperature_max_soft: uiData.Temperatur.yellowHigh,
-  temperature_max_hard: uiData.Temperatur.redHigh,
-
-  humidity_min_hard: uiData.Luftfeuchtigkeit.redLow,
-  humidity_min_soft: uiData.Luftfeuchtigkeit.yellowLow,
-  humidity_max_soft: uiData.Luftfeuchtigkeit.yellowHigh,
-  humidity_max_hard: uiData.Luftfeuchtigkeit.redHigh,
-
-  pollen_min_hard: uiData.Pollen.redLow,
-  pollen_min_soft: uiData.Pollen.yellowLow,
-  pollen_max_soft: uiData.Pollen.yellowHigh,
-  pollen_max_hard: uiData.Pollen.redHigh,
-
-  particulate_matter_min_hard: uiData.Feinstaub.redLow,
-  particulate_matter_min_soft: uiData.Feinstaub.yellowLow,
-  particulate_matter_max_soft: uiData.Feinstaub.yellowHigh,
-  particulate_matter_max_hard: uiData.Feinstaub.redHigh,
-});
 
   // Fetch initial data
   useEffect(() => {
@@ -106,22 +59,6 @@ const mapUiToApi = (uiData) => ({
   const isDirty = () => {
     return JSON.stringify(warnings) !== JSON.stringify(originalWarnings);
   };
-
-  // Validate the warning thresholds
-  const validateWarnings = (warnings) => {
-  for (const [metric, levels] of Object.entries(warnings)) {
-    if (levels.redLow >= levels.yellowLow) {
-      return `Bei "${metric}": "Warnwert niedrig rot" darf nicht größer als "Warnwert niedrig gelb" sein.`;
-    }
-    if (levels.redLow >= levels.redHigh) {
-      return `Bei "${metric}": "Warnwert niedrig rot" muss kleiner als "Warnwert hoch rot" sein.`;
-    }
-    if (levels.yellowLow >= levels.yellowHigh) {
-      return `Bei "${metric}": "Warnwert niedrig gelb" muss kleiner als "Warnwert hoch gelb" sein.`;
-    }
-  }
-  return null;
-};
 
   // Handle changes to the warning thresholds
   const handleChange = (metric, level, value) => {
@@ -188,7 +125,7 @@ const mapUiToApi = (uiData) => ({
   if (loading || !warnings) {
     return (
       <div className="warnings-wrapper">
-        <p>Lade Warnwerte...</p>
+        <LoadingIndicator text="Lade Warnwerte..." />
       </div>
     );
   }
@@ -198,45 +135,17 @@ const mapUiToApi = (uiData) => ({
     <div className="warnings-wrapper">
       <div className="warnings-container">
         <h1 className="section-title">Warnwerte anpassen</h1>
-        <form className="warnings-grid">
-          {Object.entries(warnings).map(([metric, levels]) => (
-            <div key={metric} className="warning-card">
-              <h2 className="warning-title">{metric}</h2>
-              <div className="warning-inputs">
-                {Object.entries(levels).map(([level, value]) => (
-                  <div key={level} className="input-block">
-                    <label htmlFor={`${metric}-${level}`} className="input-label">
-                      {levelLabels[level] || level}
-                    </label>
-                    <input
-                      id={`${metric}-${level}`}
-                      type="number"
-                      className="input-field"
-                      value={value}
-                      onChange={(e) => handleChange(metric, level, e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="button-group">
-            <button
-              type="button"
-              className="btn"
-              onClick={saveThresholds}
-              disabled={!isDirty() || saving}          // + deaktivieren wenn unverändert/saving
-              aria-busy={saving ? "true" : "false"}
-            >
-              {saving ? "Speichern..." : "Speichern"}
-            </button>
-            <button type="button" className="btn" onClick={handleBack}>
-              Zurück zum Dashboard
-            </button>
-          </div>
-        </form>
-        {saveError && <div className="save-error" style={{ marginTop: 16 }}>{saveError}</div>}
-        {backError && <div className="save-error" style={{ marginTop: 16 }}>{backError}</div>}
+        <WarningsForm
+          warnings={warnings}
+          levelLabels={levelLabels}
+          handleChange={handleChange}
+          saveThresholds={saveThresholds}
+          isDirty={isDirty}
+          saving={saving}
+          handleBack={handleBack}
+          saveError={saveError}
+          backError={backError}
+        />
       </div>
     </div>
   );

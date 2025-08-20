@@ -1,14 +1,23 @@
 import { feLogger } from "../logging/logger";
 import { ApiError, NetworkError } from "../errors";
 
+// Determine API base URL at runtime
 const RUNTIME_API =
   typeof window !== "undefined" && window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE;
 
+// Determine API base URL at build time
+const ENV_API =
+  process.env.REACT_APP_API_URL || process.env.VITE_API_URL || process.env.REACT_APP_API_BASE;
 
-const API_BASE =
-  RUNTIME_API ||
-  process.env.REACT_APP_API_BASE ||   
-  "/api";    
+// Determine API base URL to use
+const API_BASE = RUNTIME_API || ENV_API || "/api";
+
+function buildUrl(path) {
+  // If path is already a full URL, use it directly
+  if (path.startsWith("http")) return path;
+  // Otherwise, append to the base URL (without double slash)
+  return `${API_BASE.replace(/\/$/, "")}${path.startsWith("/") ? path : "/" + path}`;
+}
 
 async function request(method, path, body) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;

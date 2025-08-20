@@ -57,7 +57,7 @@ groups:
           annotations:
             description: ""
             runbook_url: ""
-            summary: Arduino {{ $labels.device_id }} offline seit {{ $values.C }} Sekunden
+            summary: Arduino {{ $labels.device_id }} offline seit {{ $values.A }} Sekunden
           labels:
             "": ""
           isPaused: false

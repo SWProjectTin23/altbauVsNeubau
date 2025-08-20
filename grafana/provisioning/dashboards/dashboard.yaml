@@ -1,8 +1,0 @@
-apiVersion: 1
-providers:
-  - name: "AltbauVsNeubau"
-    type: file
-    allowUiUpdates: true
-    disableDeletion: false
-    options:
-      path: /etc/grafana/provisioning/dashboards

@@ -1,70 +1,72 @@
-# Grafana Alerting - Arduino Offline
+# Alerting Documentation
 
-This document describes how the alerting for offline arduino works and how to configure it in Grafana for this project.
+## Overview
 
-## Components
-- sensor-exporter (./sensor-exporter/exporter.py) — exposes metric `sensor_seconds_since_last_data{device_id="<id>"}`
-  - exporter polls DB every 15s and sets a Gauge per device.
-  - exporter must use timezone-aware datetimes (UTC) so delays are correct.
-- Prometheus (monitoring/prometheus/prometheus.yml) — scrapes exporter every 15s.
-- Grafana — evaluates alert rules and sends email via SMTP contact point.
+This project uses Grafana's unified alerting system to monitor the availability of Arduino devices. Alerts are triggered when a device has not sent data for a defined period. Notifications are sent via email to the configured recipients.
 
-## Metric to monitor
-- Name: `sensor_seconds_since_last_data`
-- Label: `device_id`
-- Meaning: seconds since the last DB timestamp for that device.
+---
 
-## Required conifguration
-- Prometheus scrape interval: 15s (monitoring/prometheus/prometheus.yml).
-- Grafana SMTP env in `.env`:
-  - GF_SMTP_HOST, GF_SMTP_USER, GF_SMTP_PASSWORD, GF_SMTP_FROM (in docker-compose mapped to GF_SMTP_FROM_ADDRESS), GF_SMTP_FROM_NAME
-- Docker Compose mounts (optional): provisioning folders for Grafana datasource / alerting if you want infra-as-code.
+## Alert Rule
 
-## Create Grafana Contact Point (Email)
-1. Login Grafana: http://localhost:3003 (admin from `.env`).
-2. Alerting → Contact points → New contact point.
-3. Type: Email. Add recipient(s).
-4. Save → Send test to verify SMTP/auth works.
-5. If test fails, check Grafana logs:
-   - ```docker compose logs -f grafana```
+- **Location:** `grafana/provisioning/alerting/alert-rules.yaml`
+- **Rule Name:** Arduino offline
+- **Condition:** The alert triggers if `sensor_seconds_since_last_data` for any device exceeds 240 seconds.
+- **Interval:** The rule is evaluated every 10 seconds.
+- **Summary Message:**  
+  The alert email contains the device ID and the number of seconds since the last data was received:
+  ```
+  Arduino {{ $labels.device_id }} offline seit {{ $values.C }} Sekunden
+  ```
+  This ensures the exact offline duration is shown in the notification.
 
-## Create Alert Rule (Grafana UI)
-1. Alerting → Rules → New rule.
-2. Data source: Prometheus.
-3. Query (example):
-   - A: sensor_seconds_since_last_data{job="sensor_exporter"} OR
-   - A: sensor_seconds_since_last_data{device_id=~".+"}
-   - Click "Run query" — you should see one series per device_id.
-4. Condition:
-   - WHEN last() OF A IS ABOVE 120
-   - For: 2m
-   - Evaluate every: 1m
-   - No data / Error handling: choose "Alert" if you want missing metrics to trigger.
-5. Notifications: select the Email contact point created earlier.
-6. Message template examples:
-   - Title: Sensor {{ $labels.device_id }} is offline
-   - Message: Sensor {{ $labels.device_id }} last seen {{ $value }} seconds ago.
+---
+
+## Contact Points
+
+- **Location:** `grafana/provisioning/alerting/contact-points.yaml`
+- **Default Email Receiver:**  
+  - Recipients:  
+    - hirschmillert.tin23@student.dhbw-heidenheim.de  
+    - Gerold.tin23@student.dhbw-heidenheim.de
+  - Multiple recipients are supported.
+  - Notifications are sent for both firing and resolved alerts.
+
+---
+
+## Data Sources
+
+- **Prometheus:**  
+  Used for querying the metric `sensor_seconds_since_last_data`.
+
+---
+
+## Dashboard Integration
+
+- **Location:** `grafana/provisioning/dashboards/ArduinoAvailability.json`
+- **Panels:**  
+  - Stat and time series panels visualize the offline time for each Arduino device.
+  - Thresholds are set to highlight devices offline for more than 240 seconds.
+
+---
+
+## Customization
+
+- **Threshold:**  
+  Adjust the `params` value in the alert rule to change the offline threshold.
+- **Notification Message:**  
+  Edit the `summary` field in the alert rule to customize the email content.
+
+---
 
 ## Troubleshooting
-- Status "Pending": condition is true but not yet true for the full "For" duration OR evaluation frequency is too low. Increase evaluation frequency or wait for For duration.
-- No email:
-  - Check Grafana logs: docker compose logs -f grafana
-  - Verify SMTP host/port, credentials and TLS settings. GF_SMTP_HOST may include :465 for SMTPS.
-  - Remove quotes around GF_SMTP_PASSWORD in `.env` if present.
-- Query returns no series:
-  - Confirm exporter is reachable: http://localhost:9100/metrics
-  - Confirm Prometheus scraping: http://localhost:9090/targets
-  - Confirm exporter sets `device_id` label.
-- Incorrect delays:
-  - Ensure exporter uses timezone-aware UTC timestamps (exporter.py already uses datetime.now(timezone.utc) and adjusts DB timestamps).
 
-  ## Useful commands (project root, macOS)
-- Start / rebuild services:
-  - ```docker compose up -d --build grafana prometheus sensor-exporter```
-- Follow logs:
-  - ```docker compose logs -f grafana```
-  - ```docker compose logs -f prometheus```
-  - ```docker compose logs -f sensor-exporter```
-- Inspect Prometheus:
-  - http://localhost:9090/targets
-  - http://localhost:9090/graph
+- Ensure Prometheus is scraping the correct metrics.
+- Check that the email addresses in `contact-points.yaml` are valid.
+- Verify that the alert rule is enabled and not paused.
+
+---
+
+## References
+
+- [Grafana Alerting Documentation](https://grafana.com/docs/grafana/latest/alerting/)
+- [Provisioning Alerting Resources](https://grafana.com/docs/grafana/latest/administration/provisioning/#alerting)

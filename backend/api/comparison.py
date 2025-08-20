@@ -44,11 +44,6 @@ class Comparison(Resource):
             log_event(logger, "WARNING", "comparison.invalid.metric_missing")
             return {"status": "error", "message": "Metric must be specified."}, 400
 
-        if not device_id1 and not device_id2:
-            log_event(logger, "WARNING", "comparison.invalid.device_ids_missing",
-                      device_1=device_id1, device_2=device_id2)
-            return {"status": "error", "message": "At least one device ID must be provided."}, 400
-
         if device_id1 is not None and device_id1 <= 0:
             log_event(logger, "WARNING", "comparison.invalid.device_id_nonpositive",
                       device_1=device_id1)
@@ -58,6 +53,12 @@ class Comparison(Resource):
             log_event(logger, "WARNING", "comparison.invalid.device_id_nonpositive",
                       device_2=device_id2)
             return {"status": "error", "message": "Device ID 2 must be a positive integer."}, 400
+
+        # Consider only None as missing; 0 is provided but invalid (handled above)
+        if device_id1 is None and device_id2 is None:
+            log_event(logger, "WARNING", "comparison.invalid.device_ids_missing",
+                      device_1=device_id1, device_2=device_id2)
+            return {"status": "error", "message": "At least one device ID must be provided."}, 400
 
         # optional time range validation (only when any bound provided)
         if start is not None or end is not None:

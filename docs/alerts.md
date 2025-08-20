@@ -27,7 +27,7 @@ This project uses Grafana's unified alerting system to monitor the availability 
 - **Default Email Receiver:**  
   - Recipients:  
     - hirschmillert.tin23@student.dhbw-heidenheim.de  
-    - Gerold.tin23@student.dhbw-heidenheim.de
+    - geroldj.tin23@student.dhbw-heidenheim.de
   - Multiple recipients are supported.
   - Notifications are sent for both firing and resolved alerts.
 

@@ -83,8 +83,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/010_init.sql:ro
-      - ./db/availability_sensor.sql:/docker-entrypoint-initdb.d/020_availability_sensor.sql:ro
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/availability_sensor.sql:/docker-entrypoint-initdb.d/02_availability_sensor.sql:ro
       - db_data:/var/lib/postgresql/data
     networks:
       - pg-network
@@ -149,10 +149,10 @@ services:
       restart: unless-stopped
 
 
-
 volumes: # This section must be at the same level as 'services'
   db_data:
   kuma-data: 
+  grafana-data:
 
 networks: # Definition of networks
   pg-network:

@@ -53,13 +53,9 @@ groups:
                 type: threshold
           noDataState: NoData
           execErrState: Error
-          for: 0s
           annotations:
-            description: ""
-            runbook_url: ""
             summary: Arduino {{ $labels.device_id }} offline seit {{ $values.A }} Sekunden
-          labels:
-            "": ""
+          labels: {}
           isPaused: false
           notification_settings:
             receiver: grafana-default-email

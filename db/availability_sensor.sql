@@ -1,8 +1,8 @@
--- ===== Parameter (Messintervall in Sekunden) =====
+-- ===== Parameter (measurement interval in seconds) =====
 CREATE OR REPLACE VIEW v_params AS
 SELECT 30::int AS interval_seconds;
 
--- ===== Geräte-Liste (fix: IDs 1 und 2) =====
+-- ===== Device list (fixed: IDs 1 and 2) =====
 CREATE OR REPLACE VIEW v_devices AS
 SELECT * FROM (VALUES (1),(2)) AS t(device_id);
 
@@ -17,11 +17,11 @@ SELECT device_id, MAX(timestamp) AS last_seen
 FROM sensor_data
 GROUP BY device_id;
 
--- Globaler Start des Monitorings (oder fallback: heute 00:00, wenn noch keine Daten vorhanden)
+-- Global monitoring start (or fallback: today at 00:00 if no data exists yet)
 CREATE OR REPLACE VIEW v_global_start AS
 SELECT COALESCE((SELECT MIN(timestamp) FROM sensor_data), date_trunc('day', now())) AS start_ts;
 
--- ===== Seit-Beginn: Soll/Ist/Availability je Device =====
+-- ===== Since start: expected/actual/availability per device =====
 CREATE OR REPLACE VIEW v_totals_since_start_by_device AS
 WITH params AS (SELECT interval_seconds FROM v_params),
 gs AS (SELECT start_ts FROM v_global_start),
@@ -36,7 +36,6 @@ calc AS (
   SELECT
     r.device_id,
     r.ref_start,
-    -- expected since the moment AFTER ref_start (no +1, no instant bucket)
     GREATEST(
       0,
       FLOOR(EXTRACT(EPOCH FROM (now() - r.ref_start)) / (SELECT interval_seconds FROM params))
@@ -46,7 +45,6 @@ calc AS (
 SELECT
   c.device_id,
   c.soll_calc                          AS soll_total,
-  -- count only samples strictly AFTER ref_start (avoid the “first hit = 100%”)
   COUNT(s.*)::bigint                   AS ist_total,
 CASE WHEN c.soll_calc = 0 THEN 0.0
      ELSE ROUND(100.0 * COUNT(s.*) / c.soll_calc, 2)
@@ -60,10 +58,10 @@ GROUP BY c.device_id, c.ref_start, c.soll_calc
 ORDER BY c.device_id;
 
 
--- ===== Gaps > 10 Minuten (seit Beginn) =====
+-- ===== Gaps > 10 minutes (since start) =====
 CREATE OR REPLACE VIEW v_sensor_gaps AS
 WITH gs AS (SELECT start_ts FROM v_global_start),
--- interne Lücken zwischen Messpunkten
+-- internal gaps between measurement points
 ordered AS (
   SELECT
     device_id,
@@ -81,7 +79,7 @@ internal AS (
   WHERE next_ts IS NOT NULL
     AND next_ts - timestamp > interval '10 minutes'
 ),
--- Head-Gap: von globalem Start bis zum ersten Messpunkt (oder bis jetzt, wenn nie gesendet)
+-- Head gap: from global start until the first measurement (or until now if never sent)
 head AS (
   SELECT
     d.device_id,
@@ -92,7 +90,7 @@ head AS (
   LEFT JOIN v_first_seen f ON f.device_id = d.device_id
   WHERE COALESCE(f.first_seen, now()) - (SELECT start_ts FROM gs) > interval '10 minutes'
 ),
--- Tail-Gap: vom letzten Messpunkt bis jetzt
+-- Tail gap: from last measurement until now
 tail AS (
   SELECT
     d.device_id,

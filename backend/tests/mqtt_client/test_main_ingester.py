@@ -30,6 +30,7 @@ def test_on_message_valid_payload_calls_handler(mocker):
 
     mock_handle = mocker.patch("mqtt_client.main_ingester.handle_metric")
     db_conn = MagicMock()
+    db_conn.closed = False  # Simulate open connection
     userdata = {"db_connection": db_conn}
 
     on_message(MagicMock(), userdata, mock_msg)

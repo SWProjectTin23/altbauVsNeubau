@@ -23,38 +23,70 @@ SELECT COALESCE((SELECT MIN(timestamp) FROM sensor_data), date_trunc('day', now(
 
 -- ===== Since start: expected/actual/availability per device =====
 CREATE OR REPLACE VIEW v_totals_since_start_by_device AS
-WITH params AS (SELECT interval_seconds FROM v_params),
+WITH params AS (
+  SELECT
+    interval_seconds::int AS sec,
+    (interval '1 second') * interval_seconds::int AS iv
+  FROM v_params
+),
 gs AS (SELECT start_ts FROM v_global_start),
+
+-- per-device reference start
 ref AS (
-  -- reference start: first_seen if available, otherwise global start
   SELECT d.device_id,
          COALESCE(f.first_seen, (SELECT start_ts FROM gs)) AS ref_start
   FROM v_devices d
   LEFT JOIN v_first_seen f USING (device_id)
 ),
-calc AS (
+
+-- last fully completed bucket with 10s grace, aligned to device phase
+bounds AS (
   SELECT
     r.device_id,
     r.ref_start,
+    p.sec,
+    p.iv,
+    time_bucket(p.iv, now() - interval '10 seconds', r.ref_start) AS cutoff_bucket
+  FROM ref r CROSS JOIN params p
+),
+
+-- expected = # fully elapsed device-phased intervals since ref_start up to cutoff
+calc AS (
+  SELECT
+    b.device_id,
+    b.ref_start,
+    b.sec,
+    b.iv,
+    b.cutoff_bucket,
     GREATEST(
       0,
-      FLOOR(EXTRACT(EPOCH FROM (now() - r.ref_start)) / (SELECT interval_seconds FROM params))
-    )::bigint AS soll_calc
-  FROM ref r
+      FLOOR(EXTRACT(EPOCH FROM (b.cutoff_bucket - b.ref_start)) / b.sec)
+    )::bigint AS soll_total
+  FROM bounds b
 )
+
 SELECT
   c.device_id,
-  c.soll_calc                          AS soll_total,
-  COUNT(s.*)::bigint                   AS ist_total,
-CASE WHEN c.soll_calc = 0 THEN 0.0
-     ELSE ROUND(100.0 * COUNT(s.*) / c.soll_calc, 2)
-END AS availability_pct
+  c.soll_total,
+
+  -- actual = # distinct buckets with at least one sample (capped 1 per interval),
+  -- counted strictly after ref_start and up to cutoff bucket
+  COUNT(DISTINCT tb.bucket)::bigint AS ist_total,
+
+  CASE
+    WHEN c.soll_total = 0 THEN 0.0
+    ELSE ROUND(100.0 * COUNT(DISTINCT tb.bucket) / c.soll_total, 2)
+  END AS availability_pct
 
 FROM calc c
-LEFT JOIN sensor_data s
-  ON s.device_id = c.device_id
- AND s.timestamp > c.ref_start
-GROUP BY c.device_id, c.ref_start, c.soll_calc
+LEFT JOIN LATERAL (
+  SELECT time_bucket(c.iv, s.timestamp, c.ref_start) AS bucket
+  FROM sensor_data s
+  WHERE s.device_id = c.device_id
+    AND s.timestamp > c.ref_start
+    AND time_bucket(c.iv, s.timestamp, c.ref_start) <= c.cutoff_bucket
+) tb ON TRUE
+GROUP BY c.device_id, c.soll_total
 ORDER BY c.device_id;
 
 

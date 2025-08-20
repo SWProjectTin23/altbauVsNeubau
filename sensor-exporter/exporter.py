@@ -1,11 +1,16 @@
-from prometheus_client import Gauge, start_http_server
-from dotenv import load_dotenv
 import time
-import psycopg2
-from datetime import datetime, timezone
+import json
 import os
+from dotenv import load_dotenv
+import threading
+from prometheus_client import start_http_server, Gauge
+from datetime import datetime, timezone
+import paho.mqtt.client as mqtt
+from common.logging_setup import setup_logger, log_event
+from pathlib import Path
 
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
+load_dotenv(dotenv_path=str(Path(__file__).resolve().parents[1] / ".env"))
+logger = setup_logger(service="exporter", module="sensor_exporter")
 
 sensor_delay = Gauge(
     'sensor_seconds_since_last_data',
@@ -13,62 +18,51 @@ sensor_delay = Gauge(
     ['device_id']
 )
 
-DB = {
-    'host': os.getenv('DB_HOST', 'db'),
-    'port': os.getenv('DB_PORT', 5432),
-    'dbname': os.getenv('DB_NAME', 'DB_NAME'),
-    'user': os.getenv('DB_USER', 'DB_USER'),
-    'password': os.getenv('DB_PASSWORD', 'DB_PASSWORD')
-}
+MQTT_BROKER = os.getenv("MQTT_BROKER", "isd-gerold.de")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_BASE_TOPIC = os.getenv("MQTT_BASE_TOPIC", "dhbw/ai/si2023/01")
+QOS = int(os.getenv("MQTT_QOS", "1"))   
 
-try:
-    conn = psycopg2.connect(**DB)
-    print("Connection successful")
-    conn.close()
-except Exception as e:
-    print("Connection failed:", e)
+last_seen = {}
 
-def get_all_sensor_delays():
-    delays = {}
+def on_message(client, userdata, msg):
     try:
-        conn = psycopg2.connect(**DB)
-        cur = conn.cursor()
-
-        cur.execute("""
-            SELECT device_id, MAX(timestamp) as last_seen 
-            FROM sensor_data
-            GROUP BY device_id
-        """)
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-
-        now = datetime.now(timezone.utc)
-
-        for device_id, last_seen in rows:
-            if last_seen:
-                # make last_seen timezone-aware (assume DB either naive UTC or with tz)
-                if last_seen.tzinfo is None:
-                    last_seen = last_seen.replace(tzinfo=timezone.utc)
-                else:
-                    last_seen = last_seen.astimezone(timezone.utc)
-                delay = (now - last_seen).total_seconds()
-            else:
-                delay = 99999  # Kein Wert → extrem hoch
-            delays[str(device_id)] = delay
-
+        payload = json.loads(msg.payload.decode("utf-8"))
+        device_id = str(payload.get("meta", {}).get("device_id"))
+        if device_id is None or device_id == "None":
+            log_event(logger, "WARNING", "mqtt.device_id_missing", topic=msg.topic)
+            return
+        last_seen[device_id] = datetime.now(timezone.utc)
+        log_event(logger, "INFO", "mqtt.payload.received", device_id=device_id, topic=msg.topic)
     except Exception as e:
-        print(f"Error fetching sensor delays: {e}")
+        log_event(logger, "ERROR", "mqtt.payload.decode_failed", error_msg=str(e)[:120], topic=msg.topic)
+        return
 
-    return delays
+def mqtt_thread():
+    client = mqtt.Client()
+    client.on_message = on_message
+    try:
+        client.connect(MQTT_BROKER, MQTT_PORT, 60)
+        log_event(logger, "INFO", "mqtt.connected", broker=MQTT_BROKER, port=MQTT_PORT)
+    except Exception as e:
+        log_event(logger, "ERROR", "mqtt.connect_failed", error_msg=str(e)[:120], broker=MQTT_BROKER, port=MQTT_PORT)
+        return
+    client.subscribe(f"{MQTT_BASE_TOPIC}/+/+", QOS)
+    log_event(logger, "INFO", "mqtt.subscribed", topic=f"{MQTT_BASE_TOPIC}/+/+", qos=QOS)
+    client.loop_forever()
+
+def metrics_loop():
+    while True:
+        now = datetime.now(timezone.utc)
+        for device_id, ts in last_seen.items():
+            delay = (now - ts).total_seconds()
+            sensor_delay.labels(device_id=device_id).set(delay)
+            log_event(logger, "DEBUG", "metrics.sensor_delay_set", device_id=device_id, delay=delay)
+        time.sleep(5)
 
 if __name__ == '__main__':
     start_http_server(9100)
-    print("Exporter listening on port 9100")
-    while True:
-        delays = get_all_sensor_delays()
-        for device_id, delay in delays.items():
-            sensor_delay.labels(device_id=device_id).set(delay)
-            print(f"Device {device_id}: {delay:.1f} seconds since last data")
+    log_event(logger, "INFO", "exporter.start", msg="Exporter listening on port 9100")
 
-        time.sleep(15)
+    threading.Thread(target=mqtt_thread, daemon=True).start()
+    metrics_loop()

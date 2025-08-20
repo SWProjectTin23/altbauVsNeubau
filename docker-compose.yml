@@ -146,9 +146,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     networks:
       - pg-network
-    depends_on:
-      - db
     restart: unless-stopped
+    volumes:
+      - ./backend/common:/app/common
 
   grafana:
     image: grafana/grafana:10.4.3 

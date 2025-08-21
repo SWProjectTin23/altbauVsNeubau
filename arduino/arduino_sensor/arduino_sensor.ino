@@ -27,9 +27,9 @@ void loop() {
   mqttLoop();
   while (Serial1.available()) {
     sensorReadByte();
-    readTemperature();
   }
 
+  readTemperature();
 
    if (millis() - lastAverageTime >= AVERAGE_INTERVAL_MS) {
      checkWiFiConnection(WIFI_SSID, WIFI_PASS);

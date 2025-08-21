@@ -13,6 +13,7 @@ static uint32_t pm10Sum = 0;
 static uint16_t packetCount = 0;
 static float temperatureSum = 0.0;
 static unsigned int temperatureCount = 0;
+static bool temperatureSensorAvailable = true;
 
 
 static bool validatePacket() {              // Validate the packet by checking the checksum
@@ -44,6 +45,8 @@ void sensorReadByte() {             // Read the sensor data and write it to the 
         pm25Sum += pm25;
         pm10Sum += pm10;
         packetCount++;
+      } else {
+        Serial.println("Feinstaubsensor: ungültiges Paket!");
       }
       bufferIndex = 0;
     }
@@ -51,20 +54,29 @@ void sensorReadByte() {             // Read the sensor data and write it to the 
 }
 
 void readTemperature() {      // Read the temperature from the sensor
-   float c = tempsensor.readTempC();
-   temperatureSum += c;
-   temperatureCount++;
+  if (!temperatureSensorAvailable) return;
+  float c = tempsensor.readTempC();
+  if (isnan(c)) {
+    temperatureSensorAvailable = false;
+    Serial.println("Temperatursensor nicht verfügbar!");
+    return;
+  }
+  temperatureSum += c;
+  temperatureCount++;
 }  
 
-void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {       // Calculate the averages of PM2.5, PM10, and temperature
+void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg) {  // Calculate the averages of PM2.5, PM10, and temperature
   if (packetCount > 0) {
     pm25Avg = pm25Sum / packetCount;
     pm10Avg = pm10Sum / packetCount;
-    temperatureAvg = temperatureSum / temperatureCount;
   } else {
     pm25Avg = 0;
     pm10Avg = 0;
-    temperatureAvg = 0.0;
+  }
+  if (temperatureSensorAvailable && temperatureCount > 0) {
+    temperatureAvg = temperatureSum / temperatureCount;
+  } else {
+    temperatureAvg = 0.0; // Signalisiert: kein Wert verfügbar
   }
 }
 
@@ -76,33 +88,27 @@ void resetAverages() {    // Reset the averages and counters
   temperatureCount = 0;
 }
 
-void tempsensorStartup()    // Initialize the temperature sensor
-{
-  if (!tempsensor.begin())
-  {
-    Serial.println("Could not find a valid ADT7410 sensor, check wiring!");
-    while (1)
-      ;
+void tempsensorStartup() {    // Initialize the temperature sensor
+  if (!tempsensor.begin()) {
+    Serial.println("Temperatursensor nicht gefunden, läuft ohne Temperatur!");
+    temperatureSensorAvailable = false;
+    return;
   }
   delay(250);
 
   tempsensor.setResolution(ADT7410_16BIT);
   Serial.print("Resolution = ");
-  switch (tempsensor.getResolution())
-  {
-  case ADT7410_13BIT:
-    Serial.print("13 ");
-    break;
-  case ADT7410_16BIT:
-    Serial.print("16 ");
-    break;
-  default:
-    Serial.print("??");
+  switch (tempsensor.getResolution()) {
+    case ADT7410_13BIT:
+      Serial.print("13 ");
+      break;
+    case ADT7410_16BIT:
+      Serial.print("16 ");
+      break;
+    default:
+      Serial.print("??");
   }
   Serial.println("bits");
+  temperatureSensorAvailable = true;
 }
 
-
- 
-    
-  

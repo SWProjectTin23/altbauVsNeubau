@@ -12,7 +12,6 @@ common:
       rules_directory: /loki/rules
   replication_factor: 1
   ring:
-    instance_addr: 0.0.0.0
     kvstore:
       store: inmemory
 
@@ -20,19 +19,15 @@ schema_config:
   configs:
     - from: 2024-01-01
       store: tsdb
-      index:
-        prefix: loki_index_
-        period: 24h
       object_store: filesystem
       schema: v13
+      index:
+        prefix: index_
+        period: 24h
 
 ruler:
-  storage:
-    type: local
-    local:
-      directory: /loki/rules
   rule_path: /loki/rules
-  alertmanager_url: http://alertmanager:9093  # optional; wenn keiner vorhanden, egal
+  alertmanager_url: http://alertmanager:9093
   enable_api: true
 
 limits_config:

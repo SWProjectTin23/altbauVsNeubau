@@ -1,17 +1,18 @@
 apiVersion: 1
 datasources:
   - name: TimescaleDB
-    uid: timescaledb        
-    type: postgres
+    uid: timescaledb
+    type: grafana-postgresql-datasource
     access: proxy
     isDefault: true
     editable: false
-    url: db:5432
-    user: postgres
+    url: ${DB_HOST}:${DB_PORT}
+    user: ${DB_USER}
     secureJsonData:
-      password: Svk63ajSYDaQkuVK
-    database: altbau_vs_neubau
+      password: ${DB_PASSWORD}
+    database: ${DB_NAME}
     jsonData:
+      database: ${DB_NAME}
       postgresVersion: 1400
       sslmode: "disable"
       timescaledb: true
@@ -25,10 +26,11 @@ datasources:
     editable: true
 
   - name: Loki
-    uid: loki            # <— WICHTIG: muss 'loki' heißen, damit dein Dashboard passt
+    uid: loki
     type: loki
     access: proxy
     url: http://loki:3100
     isDefault: false
     jsonData:
+      timeout: 60
       maxLines: 1000

@@ -1,21 +1,139 @@
 {
-  "annotations": {"list": []},
+  "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "iteration": 1,
   "links": [],
   "liveNow": false,
   "panels": [
     {
+      "type": "stat",
+      "title": "critical",
+      "id": 101,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(count_over_time({env=~\"$env\", level=~\"(?i)critical\"}[$__range]))", "refId": "A" }
+      ],
+      "options": {
+        "textMode": "valueAndName",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "error",
+      "id": 102,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "sum(count_over_time({env=~\"$env\", level=~\"(?i)error\"}[$__range]))", "refId": "A" }
+      ],
+      "options": {
+        "textMode": "valueAndName",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "warning",
+      "id": 103,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(count_over_time({env=~\"$env\", level=~\"(?i)warning\"}[$__range]))", "refId": "A" }
+      ],
+      "options": {
+        "textMode": "valueAndName",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "stat",
+      "title": "info",
+      "id": 104,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "sum(count_over_time({env=~\"$env\", level=~\"(?i)info\"}[$__range]))", "refId": "A" }
+      ],
+      "options": {
+        "textMode": "valueAndName",
+        "graphMode": "none",
+        "colorMode": "value",
+        "justifyMode": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "table",
+      "title": "Totals by level (range)",
+      "id": 201,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "targets": [
+        { "expr": "sum by (level) (count_over_time({env=~\"$env\", level=~\"(?i)info|warning|error|critical\"}[$__range]))", "refId": "A" }
+      ],
+      "options": { "showHeader": true },
+      "transformations": [
+        { "id": "labelsToFields", "options": { "mode": "columns" } },
+        { "id": "organize", "options": { "renameByName": { "Value": "Total" } } }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+        },
+        "overrides": []
+      }
+    },
+    {
       "type": "logs",
-      "title": "Live Logs",
-      "id": 1,
-      "gridPos": {"h": 10, "w": 24, "x": 0, "y": 0},
+      "title": "Critical / Error / Warning – full messages",
+      "id": 301,
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 18, "w": 24, "x": 0, "y": 13 },
       "targets": [
         {
-          "expr": "{env=~\"$env\",service=~\"$service\",compose_service=~\"$compose_service\",level=~\"$level\"}",
+          "expr": "{env=~\"$env\", level=~\"(?i)(critical|error|warning)\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -27,114 +145,6 @@
         "showCommonLabels": true,
         "wrapLogMessage": true
       }
-    },
-    {
-      "type": "timeseries",
-      "title": "Error Rate (5m) by service",
-      "id": 2,
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 10},
-      "targets": [
-        {
-          "expr": "sum by(service) (count_over_time({env=~\"$env\", level=\"ERROR\", service=~\"$service\"}[5m]))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "Requests/min (API) – event=request_ok",
-      "id": 3,
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 10},
-      "targets": [
-        {
-          "expr": "sum by(service) (count_over_time({env=~\"$env\", service=~\"$service\", event=\"request_ok\"}[1m]))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "title": "API P95 duration_ms (5m window)",
-      "id": 4,
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
-      "targets": [
-        {
-          "expr": "quantile_over_time(0.95, ({env=~\"$env\", service=~\"$service\", event=\"request_ok\"} | json | unwrap duration_ms)[5m])",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms"
-        },
-        "overrides": []
-      }
-    },
-    {
-      "type": "timeseries",
-      "title": "MQTT processed/min by metric",
-      "id": 5,
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
-      "targets": [
-        {
-          "expr": "sum by(metric) (count_over_time({env=~\"$env\", service=\"ingestor\", event=\"msg_processed\", metric=~\"$metric\"}[1m]))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "bargauge",
-      "title": "Top 5 Warning reasons (last 1h)",
-      "id": 6,
-      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 26},
-      "targets": [
-        {
-          "expr": "topk(5, sum by(reason) (count_over_time({env=~\"$env\", level=\"WARNING\", reason!=\"\"}[1h])))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "bargauge",
-      "title": "Top 5 Error modules (last 1h)",
-      "id": 7,
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 26},
-      "targets": [
-        {
-          "expr": "topk(5, sum by(module) (count_over_time({env=~\"$env\", level=\"ERROR\", module!=\"\"}[1h])))",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "table",
-      "title": "Recent Errors",
-      "id": 8,
-      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 34},
-      "targets": [
-        {
-          "expr": "{env=~\"$env\", level=\"ERROR\", service=~\"$service\"} | json",
-          "refId": "A"
-        }
-      ],
-      "options": {
-        "showHeader": true
-      },
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
-        },
-        {
-          "id": "extractFields",
-          "options": {
-            "format": "json",
-            "source": "line"
-          }
-        }
-      ]
     }
   ],
   "refresh": "10s",
@@ -146,60 +156,20 @@
       {
         "name": "env",
         "type": "query",
-        "datasource": {"type": "loki", "uid": "loki"},
+        "datasource": { "type": "loki", "uid": "loki" },
         "query": "label_values(env)",
         "refresh": 1,
-        "current": {"text": ".*", "value": ".*"},
-        "regex": ""
-      },
-      {
-        "name": "service",
-        "type": "query",
-        "datasource": {"type": "loki", "uid": "loki"},
-        "query": "label_values(service)",
-        "refresh": 1,
         "includeAll": true,
         "multi": true,
-        "current": {"text": "All", "value": ".*"},
-        "regex": ""
-      },
-      {
-        "name": "compose_service",
-        "type": "query",
-        "datasource": {"type": "loki", "uid": "loki"},
-        "query": "label_values(compose_service)",
-        "refresh": 1,
-        "includeAll": true,
-        "multi": true,
-        "current": {"text": "All", "value": ".*"}
-      },
-      {
-        "name": "level",
-        "type": "query",
-        "datasource": {"type": "loki", "uid": "loki"},
-        "query": "label_values(level)",
-        "refresh": 1,
-        "includeAll": true,
-        "multi": true,
-        "current": {"text": "All", "value": ".*"}
-      },
-      {
-        "name": "metric",
-        "type": "query",
-        "datasource": {"type": "loki", "uid": "loki"},
-        "query": "label_values(metric)",
-        "refresh": 1,
-        "includeAll": true,
-        "multi": true,
-        "current": {"text": "All", "value": ".*"}
+        "current": { "text": "All", "value": ".*" }
       }
     ]
   },
-  "time": {"from": "now-6h", "to": "now"},
+  "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "Logging Overview (Loki)",
-  "uid": "logging-overview",
-  "version": 1,
+  "title": "Log Levels Totals + Messages (Loki)",
+  "uid": "log-levels-and-messages",
+  "version": 3,
   "weekStart": ""
 }

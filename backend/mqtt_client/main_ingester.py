@@ -58,6 +58,23 @@ def on_message(client, userdata, msg):
     db_conn = userdata.get("db_connection")
     topic = msg.topic or ""
 
+     # Check if connection is closed (psycopg2: closed==True means unusable)
+    if db_conn is None or getattr(db_conn, "closed", True):
+        log_event(
+            logger, "WARNING", "db_connection_closed",
+            result="failed", reason="reconnecting",
+            topic=topic
+        )
+        db_conn = connect_db()
+        userdata["db_connection"] = db_conn
+        if db_conn is None or getattr(db_conn, "closed", True):
+            log_event(
+                logger, "ERROR", "db_reconnect_failed",
+                result="failed", reason="db_unavailable",
+                topic=topic
+            )
+            return
+
     # Expect topic like: dhbw/ai/si2023/<group>/<sensor-type>/<sensor-id>
     parts = topic.split("/")
     if len(parts) < 6:
@@ -94,7 +111,6 @@ def on_message(client, userdata, msg):
     try:
         handle_metric(metric_name, topic, payload_dict, db_conn)
     except Exception as e:
-        # Handler already logs domain/db errors; this is a last-resort guard
         log_event(
             logger, "ERROR", "unhandled_exception",
             result="failed", reason="unexpected",

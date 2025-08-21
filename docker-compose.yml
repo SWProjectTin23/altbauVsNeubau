@@ -132,30 +132,8 @@ services:
       - pg-network
     restart: unless-stopped
 
-  sensor-exporter:
-    build:
-      context: ./sensor-exporter
-    container_name: sensor-exporter
-    ports:
-      - "9100:9100"
-    environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-    networks:
-      - pg-network
-    depends_on:
-      - db
-    restart: unless-stopped
-
   grafana:
-    image: grafana/grafana:10.4.3 
-    container_name: altbau_vs_neubau_grafana
-    depends_on:
-      db:
-        condition: service_healthy
+    image: grafana/grafana:latest
     ports:
       - "3003:3000"
     environment:
@@ -172,12 +150,30 @@ services:
     volumes:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
       - grafana-data:/var/lib/grafana
     networks:
       - pg-network
     restart: unless-stopped
 
+  sensor-exporter:
+    build:
+      context: ./sensor-exporter
+    container_name: sensor-exporter
+    ports:
+      - "9100:9100"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - pg-network
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes: # This section must be at the same level as 'services'
   db_data:

@@ -15,3 +15,11 @@ datasources:
       postgresVersion: 1400
       sslmode: "disable"
       timescaledb: true
+
+  - name: Prometheus
+    uid: fevdvif8bpb7kc
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
+    editable: true

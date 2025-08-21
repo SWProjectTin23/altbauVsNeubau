@@ -35,3 +35,8 @@ Uses [react-router-dom](https://reactrouter.com/) for navigation:
 - **Logo:** Replace `/logo512.png` for your own branding.
 - **Background Image:** Change `src/assets/Aussenaufnahme_Marienstrasse_Hanns-Voith-Campus_Schloss_Fotograf_Oliver_Vogel_Startseite.jpg` for a different background.
 - **Colors & Styles:** Adjust `src/App.css` and component styles as needed.
+
+## Backend-related Documentation
+### 1. Sensor Data Validation: [sensor-data-validation.md](sensor-data-validation.md)
+### 2. Logging specification: [logging.md](logging.md)
+### 3. Exception handling: [exceptions.md](exceptions.md)

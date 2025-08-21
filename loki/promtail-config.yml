@@ -1,0 +1,90 @@
+server:
+  http_listen_port: 9080
+  log_level: info   # debug macht nur noch Lärm – auf info stellen
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    external_labels:
+      job: docker
+      host: ${HOSTNAME}
+
+scrape_configs:
+  - job_name: docker
+
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+
+    pipeline_stages:
+      # 1) Äußeres Docker-JSON dekodieren (macht aus {"log": "...","time":...}
+      #    wieder deine eigentliche Logzeile und setzt den Zeitstempel)
+      - docker: {}
+
+      # 2) Deine Go/logfmt-Zeilen parsen – aber NICHT droppen, wenn eine Zeile nicht passt
+      - logfmt:
+          drop_malformed: false
+          mapping:
+            level: level
+            ts: ts
+            caller: caller
+            component: component
+            msg: msg
+
+      # 3) Wenn die Nutzlast ein 'ts' hat, nimm es als Zeitstempel
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+
+      # 4) Diese Felder als Labels mitschreiben (fürs Dashboard)
+      - labels:
+          level:
+          component:
+
+    relabel_configs:
+      # Promtail-Container selbst ignorieren
+      - source_labels: [__meta_docker_container_name]
+        regex: .*/?promtail$
+        action: drop
+
+      # Nützliche Standard-Labels
+      - source_labels: [__meta_docker_container_name]
+        regex: /?(.*)
+        target_label: container
+        action: replace
+
+      - source_labels: [__meta_docker_container_id]
+        target_label: container_id
+        action: replace
+
+      # compose service & project -> zu Labels machen (DASHBOARD erwartet 'compose_service')
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: (.+)
+        target_label: compose_service
+        action: replace
+
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        regex: (.+)
+        target_label: service            # optional zusätzlich als 'service'
+        action: replace
+
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        regex: (.+)
+        target_label: project
+        action: replace
+
+      # stdout/stderr
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+        action: replace
+
+      # statisches env-Label (Dashboard-Filter 'env' bedienen)
+      - target_label: env
+        replacement: dev                 # <— ggf. "prod", "staging", etc.
+
+      # Pfad zur Log-Datei
+      - source_labels: [__meta_docker_container_log_path]
+        target_label: __path__
+        action: replace

@@ -175,10 +175,45 @@ services:
       db:
         condition: service_healthy
 
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: loki
+    command: -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"          
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: promtail
+    command:
+      - -config.file=/etc/promtail/config.yml
+      - -log.level=debug
+    ports:
+      - "9080:9080"                       # <— damit /targets im Browser funktioniert
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro
+      - promtail-data:/var/lib/promtail
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+
+
 volumes: # This section must be at the same level as 'services'
   db_data:
   kuma-data:
   grafana-data:
+  loki-data:
+  promtail-data:
+
 
 networks: # Definition of networks
   pg-network:

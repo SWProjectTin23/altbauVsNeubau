@@ -23,3 +23,12 @@ datasources:
     url: http://prometheus:9090
     isDefault: false
     editable: true
+
+  - name: Loki
+    uid: loki            # <— WICHTIG: muss 'loki' heißen, damit dein Dashboard passt
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    jsonData:
+      maxLines: 1000

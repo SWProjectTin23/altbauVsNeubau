@@ -21,6 +21,9 @@ metric_map = {
     "temperature": {
         "01": "temperature",
     },
+    "humidity": {
+        "01": "humidity",
+    },
     # future mappings (e.g., "humidity": {...})
 }
 

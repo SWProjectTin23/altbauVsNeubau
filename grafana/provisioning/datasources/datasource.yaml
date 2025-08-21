@@ -16,6 +16,7 @@ datasources:
       sslmode: "disable"
       timescaledb: true
 
+
   - name: Prometheus
     uid: fevdvif8bpb7kc
     type: prometheus
@@ -23,3 +24,4 @@ datasources:
     url: http://prometheus:9090
     isDefault: false
     editable: true
+

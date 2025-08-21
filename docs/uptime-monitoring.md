@@ -48,3 +48,22 @@ To back up or move the internal monitoring configuration and history stored in t
 
 ```bash
 docker cp uptime-kuma:/app/data/kuma.db ~/Desktop/kuma.db
+
+
+
+# 1) Folder & Timestamp
+mkdir -p kuma_data/backups
+TS=$(date +%F_%H%M%S)
+
+# 2) Stream the database files from the container and extract locally
+docker exec uptime-kuma sh -lc 'cd /app/data && tar cf - kuma.db kuma.db-wal kuma.db-shm 2>/dev/null' \
+| tar xf - -C kuma_data/backups
+
+# 3) Rename cleanly (with timestamp)
+[ -f kuma_data/backups/kuma.db ]     && mv kuma_data/backups/kuma.db     "kuma_data/backups/run-$TS.db"
+[ -f kuma_data/backups/kuma.db-wal ] && mv kuma_data/backups/kuma.db-wal "kuma_data/backups/run-$TS.db-wal"
+[ -f kuma_data/backups/kuma.db-shm ] && mv kuma_data/backups/kuma.db-shm "kuma_data/backups/run-$TS.db-shm"
+
+# 4) Verify result
+ls -lah kuma_data/backups | grep "run-$TS"
+

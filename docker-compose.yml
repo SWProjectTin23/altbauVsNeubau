@@ -137,16 +137,25 @@ services:
     ports:
       - "3003:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-${GF_SECURITY_ADMIN_USER:-admin}}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-${GF_SECURITY_ADMIN_PASSWORD:-admin}}
-      GF_USERS_DEFAULT_THEME: light
+      GF_EXPLORE_ENABLED: "true"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-admin}"
+
+      GF_USERS_DEFAULT_THEME: "light"
       GF_USERS_ALLOW_SIGN_UP: "false"
+
       GF_SMTP_ENABLED: "true"
-      GF_SMTP_HOST: ${GF_SMTP_HOST}
-      GF_SMTP_USER: ${GF_SMTP_USER}
-      GF_SMTP_PASSWORD: ${GF_SMTP_PASSWORD}
-      GF_SMTP_FROM_ADDRESS: ${GF_SMTP_FROM}
-      GF_SMTP_FROM_NAME: ${GF_SMTP_FROM_NAME}
+      GF_SMTP_HOST: "${GF_SMTP_HOST}"
+      GF_SMTP_USER: "${GF_SMTP_USER}"
+      GF_SMTP_PASSWORD: "${GF_SMTP_PASSWORD}"
+      GF_SMTP_FROM_ADDRESS: "${GF_SMTP_FROM}"
+      GF_SMTP_FROM_NAME: "${GF_SMTP_FROM_NAME}"
     volumes:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro

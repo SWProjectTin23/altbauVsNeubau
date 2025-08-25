@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/added_grafana_docker
 
 jobs:
   build_and_push:
@@ -31,7 +32,7 @@ jobs:
           docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile ./frontend
           docker push ghcr.io/geroldj/altbauvsneubau/frontend:latest
 
-      - name: Build and push grafana image
+      - name: Build and push sensor exporter image
         run: |
-          docker build -t ghcr.io/geroldj/altbauvsneubau/grafana:latest -f ./grafana/Dockerfile ./grafana
-          docker push ghcr.io/geroldj/altbauvsneubau/grafana:latest
+          docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest -f ./sensor-exporter/Dockerfile ./sensor-exporter
+          docker push ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest

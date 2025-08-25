@@ -1,46 +1,43 @@
 #include "sensor_reader.h"
 #include <Wire.h>
-#include "Adafruit_ADT7410.h"
-#include <DHT.h>
+#include "Adafruit_HTU21DF.h"
 
 #define BUFFER_SIZE 20
-#define DHTPIN 7
-#define DHTTYPE DHT11
 
-Adafruit_ADT7410 tempsensor = Adafruit_ADT7410();
-DHT dht(DHTPIN, DHTTYPE);
+Adafruit_HTU21DF htu = Adafruit_HTU21DF();
+
+#define ADT7410_ADDR 0x48
 
 static uint8_t buffer[BUFFER_SIZE];
 static uint8_t bufferIndex = 0;
 static uint32_t pm25Sum = 0;
 static uint32_t pm10Sum = 0;
 static uint16_t packetCount = 0;
+
 static float temperatureSum = 0.0;
 static unsigned int temperatureCount = 0;
 static bool temperatureSensorAvailable = true;
+
 static float humiditySum = 0.0;
 static unsigned int humidityCount = 0;
 static bool humiditySensorAvailable = true;
 
-
-static bool validatePacket() {              // Validate the packet by checking the checksum
-  uint8_t sum = 0;                          
+static bool validatePacket() {
+  uint8_t sum = 0;
   for (int i = 0; i < BUFFER_SIZE; i++) {
     sum += buffer[i];
   }
   return (sum & 0xFF) == 0;
 }
 
-static void parsePacket(uint16_t &pm25, uint16_t &pm10) {     // Parse the packet to extract PM2.5 and PM10 values
-            pm25 = (buffer[5] << 8) | buffer[6];
-  uint16_t  pm10_raw = (buffer[9] << 8) | buffer[10];
-
-  float     factor = max(1.0, (float)pm10_raw / (float)pm25 / 5.0);
-
+static void parsePacket(uint16_t &pm25, uint16_t &pm10) {
+  pm25 = (buffer[5] << 8) | buffer[6];
+  uint16_t pm10_raw = (buffer[9] << 8) | buffer[10];
+  float factor = max(1.0, (float)pm10_raw / (float)pm25 / 5.0);
   pm10 = (int)(pm10_raw / factor);
 }
 
-void sensorReadByte() {             // Read the sensor data and write it to the variable
+void sensorReadByte() {
   if (Serial1.available()) {
     uint8_t b = Serial1.read();
     buffer[bufferIndex++] = b;
@@ -60,9 +57,24 @@ void sensorReadByte() {             // Read the sensor data and write it to the 
   }
 }
 
-void readTemperature() {      // Read the temperature from the sensor
+// Temperatur vom ADT7410 per Wire
+float readADT7410() {
+  Wire.beginTransmission(ADT7410_ADDR);
+  Wire.write(0x00); // Temperatur-Register
+  Wire.endTransmission();
+
+  Wire.requestFrom(ADT7410_ADDR, 2);
+  if (Wire.available() < 2) return NAN;
+
+  uint16_t raw = (Wire.read() << 8) | Wire.read();
+  raw >>= 3; // 13-bit Mode
+  float tempC = raw * 0.0625; 
+  return tempC;
+}
+
+void readTemperature() {
   if (!temperatureSensorAvailable) return;
-  float c = tempsensor.readTempC();
+  float c = readADT7410();
   if (isnan(c)) {
     temperatureSensorAvailable = false;
     Serial.println("Temperatursensor nicht verfügbar!");
@@ -70,11 +82,11 @@ void readTemperature() {      // Read the temperature from the sensor
   }
   temperatureSum += c;
   temperatureCount++;
-}  
+}
 
 void readHumidity() {
   if (!humiditySensorAvailable) return;
-  float h = dht.readHumidity();
+  float h = htu.readHumidity();
   if (isnan(h)) {
     humiditySensorAvailable = false;
     Serial.println("Feuchtigkeitssensor nicht verfügbar!");
@@ -84,7 +96,7 @@ void readHumidity() {
   humidityCount++;
 }
 
-void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg, float &humidityAvg) {  // Calculate the averages of PM2.5, PM10, and temperature
+void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg, float &humidityAvg) {
   if (packetCount > 0) {
     pm25Avg = pm25Sum / packetCount;
     pm10Avg = pm10Sum / packetCount;
@@ -95,7 +107,7 @@ void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg, fl
   if (temperatureSensorAvailable && temperatureCount > 0) {
     temperatureAvg = temperatureSum / temperatureCount;
   } else {
-    temperatureAvg = 0.0; // Signalisiert: kein Wert verfügbar
+    temperatureAvg = 0.0;
   }
   if (humiditySensorAvailable && humidityCount > 0) {
     humidityAvg = humiditySum / humidityCount;
@@ -104,7 +116,7 @@ void getAverages(uint16_t &pm25Avg, uint16_t &pm10Avg, float &temperatureAvg, fl
   }
 }
 
-void resetAverages() {    // Reset the averages and counters
+void resetAverages() {
   pm25Sum = 0;
   pm10Sum = 0;
   packetCount = 0;
@@ -114,32 +126,26 @@ void resetAverages() {    // Reset the averages and counters
   humidityCount = 0;
 }
 
-void tempsensorStartup() {    // Initialize the temperature sensor
-  if (!tempsensor.begin()) {
-    Serial.println("Temperatursensor nicht gefunden, läuft ohne Temperatur!");
+void tempsensorStartup() {
+  Wire.begin();
+  // ADT7410-Test: Ist Sensor erreichbar?
+  Wire.beginTransmission(ADT7410_ADDR);
+  if (Wire.endTransmission() != 0) {
+    Serial.println("Temperatursensor (ADT7410) nicht gefunden, läuft ohne Temperatur!");
     temperatureSensorAvailable = false;
     return;
   }
-  delay(250);
-
-  tempsensor.setResolution(ADT7410_16BIT);
-  Serial.print("Resolution = ");
-  switch (tempsensor.getResolution()) {
-    case ADT7410_13BIT:
-      Serial.print("13 ");
-      break;
-    case ADT7410_16BIT:
-      Serial.print("16 ");
-      break;
-    default:
-      Serial.print("??");
-  }
-  Serial.println("bits");
   temperatureSensorAvailable = true;
+  Serial.println("ADT7410 gefunden.");
 }
 
 void humiditySensorStartup() {
-  dht.begin();
+  if (!htu.begin()) {
+    Serial.println("Feuchtigkeitssensor (HTU21D-F) nicht gefunden, läuft ohne Feuchtigkeit!");
+    humiditySensorAvailable = false;
+    return;
+  }
   humiditySensorAvailable = true;
+  Serial.println("HTU21D-F gefunden.");
 }
 

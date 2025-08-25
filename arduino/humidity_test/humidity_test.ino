@@ -1,60 +1,69 @@
-#include <DHT.h>
+#include <Wire.h>
+#include "Adafruit_HTU21DF.h"
 
-// === Pins für die Sensoren ===
-#define DHTPIN1 6  // Sensor 1 an D6
-#define DHTPIN2 7  // Sensor 2 an D7
+// HTU21D-F: Humidity
+Adafruit_HTU21DF htu = Adafruit_HTU21DF();
 
-// === Sensortyp ===
-#define DHTTYPE DHT11
-
-// === DHT Objekte ===
-DHT dht1(DHTPIN1, DHTTYPE);
-DHT dht2(DHTPIN2, DHTTYPE);
-
-// === Plausibilitätsgrenzen ===
-const float MIN_TEMP = 0.0;    // °C
-const float MAX_TEMP = 50.0;   // °C
-const float MIN_HUM = 20.0;    // %
-const float MAX_HUM = 80.0;    // %
+// ADT7410: Temperatur (Adresse 0x48)
+#define ADT7410_ADDR 0x48
 
 void setup() {
-  Serial.begin(9600);
-  dht1.begin();
-  dht2.begin();
-  Serial.println("=== DHT11 Sensor Test ===");
+  Serial.begin(115200);
+  while (!Serial) delay(10);
+
+  Serial.println("Starte Sensor-Test...");
+
+  // HTU21D-F initialisieren
+  if (!htu.begin()) {
+    Serial.println("Fehler: HTU21D-F nicht gefunden!");
+    while (1);
+  }
+  Serial.println("HTU21D-F gefunden.");
+
+  // ADT7410 initialisieren
+  Wire.beginTransmission(ADT7410_ADDR);
+  if (Wire.endTransmission() != 0) {
+    Serial.println("Fehler: ADT7410 nicht gefunden!");
+    while (1);
+  }
+  Serial.println("ADT7410 gefunden.");
+}
+
+float readADT7410() {
+  Wire.beginTransmission(ADT7410_ADDR);
+  Wire.write(0x00); // Temperatur-Register
+  Wire.endTransmission();
+
+  Wire.requestFrom(ADT7410_ADDR, 2);
+  if (Wire.available() < 2) return NAN;
+
+  uint16_t raw = (Wire.read() << 8) | Wire.read();
+  raw >>= 3; // 13-bit Mode
+  float tempC = raw * 0.0625; 
+  return tempC;
 }
 
 void loop() {
-  float t1 = dht1.readTemperature();
-  float h1 = dht1.readHumidity();
-  float t2 = dht2.readTemperature();
-  float h2 = dht2.readHumidity();
-
-  Serial.println("--- Messung ---");
-
-  // Sensor 1 prüfen
-  if (isnan(t1) || isnan(h1)) {
-    Serial.println("Sensor 1: FEHLER beim Auslesen!");
-  } else if (t1 < MIN_TEMP || t1 > MAX_TEMP || h1 < MIN_HUM || h1 > MAX_HUM) {
-    Serial.print("Sensor 1: Werte unplausibel -> ");
-    Serial.print(t1); Serial.print(" °C, ");
-    Serial.print(h1); Serial.println(" %");
+  // Humidity vom HTU21D-F
+  float humidity = htu.readHumidity();
+  if (!isnan(humidity)) {
+    Serial.print("Luftfeuchtigkeit: ");
+    Serial.print(humidity);
+    Serial.println(" %");
   } else {
-    Serial.print("Sensor 1 -> Temp: "); Serial.print(t1); Serial.print(" °C, ");
-    Serial.print("Feuchtigkeit: "); Serial.print(h1); Serial.println(" %");
+    Serial.println("Fehler beim Lesen der Luftfeuchtigkeit!");
   }
 
-  // Sensor 2 prüfen
-  if (isnan(t2) || isnan(h2)) {
-    Serial.println("Sensor 2: FEHLER beim Auslesen!");
-  } else if (t2 < MIN_TEMP || t2 > MAX_TEMP || h2 < MIN_HUM || h2 > MAX_HUM) {
-    Serial.print("Sensor 2: Werte unplausibel -> ");
-    Serial.print(t2); Serial.print(" °C, ");
-    Serial.print(h2); Serial.println(" %");
+  // Temperatur vom ADT7410
+  float temp = readADT7410();
+  if (!isnan(temp)) {
+    Serial.print("Temperatur: ");
+    Serial.print(temp);
+    Serial.println(" °C");
   } else {
-    Serial.print("Sensor 2 -> Temp: "); Serial.print(t2); Serial.print(" °C, ");
-    Serial.print("Feuchtigkeit: "); Serial.print(h2); Serial.println(" %");
+    Serial.println("Fehler beim Lesen der Temperatur!");
   }
 
-  delay(2000); // DHT11 nicht schneller als alle 2 Sekunden auslesen
+  Serial.println("-----------------------");
+  delay(1000);
 }

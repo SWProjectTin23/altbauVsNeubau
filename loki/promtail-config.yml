@@ -1,0 +1,74 @@
+server:
+  http_listen_port: 9080
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    external_labels:
+      job: docker
+      host: ${HOSTNAME}
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+
+    pipeline_stages:
+      - docker: {}
+
+      - json:
+          expressions:
+            level: level
+            service: service
+            module: module
+            event: event
+            metric: metric
+            message: message
+            time: time
+            ts: ts
+
+      - template:
+          source: level
+          template: '{{ if .Value }}{{ ToUpper .Value }}{{ end }}'
+
+      - timestamp:
+          source: ts
+          format: RFC3339Nano
+          action_on_failure: skip
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+          action_on_failure: skip
+
+      - labels:
+          level:
+          service:
+          module:
+          event:
+          metric:
+          reason:
+
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        regex: "/(.*)"
+        target_label: container
+
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: compose_service
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service
+
+      - source_labels: [__meta_docker_container_label_com_docker_compose_project]
+        target_label: compose_project
+      - source_labels: [__meta_docker_container_image]
+        target_label: image
+      - source_labels: [__meta_docker_container_log_stream]
+        target_label: stream
+
+
+      - target_label: env
+        replacement: default

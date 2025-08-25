@@ -30,3 +30,8 @@ jobs:
         run: |
           docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile ./frontend
           docker push ghcr.io/geroldj/altbauvsneubau/frontend:latest
+
+      - name: Build and push sensor exporter image
+        run: |
+          docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest -f ./sensor-exporter/Dockerfile ./sensor-exporter
+          docker push ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest

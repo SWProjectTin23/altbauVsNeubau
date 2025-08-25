@@ -112,15 +112,22 @@ services:
     restart: unless-stopped
 
   uptime-kuma:
-    build:
-      context: ./kuma-data
-      dockerfile: Dockerfile
+    image: louislam/uptime-kuma:1
     container_name: uptime-kuma
     ports:
       - "3002:3001"
+    volumes:
+      - ./kuma_data:/seed:ro         
+    tmpfs:
+      - /app/data:size=256m,mode=0755  
+    command: >
+      sh -c "cp -f /seed/kuma.db /app/data/kuma.db &&
+             node server/server.js"
+    restart: unless-stopped
     networks:
       - pg-network
-    restart: unless-stopped
+
+
 
   prometheus: 
     image: prom/prometheus:latest

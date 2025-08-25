@@ -17,6 +17,7 @@ datasources:
       sslmode: "disable"
       timescaledb: true
 
+
   - name: Prometheus
     uid: fevdvif8bpb7kc
     type: prometheus
@@ -24,6 +25,7 @@ datasources:
     url: http://prometheus:9090
     isDefault: false
     editable: true
+
 
   - name: Loki
     uid: loki
@@ -34,3 +36,4 @@ datasources:
     jsonData:
       timeout: 60
       maxLines: 1000
+

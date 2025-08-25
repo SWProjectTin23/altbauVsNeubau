@@ -19,6 +19,7 @@ void setup() {
   Serial1.begin(9600);
   Serial.begin(115200);
   tempsensorStartup();
+  humiditySensorStartup();
   startupTime = getUnixTime(); 
   sequence = 0;
 }
@@ -27,19 +28,20 @@ void loop() {
   mqttLoop();
   while (Serial1.available()) {
     sensorReadByte();
-    readTemperature();
   }
 
+  readTemperature();
+  readHumidity();
 
-   if (millis() - lastAverageTime >= AVERAGE_INTERVAL_MS) {
-     checkWiFiConnection(WIFI_SSID, WIFI_PASS);
-     uint16_t pm25Avg, pm10Avg;
-     float temperatureAvg;
-     getAverages(pm25Avg, pm10Avg, temperatureAvg);
-     sendAverages(startupTime, sequence++, pm25Avg, pm10Avg, temperatureAvg);
-     resetAverages();
-     lastAverageTime = millis();
-   }
+  if (millis() - lastAverageTime >= AVERAGE_INTERVAL_MS) {
+    checkWiFiConnection(WIFI_SSID, WIFI_PASS);
+    uint16_t pm25Avg, pm10Avg;
+    float temperatureAvg, humidityAvg;
+    getAverages(pm25Avg, pm10Avg, temperatureAvg, humidityAvg);
+    sendAverages(startupTime, sequence++, pm25Avg, pm10Avg, temperatureAvg, humidityAvg);
+    resetAverages();
+    lastAverageTime = millis();
+  }
 }
 
 

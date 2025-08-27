@@ -1,0 +1,195 @@
+services:
+  backend-api:
+    container_name: altbau_vs_neubau_api # A fixed name for the container
+    image: ghcr.io/geroldj/altbauvsneubau/backend-api:latest
+    ports:
+      - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
+    environment:
+      - FLASK_APP=api:create_app
+      - FLASK_RUN_HOST=0.0.0.0
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pg-network
+    healthcheck:
+      # IMPORTANT: Health check inside the container must use the internal port (5000)
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+      
+  backend-mqtt:
+    container_name: altbau_vs_neubau_mqtt
+    image: ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_PORT=${MQTT_PORT}
+      - MQTT_BROKER_BACKUP=${MQTT_BROKER_BACKUP}
+      - MQTT_PORT_BACKUP=${MQTT_PORT_BACKUP}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - LOG_LEVEL=INFO
+    networks:
+      - pg-network
+
+  frontend:
+    container_name: altbau_vs_neubau_frontend # a fixed name for the container
+    image: ghcr.io/geroldj/altbauvsneubau/frontend:latest
+    ports:
+      - "3000:80"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    networks:
+      - pg-network
+    healthcheck:
+      # IMPORTANT: Health check inside the container must use the internal port (3000)
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: timescale/timescaledb:latest-pg14
+    container_name: altbau_vs_neubau_db # a fixed name for the container
+    environment:
+      - POSTGRES_USER=${DB_USER}          
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./db/availability_sensor.sql:/docker-entrypoint-initdb.d/02_availability_sensor.sql:ro
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - pg-network
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U ${DB_USER} -d ${DB_NAME} -c 'SELECT 1;' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 60s # Longer start period for the database
+
+  pgadmin: # The name of your pgAdmin service
+    image: dpage/pgadmin4 # The Docker image for pgAdmin
+    container_name: altbau_vs_neubau_pgadmin # a fixed name for the container
+    environment: # Environment variables for pgAdmin
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL} # Login email for pgAdmin
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD} # Login password for pgAdmin
+    ports: # Port mapping from host to container
+      - "5480:80" # pgAdmin is accessible at http://localhost:5480
+    depends_on: # Ensures that the DB starts before pgAdmin
+      - db
+    networks: # Connects the container to the same internal network as the DB
+      - pg-network
+    restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "3002:3001"
+    volumes:
+      - ./kuma_data:/seed:ro
+    tmpfs:
+      - /app/data:size=256m,mode=0755  
+    command: >
+      sh -c "cp -f /seed/kuma.db /app/data/kuma.db &&
+             node server/server.js"
+    restart: unless-stopped
+    networks:
+      - pg-network
+
+
+
+  prometheus: 
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3003:3000"
+    environment:
+      GF_EXPLORE_ENABLED: "true"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-admin}"
+
+      GF_USERS_DEFAULT_THEME: "light"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: "${GF_SMTP_HOST}"
+      GF_SMTP_USER: "${GF_SMTP_USER}"
+      GF_SMTP_PASSWORD: "${GF_SMTP_PASSWORD}"
+      GF_SMTP_FROM_ADDRESS: "${GF_SMTP_FROM}"
+      GF_SMTP_FROM_NAME: "${GF_SMTP_FROM_NAME}"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - pg-network
+    restart: unless-stopped
+
+  sensor-exporter:
+    image: ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest
+    ports:
+      - "9100:9100"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - pg-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes: # This section must be at the same level as 'services'
+  db_data:
+  kuma-data:
+  grafana-data:
+
+networks: # Definition of networks
+  pg-network:
+    driver: bridge # Standard bridge network

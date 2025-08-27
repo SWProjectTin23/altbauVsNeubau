@@ -8,7 +8,7 @@ from api.range import TimeRange
 from api.device_latest import DeviceLatest
 from api.comparison import Comparison
 from api.thresholds import Thresholds
-from api.alert_mail import AlertEmail
+from api.alertMail import AlertEmail
 from api.sendAlertMail import SendAlertMail
 
 def create_app():

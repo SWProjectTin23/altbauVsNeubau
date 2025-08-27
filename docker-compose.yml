@@ -119,12 +119,7 @@ services:
     ports:
       - "3002:3001"
     volumes:
-      - ./kuma_data:/seed:ro         
-    tmpfs:
-      - /app/data:size=256m,mode=0755  
-    command: >
-      sh -c "cp -f /seed/kuma.db /app/data/kuma.db &&
-             node server/server.js"
+      - ./kuma_data:/app/data   
     restart: unless-stopped
     networks:
       - pg-network
@@ -217,8 +212,6 @@ services:
     networks:
       - pg-network
     restart: unless-stopped
-
-
 
 volumes: # This section must be at the same level as 'services'
   db_data:

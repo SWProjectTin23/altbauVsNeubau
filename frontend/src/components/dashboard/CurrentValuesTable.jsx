@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { getWarningClass, formatCurrentTimestamp } from "./dashboardUtils";
+import { api } from "../../utils/api";
 
 const metricUnits = {
   Temperatur: "°C",
@@ -8,7 +9,37 @@ const metricUnits = {
   Feinstaub: "µg/m³",
 };
 
+async function maybeSendAlertMail({ metric, value, thresholds, device }) {
+  try {
+    await api.post("/send_alert_mail", {
+      metric,
+      value,
+      thresholds,
+      device
+    });
+  } catch (e) {
+    console.warn("Fehler beim Senden der Alert-Mail:", e);
+  }
+}
+
+
 export default function CurrentValuesTable({ metrics, currentData, warningThresholds }) {
+  useEffect(() => {
+    ["Altbau", "Neubau"].forEach(device => {
+      metrics.forEach(metric => {
+        const value = currentData[device]?.[metric];
+        if (typeof value === "number") {
+          maybeSendAlertMail({
+            metric,
+            value,
+            thresholds: warningThresholds,
+            device
+          });
+        }
+      });
+    });
+  }, [currentData, warningThresholds, metrics]);
+
   return (
     <div className="table-wrapper">
       <table className="metrics-table">

@@ -41,3 +41,17 @@ INSERT INTO thresholds (temperature_min_hard, temperature_min_soft, temperature_
  30.00, 40.00, 60.00, 80.00,
  0, 5, 30, 80,
  0, 20, 50, 70);
+
+CREATE TABLE IF NOT EXISTS alert_emails (
+    email VARCHAR(255) NOT NULL,
+);
+
+INSERT INTO alert_emails (email) VALUES ('alert@example.com');
+
+CREATE TABLE IF NOT EXISTS alert_cooldowns (
+    device VARCHAR(50) NOT NULL,
+    metric VARCHAR(50) NOT NULL,
+    mail_type VARCHAR(10) NOT NULL,
+    last_sent TIMESTAMPTZ NOT NULL,
+    PRIMARY KEY (device, metric, mail_type)
+);

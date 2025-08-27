@@ -10,7 +10,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import './Dashboard.css';
-
 import { api } from "../utils/api";
 import { feLogger } from "../logging/logger";
 

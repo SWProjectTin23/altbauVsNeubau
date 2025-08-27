@@ -19,6 +19,7 @@ jobs:
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_PORT: ${{ secrets.DB_PORT }}
       MQTT_BROKER: ${{ secrets.MQTT_BROKER }}
+      MQTT_BROKER_BACKUP: ${{ secrets.MQTT_BROKER_BACKUP }}
       MQTT_PORT: ${{ secrets.MQTT_PORT }}
       PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
       PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}

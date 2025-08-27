@@ -3,7 +3,7 @@ import psycopg2
 import paho.mqtt.client as mqtt
 
 from mqtt_client.mqtt_config import (
-    MQTT_BROKER, MQTT_PORT, MQTT_BASE_TOPIC, QOS,
+    MQTT_BROKER, MQTT_PORT, MQTT_BROKER2, MQTT_PORT2, MQTT_BASE_TOPIC, QOS,
     DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT
 )
 from mqtt_client.handler import handle_metric
@@ -11,6 +11,13 @@ from common.logging_setup import setup_logger, log_event
 
 # Structured logger bound to this module/service
 logger = setup_logger(service="ingester", module="main_ingester")
+
+# Log the MQTT broker configuration at the start
+log_event(
+    logger, "INFO", "env_mqtt_broker_config",
+    broker_1=MQTT_BROKER, port_1=MQTT_PORT,
+    broker_2=MQTT_BROKER2, port_2=MQTT_PORT2
+)
 
 # Metric mapping from topic suffix to database column
 metric_map = {
@@ -163,8 +170,50 @@ if __name__ == "__main__":
     client.on_disconnect = on_disconnect
     client.on_message = on_message
 
+    # Fallback: try first MQTT broker, then second, with structured logs
     try:
-        client.connect(MQTT_BROKER, MQTT_PORT, 60)
+        connected = False
+        try:
+            client.connect(MQTT_BROKER, MQTT_PORT, 60)
+            log_event(
+                logger, "INFO", "mqtt_connect_attempt",
+                broker=MQTT_BROKER, port=MQTT_PORT, result="ok"
+            )
+            connected = True
+        except Exception as e:
+            log_event(
+                logger, "WARNING", "mqtt_connect_attempt",
+                broker=MQTT_BROKER, port=MQTT_PORT, result="failed", error_type=type(e).__name__, error_msg=str(e)[:200]
+            )
+            if MQTT_BROKER2:
+                log_event(
+                    logger, "INFO", "mqtt_connect_fallback_attempt",
+                    broker=MQTT_BROKER2, port=MQTT_PORT2, result="attempt"
+                )
+                try:
+                    client.connect(MQTT_BROKER2, MQTT_PORT2, 60)
+                    log_event(
+                        logger, "INFO", "mqtt_connect_fallback",
+                        broker=MQTT_BROKER2, port=MQTT_PORT2, result="ok"
+                    )
+                    connected = True
+                except Exception as e2:
+                    log_event(
+                        logger, "WARNING", "mqtt_connect_attempt",
+                        broker=MQTT_BROKER2, port=MQTT_PORT2, result="failed", error_type=type(e2).__name__, error_msg=str(e2)[:200]
+                    )
+                    log_event(
+                        logger, "CRITICAL", "mqtt_connect_fallback",
+                        broker=MQTT_BROKER2, port=MQTT_PORT2, result="failed", error_type=type(e2).__name__, error_msg=str(e2)[:200]
+                    )
+            else:
+                log_event(
+                    logger, "CRITICAL", "mqtt_connect_fallback",
+                    broker=None, port=None, result="failed", reason="no_fallback_configured"
+                )
+        if not connected:
+            log_event(logger, "CRITICAL", "ingester_exit", reason="no_mqtt_connection")
+            raise SystemExit(1)
         client.loop_forever()
     except KeyboardInterrupt:
         log_event(logger, "INFO", "shutdown_requested")

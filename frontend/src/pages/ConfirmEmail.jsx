@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../utils/api";
+import '../App.css';
 
 export default function ConfirmEmail() {
   const [searchParams] = useSearchParams();
@@ -39,6 +40,7 @@ export default function ConfirmEmail() {
       {status === "pending" && <p>Bestätige deine E-Mail-Adresse...</p>}
       {status === "success" && <p style={{ color: "green", fontWeight: 600 }}>{message}</p>}
       {status === "error" && <p style={{ color: "red", fontWeight: 600 }}>{message}</p>}
+    <button className="btn" onClick={() => window.location.href = "/"}>Zurück zur Startseite</button>
     </div>
   );
 }

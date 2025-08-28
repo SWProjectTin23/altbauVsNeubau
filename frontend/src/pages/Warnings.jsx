@@ -29,6 +29,7 @@ export default function () {
   const navigate = useNavigate();
   const [alertEmail, setAlertEmail] = useState("");
   const [originalAlertEmail, setOriginalAlertEmail] = useState("");
+  const emailChanged = alertEmail !== (originalAlertEmail ?? "");
 
   // Fetch initial data
   useEffect(() => {
@@ -117,6 +118,8 @@ export default function () {
   setBackError(null);
   setInfoMessage(null);
 
+  setSaving(true);
+
   // Validate thresholds
   const validationError = validateWarnings(warnings);
   if (validationError) {
@@ -134,23 +137,22 @@ export default function () {
   setSaving(true);
 
   try {
-    // Save email
-    const emailResult = await api.post("/alert_email", { alert_email: alertEmail });
-    if (emailResult.status !== "success") {
-      setSaveError(emailResult.message || "Fehler beim Speichern der Alert-Mail-Adresse.");
-      setSaving(false);
-      return;
+    if (emailChanged) {
+      const emailResult = await api.post("/alert_email", { alert_email: alertEmail });
+      if (emailResult.status !== "success") {
+        setSaveError(emailResult.message || "Fehler beim Speichern der Alert-Mail-Adresse.");
+        setSaving(false);
+        return;
+      }
+      if (emailResult.message === "Confirmation mail sent.") {
+        setInfoMessage("Bitte bestätige deine E-Mail-Adresse in deinem Postfach, bevor Alerts gesendet werden.");
+        setOriginalWarnings(warnings);
+        setOriginalAlertEmail(alertEmail);
+        setSaving(false);
+        return;
+      }
+      setOriginalAlertEmail(alertEmail); // E-Mail als "gespeichert" markieren
     }
-
-    // Check if a confirmation email was sent
-    if (emailResult.message === "Confirmation mail sent.") {
-      setInfoMessage("Bitte bestätige deine E-Mail-Adresse in deinem Postfach, bevor Alerts gesendet werden.");
-      setOriginalWarnings(warnings);
-      setOriginalAlertEmail(alertEmail);
-      setSaving(false);
-    return; 
-  }
-
     // Save thresholds
     const payload = { ...mapUiToApi(warnings), alert_email: alertEmail };
     const result = await api.post("/thresholds", payload);

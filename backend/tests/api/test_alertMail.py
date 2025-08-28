@@ -1,4 +1,4 @@
-from api.db_operations import get_db_connection
+from api.db import get_db_connection
 from unittest.mock import MagicMock
 import psycopg2
 

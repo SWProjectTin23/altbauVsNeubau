@@ -7,6 +7,8 @@ from .device_data import get_device_data_from_db
 from .device_latest import get_latest_device_data_from_db
 from .comparison import compare_devices_over_time
 from .thresholds import get_thresholds_from_db, update_thresholds_in_db
+from .alertMail import get_alert_email, set_alert_email
+from .sendAlertMail import is_alert_active, set_alert_active, reset_alert
 
 __all__ = [
     "check_db_config",

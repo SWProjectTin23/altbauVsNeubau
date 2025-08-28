@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import request
-from api.db_operations import get_alert_email, set_alert_email
+from api.db import get_alert_email, set_alert_email
 
 class AlertEmail(Resource):
     def get(self):

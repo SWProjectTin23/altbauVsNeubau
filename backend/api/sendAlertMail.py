@@ -2,12 +2,7 @@ import os
 import datetime
 from flask_restful import Resource
 from flask import request
-from api.db_operations import (
-    get_alert_email,
-    is_alert_active,
-    set_alert_active,
-    reset_alert
-)
+from api.db import get_alert_email, is_alert_active, set_alert_active, reset_alert
 import smtplib
 import psycopg2
 from email.mime.text import MIMEText

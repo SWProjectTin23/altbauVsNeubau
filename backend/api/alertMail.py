@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask import request
 import psycopg2
-from .db_operations import get_db_connection 
+from api.db_operations import get_db_connection 
 
 class AlertEmail(Resource):
     def get(self):

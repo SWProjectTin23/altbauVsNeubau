@@ -13,7 +13,7 @@ from common.exceptions import (
 )
 
 # db ops
-from .db_operations import get_device_data_from_db, device_exists
+from api.db import get_device_data_from_db, device_exists
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="device_data")

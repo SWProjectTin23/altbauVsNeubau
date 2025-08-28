@@ -631,3 +631,64 @@ def update_thresholds_in_db(threshold_data):
     finally:
         if conn:
             conn.close()
+
+def get_alert_email():
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT email FROM alert_emails LIMIT 1")
+        row = cur.fetchone()
+        cur.close()
+        return row[0] if row else None
+    except psycopg2.Error as e:
+        log_event(logger, "ERROR", "db.error.get_email", error=str(e))
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def set_alert_email(email):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM alert_emails")
+    cur.execute("INSERT INTO alert_emails (email) VALUES (%s)", (email,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def is_alert_active(device, metric, mail_type):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT 1 FROM alert_cooldowns WHERE device=%s AND metric=%s AND mail_type=%s",
+        (device, metric, mail_type)
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    return bool(row)
+
+def set_alert_active(device, metric, mail_type):
+    now = datetime.datetime.utcnow()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO alert_cooldowns (device, metric, mail_type, last_sent) VALUES (%s, %s, %s, %s) "
+        "ON CONFLICT (device, metric, mail_type) DO UPDATE SET last_sent = EXCLUDED.last_sent",
+        (device, metric, mail_type, now)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def reset_alert(device, metric, mail_type):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM alert_cooldowns WHERE device=%s AND metric=%s AND mail_type=%s",
+        (device, metric, mail_type)
+    )
+    conn.commit()
+    cur.close()
+    conn.close()

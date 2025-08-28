@@ -43,10 +43,11 @@ INSERT INTO thresholds (temperature_min_hard, temperature_min_soft, temperature_
  0, 20, 50, 70);
 
 CREATE TABLE IF NOT EXISTS alert_emails (
-    email VARCHAR(255) NOT NULL
+    email VARCHAR(255) NOT NULL,
+    confirmed BOOLEAN DEFAULT FALSE,
+    confirmation_token VARCHAR(64),
+    PRIMARY KEY (email)
 );
-
-INSERT INTO alert_emails (email) VALUES ('alert@example.com');
 
 CREATE TABLE IF NOT EXISTS alert_cooldowns (
     device VARCHAR(50) NOT NULL,

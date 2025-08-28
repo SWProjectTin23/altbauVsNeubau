@@ -257,7 +257,7 @@ export default function Dashboard() {
             />
           )}
           <div className="button-container">
-            <button onClick={() => navigate("/warnwerte")} className="btn">
+            <button onClick={() => navigate("/warnings")} className="btn">
               Warnungen ändern
             </button>
           </div>

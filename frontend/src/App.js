@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Warnings from "./pages/Warnings";
 import "./App.css";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 function App() {
   return (
@@ -22,7 +23,8 @@ function App() {
           <main>
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/warnwerte" element={<Warnings />} />
+              <Route path="/warnings" element={<Warnings />} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
             </Routes>
           </main>
         </AppErrorBoundary>

@@ -61,21 +61,21 @@ calc AS (
     GREATEST(
       0,
       FLOOR(EXTRACT(EPOCH FROM (b.cutoff_bucket - b.ref_start)) / b.sec)
-    )::bigint AS soll_total
+    )::bigint AS expected_total
   FROM bounds b
 )
 
 SELECT
   c.device_id,
-  c.soll_total,
+  c.expected_total,
 
   -- actual = # distinct buckets with at least one sample (capped 1 per interval),
   -- counted strictly after ref_start and up to cutoff bucket
-  COUNT(DISTINCT tb.bucket)::bigint AS ist_total,
+  COUNT(DISTINCT tb.bucket)::bigint AS actual_total,
 
   CASE
-    WHEN c.soll_total = 0 THEN 0.0
-    ELSE ROUND(100.0 * COUNT(DISTINCT tb.bucket) / c.soll_total, 2)
+    WHEN c.expected_total = 0 THEN 0.0
+    ELSE ROUND(100.0 * COUNT(DISTINCT tb.bucket) / c.expected_total, 2)
   END AS availability_pct
 
 FROM calc c
@@ -86,8 +86,109 @@ LEFT JOIN LATERAL (
     AND s.timestamp > c.ref_start
     AND time_bucket(c.iv, s.timestamp, c.ref_start) <= c.cutoff_bucket
 ) tb ON TRUE
-GROUP BY c.device_id, c.soll_total
+GROUP BY c.device_id, c.expected_total
 ORDER BY c.device_id;
+
+
+-- ===== Per-sensor actual counts & availability (since start) =====
+-- We count non-null values per sensor column per device and normalise by expected_total.
+CREATE OR REPLACE VIEW v_counts_since_start_by_device_and_sensor AS
+WITH params AS (
+  SELECT
+    interval_seconds::int AS sec,
+    (interval '1 second') * interval_seconds::int AS iv
+  FROM v_params
+),
+gs AS (SELECT start_ts FROM v_global_start),
+
+ref AS (
+  SELECT d.device_id,
+         COALESCE(f.first_seen, (SELECT start_ts FROM gs)) AS ref_start
+  FROM v_devices d
+  LEFT JOIN v_first_seen f USING (device_id)
+),
+bounds AS (
+  SELECT
+    r.device_id,
+    r.ref_start,
+    p.sec,
+    p.iv,
+    time_bucket(p.iv, now() - interval '10 seconds', r.ref_start) AS cutoff_bucket
+  FROM ref r CROSS JOIN params p
+),
+expected AS (
+  SELECT
+    b.device_id,
+    GREATEST(
+      0,
+      FLOOR(EXTRACT(EPOCH FROM (b.cutoff_bucket - b.ref_start)) / b.sec)
+    )::bigint AS expected_total,
+    b.iv,
+    b.ref_start,
+    b.cutoff_bucket
+  FROM bounds b
+),
+-- helper to time-bucket and cap to 1 per interval for a column
+bucketed AS (
+  SELECT
+    s.device_id,
+    'temperature'::text AS sensor,
+    time_bucket(e.iv, s.timestamp, e.ref_start) AS bucket
+  FROM sensor_data s
+  JOIN expected e USING (device_id)
+  WHERE s.temperature IS NOT NULL
+    AND s.timestamp > e.ref_start
+    AND time_bucket(e.iv, s.timestamp, e.ref_start) <= e.cutoff_bucket
+  UNION ALL
+  SELECT
+    s.device_id,
+    'humidity' AS sensor,
+    time_bucket(e.iv, s.timestamp, e.ref_start) AS bucket
+  FROM sensor_data s
+  JOIN expected e USING (device_id)
+  WHERE s.humidity IS NOT NULL
+    AND s.timestamp > e.ref_start
+    AND time_bucket(e.iv, s.timestamp, e.ref_start) <= e.cutoff_bucket
+  UNION ALL
+  SELECT
+    s.device_id,
+    'pollen' AS sensor,
+    time_bucket(e.iv, s.timestamp, e.ref_start) AS bucket
+  FROM sensor_data s
+  JOIN expected e USING (device_id)
+  WHERE s.pollen IS NOT NULL
+    AND s.timestamp > e.ref_start
+    AND time_bucket(e.iv, s.timestamp, e.ref_start) <= e.cutoff_bucket
+  UNION ALL
+  SELECT
+    s.device_id,
+    'particulate_matter' AS sensor,
+    time_bucket(e.iv, s.timestamp, e.ref_start) AS bucket
+  FROM sensor_data s
+  JOIN expected e USING (device_id)
+  WHERE s.particulate_matter IS NOT NULL
+    AND s.timestamp > e.ref_start
+    AND time_bucket(e.iv, s.timestamp, e.ref_start) <= e.cutoff_bucket
+),
+agg AS (
+  SELECT device_id, sensor, COUNT(DISTINCT bucket)::bigint AS actual_count
+  FROM bucketed
+  GROUP BY device_id, sensor
+)
+
+SELECT
+  e.device_id,
+  s.sensor,
+  e.expected_total,
+  COALESCE(a.actual_count, 0) AS actual_count,
+  CASE
+    WHEN e.expected_total = 0 THEN 0.0
+    ELSE ROUND(100.0 * COALESCE(a.actual_count, 0) / e.expected_total, 2)
+  END AS availability_pct
+FROM expected e
+CROSS JOIN (VALUES ('temperature'), ('humidity'), ('pollen'), ('particulate_matter')) AS s(sensor)
+LEFT JOIN agg a ON a.device_id = e.device_id AND a.sensor = s.sensor
+ORDER BY e.device_id, s.sensor;
 
 
 -- ===== Gaps > 10 minutes (since start) =====

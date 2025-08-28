@@ -26,7 +26,8 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "fixed", "fixedColor": "text" },
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] },
+          "noValue": "0"
         },
         "overrides": []
       }
@@ -50,7 +51,8 @@
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "fixed", "fixedColor": "text" },
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] }
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "text", "value": null } ] },
+          "noValue": "0"
         },
         "overrides": []
       }

@@ -139,7 +139,8 @@ class SendAlertMail(Resource):
                 )
                 return {"status": "success", "message": "No Threshold Exceeded"}, 200
         
-        except (psycopg2.Error, smtplib.SMTPException) as e:
-            error_message = f"An error occurred: {str(e)}"
-            log_event(logger, "ERROR", "alert_mail.process_error", error=error_message)
+        except Exception as e:
+            logger.exception("Unexpected error occurred in SendAlertMail")
+            error_message = f"An unexpected error occurred: {str(e)}"
+            log_event(logger, "ERROR", "alert_mail.unexpected_error", error=error_message)
             return {"status": "error", "message": error_message}, 500

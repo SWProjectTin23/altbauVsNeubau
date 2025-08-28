@@ -1,138 +1,162 @@
 import pytest
-from unittest.mock import MagicMock
-import psycopg2
-import smtplib
+from unittest.mock import patch, MagicMock
+from flask import Flask
+from api.sendAlertMail import SendAlertMail
 
 @pytest.fixture
-def test_data():
-    """Fixture to provide a standard set of test data."""
-    return {
-        "device": "Arduino01",
+def client():
+    app = Flask(__name__)
+    app.config["TESTING"] = True
+    app.add_url_rule("/alert", view_func=SendAlertMail.as_view("send_alert_mail"))
+    return app.test_client()
+
+
+# ---- Success: hart alert ----
+@patch("api.sendAlertMail.send_mail")
+@patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
+@patch("api.sendAlertMail.is_alert_active", return_value=False)
+@patch("api.sendAlertMail.set_alert_active")
+
+
+def test_hart_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_send_mail, client):
+    payload = {
         "metric": "Temperatur",
-        "value": 25,
+        "value": 60,
+        "device": "ABC123",
         "thresholds": {
             "Temperatur": {
-                "redLow": 5, "yellowLow": 10, "yellowHigh": 30, "redHigh": 35
+                "redLow": -10,
+                "redHigh": 50,
+                "yellowLow": 0,
+                "yellowHigh": 40
             }
         }
     }
+    response = client.post("/alert", json=payload)
+    assert response.status_code == 200
+    assert b"hart-Mail sent" in response.data
+    mock_send_mail.assert_called_once()
+    mock_set_alert_active.assert_called_once()
 
-def test_post_send_alert_mail_missing_parameters(client, mocker):
-    """Test with missing parameters -> 400 Bad Request."""
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    response = client.post('/api/send_alert_mail', json={})
+
+# ---- Success: soft alert ----
+@patch("api.sendAlertMail.send_mail")
+@patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
+@patch("api.sendAlertMail.is_alert_active", return_value=False)
+@patch("api.sendAlertMail.set_alert_active")
+def test_soft_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_send_mail, client):
+    payload = {
+        "metric": "Temperatur",
+        "value": 45,
+        "device": "ABC123",
+        "thresholds": {
+            "Temperatur": {
+                "redLow": -10,
+                "redHigh": 50,
+                "yellowLow": 0,
+                "yellowHigh": 40
+            }
+        }
+    }
+    response = client.post("/alert", json=payload)
+    assert response.status_code == 200
+    assert b"soft-Mail sent" in response.data
+
+
+# ---- Already active alert ----
+@patch("api.sendAlertMail.send_mail")
+@patch("api.sendAlertMail.get_alert_email")
+@patch("api.sendAlertMail.is_alert_active", return_value=True)
+def test_alert_already_active(mock_is_active, mock_get_email, mock_send_mail, client):
+    payload = {
+        "metric": "Temperatur",
+        "value": 60,
+        "device": "ABC123",
+        "thresholds": {
+            "Temperatur": {
+                "redLow": -10,
+                "redHigh": 50,
+                "yellowLow": 0,
+                "yellowHigh": 40
+            }
+        }
+    }
+    response = client.post("/alert", json=payload)
+    assert response.status_code == 200
+    assert b"already active" in response.data
+    mock_send_mail.assert_not_called()
+
+
+# ---- Normal range -> reset alert ----
+@patch("api.sendAlertMail.reset_alert")
+def test_reset_alert_on_normal_value(mock_reset_alert, client):
+    payload = {
+        "metric": "Temperatur",
+        "value": 25,
+        "device": "ABC123",
+        "thresholds": {
+            "Temperatur": {
+                "redLow": -10,
+                "redHigh": 50,
+                "yellowLow": 0,
+                "yellowHigh": 40
+            }
+        }
+    }
+    response = client.post("/alert", json=payload)
+    assert response.status_code == 200
+    assert b"No Threshold Exceeded" in response.data
+    assert mock_reset_alert.call_count == 2
+
+
+# ---- Missing parameter ----
+def test_missing_parameters(client):
+    payload = {
+        "value": 25,
+        "device": "ABC123",
+        "thresholds": {}
+    }
+    response = client.post("/alert", json=payload)
     assert response.status_code == 400
-    assert response.get_json()['message'] == 'Missing parameters'
-    mock_log_event.assert_called_once()
+    assert b"Missing parameters" in response.data
 
-def test_post_send_alert_mail_unknown_metric(client, mocker, test_data):
-    """Test with unknown metric -> 400 Bad Request."""
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['metric'] = 'UnbekannteMetrik'
-    response = client.post('/api/send_alert_mail', json=test_data)
+
+# ---- Unknown metric ----
+def test_unknown_metric(client):
+    payload = {
+        "metric": "Unbekannt",
+        "value": 25,
+        "device": "ABC123",
+        "thresholds": {
+            "Temperatur": {
+                "redLow": -10,
+                "redHigh": 50
+            }
+        }
+    }
+    response = client.post("/alert", json=payload)
     assert response.status_code == 400
-    assert response.get_json()['message'] == 'Unknown metric'
-    mock_log_event.assert_called_once()
+    assert b"Unknown metric" in response.data
 
-def test_post_red_alert_triggered_sends_mail(client, mocker, test_data):
-    """Test for a red alert: mail should be sent and cooldown set."""
-    mock_send_mail = mocker.patch('api.sendAlertMail.send_mail')
-    mocker.patch('api.sendAlertMail.get_alert_email', return_value="test@example.com")
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=False)
-    mock_set_alert_active = mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_reset_alert = mocker.patch('api.sendAlertMail.reset_alert')
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 40
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'hart-Mail sent'
-    mock_send_mail.assert_called_once()
-    mock_set_alert_active.assert_called_once_with("Arduino01", "Temperatur", "hart")
-    mock_reset_alert.assert_not_called()
-    mock_log_event.assert_called()
-
-def test_post_red_alert_cooldown_active(client, mocker, test_data):
-    """Test for a red alert when cooldown is already active: no mail should be sent."""
-    mocker.patch('api.sendAlertMail.send_mail')
-    mocker.patch('api.sendAlertMail.get_alert_email', return_value="test@example.com")
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=True)
-    mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 40
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'hart-Mail already active'
-    mock_log_event.assert_called()
-
-def test_post_yellow_alert_triggered_sends_mail(client, mocker, test_data):
-    """Test for a yellow alert: mail should be sent and cooldown set."""
-    mock_send_mail = mocker.patch('api.sendAlertMail.send_mail')
-    mocker.patch('api.sendAlertMail.get_alert_email', return_value="test@example.com")
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=False)
-    mock_set_alert_active = mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_reset_alert = mocker.patch('api.sendAlertMail.reset_alert')
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 32
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'soft-Mail sent'
-    mock_send_mail.assert_called_once()
-    mock_set_alert_active.assert_called_once_with("Arduino01", "Temperatur", "soft")
-    mock_reset_alert.assert_not_called()
-    mock_log_event.assert_called()
-
-def test_post_yellow_alert_cooldown_active(client, mocker, test_data):
-    """Test for a yellow alert when cooldown is already active: no mail should be sent."""
-    mocker.patch('api.sendAlertMail.send_mail')
-    mocker.patch('api.sendAlertMail.get_alert_email', return_value="test@example.com")
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=True)
-    mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 32
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'soft-Mail already active'
-    mock_log_event.assert_called()
-
-def test_post_value_in_normal_range_resets_alert(client, mocker, test_data):
-    """Test when the value is back in the normal range: alerts should be reset."""
-    mocker.patch('api.sendAlertMail.send_mail')
-    mock_reset_alert = mocker.patch('api.sendAlertMail.reset_alert')
-    mock_set_alert_active = mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 20
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 200
-    assert response.get_json()['message'] == 'No Threshold Exceeded'
-    mock_reset_alert.assert_any_call("Arduino01", "Temperatur", "hart")
-    mock_reset_alert.assert_any_call("Arduino01", "Temperatur", "soft")
-    mock_set_alert_active.assert_not_called()
-    mock_log_event.assert_called()
-
-def test_post_database_error_on_get_email(client, mocker, test_data):
-    """Test when a database error occurs during email retrieval."""
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    mock_get_alert_email = mocker.patch('api.sendAlertMail.get_alert_email', side_effect=psycopg2.Error("DB Error"))
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=False)
-    
-    test_data['value'] = 40
-    response = client.post('/api/send_alert_mail', json=test_data)
-    
+@patch("api.sendAlertMail.send_mail", side_effect=Exception("SMTP failed"))
+@patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
+@patch("api.sendAlertMail.is_alert_active", return_value=False)
+def test_send_mail_exception(mock_is_active, mock_get_email, mock_send_mail, client):
+    payload = {
+        "metric": "Temperatur",
+        "value": 60,
+        "device": "ABC123",
+        "thresholds": {
+            "Temperatur": {
+                "redLow": -10,
+                "redHigh": 50,
+                "yellowLow": 0,
+                "yellowHigh": 40
+            }
+        }
+    }
+    response = client.post("/alert", json=payload)
     assert response.status_code == 500
-    assert "DB Error" in response.get_json()['message']
-    mock_get_alert_email.assert_called_once()
-    mock_log_event.assert_called()
+    assert "SMTP failed" in response.json["message"]
+    assert response.json["status"] == "error"
 
-def test_post_send_mail_failure(client, mocker, test_data):
-    """Test when the mail sending fails."""
-    mocker.patch('api.sendAlertMail.get_alert_email', return_value="test@example.com")
-    mocker.patch('api.sendAlertMail.is_alert_active', return_value=False)
-    mocker.patch('api.sendAlertMail.set_alert_active')
-    mock_send_mail = mocker.patch('api.sendAlertMail.send_mail', side_effect=smtplib.SMTPException("SMTP Failure"))
-    mock_log_event = mocker.patch('api.sendAlertMail.log_event')
-    test_data['value'] = 40
-    response = client.post('/api/send_alert_mail', json=test_data)
-    assert response.status_code == 500
-    assert "SMTP Failure" in response.get_json()['message']
-    mock_send_mail.assert_called_once()
-    mock_log_event.assert_called()

@@ -2,7 +2,7 @@ import os
 import datetime
 from flask_restful import Resource
 from flask import request
-from .db_operations import get_db_connection
+from api.db_operations import get_db_connection
 import smtplib
 import psycopg2
 from email.mime.text import MIMEText

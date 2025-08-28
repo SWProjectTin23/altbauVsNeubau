@@ -10,7 +10,6 @@ from api.comparison import Comparison
 from api.thresholds import Thresholds
 from api.alertMail import AlertEmail
 from api.sendAlertMail import SendAlertMail
-from .db_operations import get_db_connection
 
 def create_app():
     app = Flask(__name__)

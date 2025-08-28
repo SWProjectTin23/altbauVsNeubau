@@ -15,7 +15,7 @@ from common.exceptions import (
 )
 
 # db ops
-from .db_operations import compare_devices_over_time, validate_timestamps_and_range
+from api.db import compare_devices_over_time, validate_timestamps_and_range
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="comparison")

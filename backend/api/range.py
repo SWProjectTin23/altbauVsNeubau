@@ -13,7 +13,7 @@ from common.exceptions import (
 )
 
 # db ops
-from .db_operations import get_all_device_time_ranges_from_db
+from api.db import get_all_device_time_ranges_from_db
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="range")

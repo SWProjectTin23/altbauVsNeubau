@@ -6,7 +6,7 @@ import psycopg2  # keep: tests expect us to catch psycopg2.Error
 from common.logging_setup import setup_logger, log_event, DurationTimer
 
 # db ops
-from .db_operations import get_thresholds_from_db, update_thresholds_in_db
+from api.db import get_thresholds_from_db, update_thresholds_in_db
 
 logger = setup_logger(service="api", module="thresholds")
 

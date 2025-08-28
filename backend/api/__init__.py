@@ -32,8 +32,8 @@ def create_app():
     api.add_resource(DeviceLatest, "/api/devices/<int:device_id>/latest")
     api.add_resource(Comparison, "/api/comparison")
     api.add_resource(Thresholds, "/api/thresholds")
-    api.add_resource(AlertEmail, "/api/alert_email")
-    api.add_resource(SendAlertMail, "/api/send_alert_mail")
+    # api.add_resource(AlertEmail, "/api/alert_email")
+    # api.add_resource(SendAlertMail, "/api/send_alert_mail")
 
 
     # Health Endpoint

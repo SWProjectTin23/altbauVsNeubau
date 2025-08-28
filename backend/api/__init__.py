@@ -8,6 +8,8 @@ from api.range import TimeRange
 from api.device_latest import DeviceLatest
 from api.comparison import Comparison
 from api.thresholds import Thresholds
+from api.alertMail import AlertEmail
+from api.sendAlertMail import SendAlertMail
 
 def create_app():
     app = Flask(__name__)
@@ -16,8 +18,8 @@ def create_app():
         resources={r"/api/*": {"origins": [
             "http://217.154.215.67:3000",
             "http://localhost:3000",
-            "https://timhirschmiller-fotografie.de",
-            "http://isd-gerold.de:3000"
+            "http://isd-gerold.de:3000",
+            "http://hrschmllr.de:3000"
         ]}},
         supports_credentials=True,
         allow_headers=["*"]
@@ -30,6 +32,9 @@ def create_app():
     api.add_resource(DeviceLatest, "/api/devices/<int:device_id>/latest")
     api.add_resource(Comparison, "/api/comparison")
     api.add_resource(Thresholds, "/api/thresholds")
+    api.add_resource(AlertEmail, "/api/alert_email")
+    api.add_resource(SendAlertMail, "/api/send_alert_mail")
+
 
     # Health Endpoint
     @app.route('/health', methods=['GET'])

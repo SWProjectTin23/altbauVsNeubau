@@ -13,23 +13,6 @@
 .text-left { text-align: left; }
 .text-xl { font-size: 1.25rem; }
 
-
-/* Hintergrund Hauptbereich */
-.dashboard-wrapper {
-  background-color: #f9f9fe;
-  min-height: 100vh;
-  padding: 2rem;
-  width: 80vw;
-  
-  margin: 0 auto;
-}
-
-/* Zentrale Containerbegrenzung */
-.dashboard-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
 /* Tabellenlayout */
 .metrics-table {
   width: 100%;
@@ -73,32 +56,6 @@
 
 .interval-btn.hover {
   background-color: #bc0016;
-}
-
-/* Chart-Wrapper */
-.chart-card {
-  background-color: #FFFFFF;
-  padding: 1rem;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-/* Section-Title */
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-/* Responsive Grid für Charts */
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  margin-top: 2rem;;
 }
 
 /* Chart-Modal */
@@ -163,30 +120,6 @@
   font-size: 1.1em;
   text-align: center;
   margin: 2em 0;
-}
-
-/* Responsive for smaller screens */
-@media (max-width: 768px) {
-  .charts-grid {
-    grid-template-columns: 1fr; /* One column on small screens */
-    gap: 1.5rem;
-  }
-}
-
-/* Button unhover */
-.btn {
-  margin-top: 1rem;
-  padding: 0.5rem 1.2rem;
-  background-color: #e2001a !important;
-  color: #ffffff !important;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Button is clicked */
-.btn.hover {
-  background-color: #990012 !important;
 }
 
 .warn-yellow {

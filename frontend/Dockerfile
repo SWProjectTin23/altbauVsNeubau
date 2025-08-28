@@ -13,6 +13,8 @@ RUN npm install
 # Copy the entire application source code
 COPY . .
 
+RUN ls -l /app/src/utils/api.js
+
 # Build the application for production.
 # NOTE: This is where the VITE_API_URL is compiled into the static assets.
 RUN npm run build

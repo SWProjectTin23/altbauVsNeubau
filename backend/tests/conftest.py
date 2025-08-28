@@ -2,11 +2,15 @@ import pytest
 from api import create_app
 
 @pytest.fixture
-def client():
-    """
-    Create a test client for the Flask application.
-    """
+def app():
+    """Create and configure a new app instance for each test."""
     app = create_app()
-    app.config['TESTING'] = True
-    with app.test_client() as client:
-        yield client
+    app.config.update({
+        "TESTING": True,
+    })
+    yield app
+
+@pytest.fixture
+def client(app):
+    """A test client for the app."""
+    return app.test_client()

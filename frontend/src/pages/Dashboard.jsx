@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import './Dashboard.css';
-
+import '../App.css';
 import { api } from "../utils/api";
 import { feLogger } from "../logging/logger";
 
@@ -243,8 +243,8 @@ export default function Dashboard() {
   const { start: intervalStart, end: intervalEnd } = getIntervalRange(selectedInterval);
 
     return (
-    <div className="dashboard-wrapper">
-      <div className="dashboard-container">
+    <div className="wrapper">
+      <div className="container">
         <section className="current-values">
           <h2 className="section-title">Aktuelle Messwerte</h2>
           {(!currentData || !warningThresholds) ? (
@@ -273,7 +273,7 @@ export default function Dashboard() {
             selectedInterval={selectedInterval}
             setSelectedInterval={setSelectedInterval}
           />
-          <div className="charts-grid">
+          <div className="grid-2">
             {metrics.map((metric) => (
               <ChartCard
                 key={metric}

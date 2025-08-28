@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './Warnings.css';
+import '../App.css';
 import { api } from "../utils/api";              
 import { feLogger } from "../logging/logger"; 
 import { mapApiToUi, mapUiToApi, validateWarnings } from "../components/warnings/warningsUtils";
@@ -25,6 +26,8 @@ export default function () {
   const [saveError, setSaveError] = useState(null);
   const [backError, setBackError] = useState(null);
   const navigate = useNavigate();
+  const [alertEmail, setAlertEmail] = useState("");
+  const [originalAlertEmail, setOriginalAlertEmail] = useState("");
 
   // Fetch initial data
   useEffect(() => {
@@ -52,12 +55,28 @@ export default function () {
         setLoading(false);
       }
     };
+    const fetchAlertEmail = async () => {
+      try {
+        const result = await api.get("/alert_email");
+        if (result.status === "success") {
+          setAlertEmail(result.email);
+          setOriginalAlertEmail(result.email);
+        }
+      } catch (error) {
+        feLogger.error("warnings", "fetch-alert-email-failed", { error: String(error) });
+      }
+    };
     fetchThresholds();
+    fetchAlertEmail();
   }, []);
 
   // Check if the form is dirty (i.e., has unsaved changes)
   const isDirty = () => {
-    return JSON.stringify(warnings) !== JSON.stringify(originalWarnings);
+    return (
+      JSON.stringify(warnings) !== JSON.stringify(originalWarnings) ||
+      saveError !== null ||
+      alertEmail !== (originalAlertEmail ?? "")
+    );
   };
 
   // Handle changes to the warning thresholds
@@ -84,47 +103,63 @@ export default function () {
     }
   };
 
+  const validateEmail = (email) => {
+    if (!email) return "Bitte eine E-Mail-Adresse eingeben.";
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!re.test(email)) return "Bitte eine gültige E-Mail-Adresse eingeben.";
+    return null;
+  };
+
   // Save the warning thresholds
   const saveThresholds = async () => {
-    setSaveError(null);
-    setBackError(null);
+  setSaveError(null);
+  setBackError(null);
 
-    // Validate the warning thresholds
-    const validationError = validateWarnings(warnings);
-    if (validationError) {
-      setSaveError(validationError);
-      feLogger.warn("warnings", "validation-failed", { validationError, warnings });
+  // Validate thresholds
+  const validationError = validateWarnings(warnings);
+  if (validationError) {
+    setSaveError(validationError);
+    return;
+  }
+
+  // Validate email
+  const emailError = validateEmail(alertEmail);
+  if (emailError) {
+    setSaveError(emailError);
+    return;
+  }
+
+  setSaving(true);
+
+  try {
+    // 1. Speichere die E-Mail
+    const emailResult = await api.post("/alert_email", { alert_email: alertEmail });
+    if (emailResult.status !== "success") {
+      setSaveError(emailResult.message || "Fehler beim Speichern der Alert-Mail-Adresse.");
+      setSaving(false);
       return;
     }
 
-    setSaving(true);
-    feLogger.info("warnings", "save-start", {});
-
-    // Map the UI format to API format
-    try {
-      const payload = mapUiToApi(warnings);
-      const result = await api.post("/thresholds", payload);  
-      if (result.status === "success") {
-        setOriginalWarnings(warnings);
-        feLogger.info("warnings", "save-success", { warnings });
-        navigate("/");
-      } else {
-        const msg = result.message || "Fehler beim Speichern der Warnwerte.";
-        setSaveError(msg);
-        feLogger.warn("warnings", "save-error", { result });
-      }
-    } catch (error) {
-      setSaveError("Ein Fehler ist beim Speichern aufgetreten.");
-      feLogger.error("warnings", "save-failed", { error: String(error) });
-    } finally {
-      setSaving(false);
-    } 
-  };
+    // 2. Speichere die Warnwerte
+    const payload = { ...mapUiToApi(warnings), alert_email: alertEmail };
+    const result = await api.post("/thresholds", payload);
+    if (result.status === "success") {
+      setOriginalWarnings(warnings);
+      setTimeout(() => navigate("/"), 1200); // Optional: Erfolg anzeigen, dann weiterleiten
+    } else {
+      setSaveError(result.message || "Fehler beim Speichern der Warnwerte.");
+    }
+  } catch (error) {
+    setSaveError("Ein Fehler ist beim Speichern aufgetreten.");
+  } finally {
+    setSaving(false);
+  }
+};
 
   // Loading state
   if (loading || !warnings) {
     return (
-      <div className="warnings-wrapper">
+      <div className="wrapper">
         <LoadingIndicator text="Lade Warnwerte..." />
       </div>
     );
@@ -132,8 +167,8 @@ export default function () {
 
   // Render the warning thresholds form
   return (
-    <div className="warnings-wrapper">
-      <div className="warnings-container">
+    <div className="wrapper">
+      <div className="container">
         <h1 className="section-title">Warnwerte anpassen</h1>
         <WarningsForm
           warnings={warnings}
@@ -145,6 +180,8 @@ export default function () {
           handleBack={handleBack}
           saveError={saveError}
           backError={backError}
+          alertEmail={alertEmail}
+          setAlertEmail={setAlertEmail}
         />
       </div>
     </div>

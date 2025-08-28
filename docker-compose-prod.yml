@@ -93,20 +93,6 @@ services:
       retries: 10
       start_period: 60s # Longer start period for the database
 
-  pgadmin: # The name of your pgAdmin service
-    image: dpage/pgadmin4 # The Docker image for pgAdmin
-    container_name: altbau_vs_neubau_pgadmin # a fixed name for the container
-    environment: # Environment variables for pgAdmin
-      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL} # Login email for pgAdmin
-      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD} # Login password for pgAdmin
-    ports: # Port mapping from host to container
-      - "5480:80" # pgAdmin is accessible at http://localhost:5480
-    depends_on: # Ensures that the DB starts before pgAdmin
-      - db
-    networks: # Connects the container to the same internal network as the DB
-      - pg-network
-    restart: unless-stopped
-
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma

@@ -21,7 +21,7 @@ export default function ChartCard({
   const hasNeubauData = (data.neubauData || []).some(d => typeof d.value === "number");
 
   return (
-    <div className="chart-card" onClick={onClick} style={{ cursor: "pointer" }} title="Für Großansicht klicken">
+    <div className="card" onClick={onClick} style={{ cursor: "pointer" }} title="Für Großansicht klicken">
       <h3 className="chart-title">{metric}</h3>
       {!hasData ? (
         <div className="chart-empty">
@@ -29,7 +29,7 @@ export default function ChartCard({
           Bitte Zeitraum oder Metrik ändern.
         </div>
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart>
             <XAxis
               dataKey="timestamp"

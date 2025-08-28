@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import './Warnings.css';
+import '../App.css';
 import { api } from "../utils/api";              
 import { feLogger } from "../logging/logger"; 
 import { mapApiToUi, mapUiToApi, validateWarnings } from "../components/warnings/warningsUtils";
@@ -158,7 +159,7 @@ export default function () {
   // Loading state
   if (loading || !warnings) {
     return (
-      <div className="warnings-wrapper">
+      <div className="wrapper">
         <LoadingIndicator text="Lade Warnwerte..." />
       </div>
     );
@@ -166,8 +167,8 @@ export default function () {
 
   // Render the warning thresholds form
   return (
-    <div className="warnings-wrapper">
-      <div className="warnings-container">
+    <div className="wrapper">
+      <div className="container">
         <h1 className="section-title">Warnwerte anpassen</h1>
         <WarningsForm
           warnings={warnings}

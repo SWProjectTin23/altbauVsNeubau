@@ -16,7 +16,7 @@ export default function WarningsForm({
   setAlertEmail
 }) {
   return (
-    <form className="warnings-grid">
+    <form className="warnings-form">
       <div className="email-field">
         <label htmlFor="alertEmail">Alert-Mail-Adresse:</label>
         <input
@@ -28,15 +28,19 @@ export default function WarningsForm({
           required
         />
       </div>
-      {Object.entries(warnings).map(([metric, levels]) => (
-        <WarningCard
-          key={metric}
-          metric={metric}
-          values={levels}
-          levelLabels={levelLabels}
-          onChange={handleChange}
-        />
-      ))}
+      <div className="grid-2">
+        {Object.entries(warnings).map(([metric, levels]) => (
+          <WarningCard
+            key={metric}
+            metric={metric}
+            values={levels}
+            levelLabels={levelLabels}
+            onChange={handleChange}
+          />
+        ))}
+      </div>
+      <ErrorMessage message={saveError} />
+      <ErrorMessage message={backError} />
       <div className="button-group">
         <button
           type="button"
@@ -65,8 +69,6 @@ export default function WarningsForm({
           Zurück zum Dashboard
         </button>
       </div>
-      <ErrorMessage message={saveError} />
-      <ErrorMessage message={backError} />
     </form>
   );
 }

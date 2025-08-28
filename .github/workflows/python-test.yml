@@ -31,12 +31,20 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r backend/requirements.txt
 
+        - name: Debug - show current directory and files
+          run: |
+            pwd
+            ls -la
+            ls -la backend
+
         - name: Set PYTHONPATH
           run: echo "PYTHONPATH=$PYTHONPATH:./backend" >> $GITHUB_ENV
 
         - name: Run tests with coverage
           run: |
-            pytest backend/tests/ --maxfail=1 --disable-warnings --cov=backend --cov-report=term-missing
+            export PYTHONPATH=backend
+            python -m pytest backend/tests/ --maxfail=1 --disable-warnings --cov=backend --cov-report=term-missing
+
 
         - name: Upload coverage report
           if: always()

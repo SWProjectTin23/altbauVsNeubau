@@ -2,6 +2,18 @@ body, .font-sans {
   font-family: 'Inter', 'Open Sans', Arial, sans-serif;
 }
 
+.layout-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .main-bg {
   min-height: 100vh;
   background-size: cover;

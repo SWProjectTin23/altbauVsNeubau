@@ -9,7 +9,7 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 function App() {
   return (
     <BrowserRouter>
-      <div className="font-sans">
+      <div className="font-sans layout-wrapper">
         <header className="custom-header">
           <div className="header-container">
             <h1 className="header-title">Dashboard – Altbau vs Neubau</h1>
@@ -20,7 +20,7 @@ function App() {
         </header>
 
         <AppErrorBoundary>
-          <main>
+          <main className="main-content">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/warnings" element={<Warnings />} />

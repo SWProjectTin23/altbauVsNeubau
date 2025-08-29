@@ -134,7 +134,7 @@ def handle_metric(metric_name: str, topic: str, payload_dict: Dict[str, Any], db
         )
 
     # ---- Ingestion/domain validation failures (Warning) ----
-    except (PayloadValidationError, UnknownMetricError, NonNumericMetricError, MetricOutOfRangeError) as e:
+    except (PayloadValidationError, UnknownMetricError, NonNumericMetricError) as e:
         # Map reason: range issues -> min_max_check; others -> schema_mismatch
         code = getattr(e, "error_code", "")
         reason = "min_max_check" if code == "VALUE_OUT_OF_RANGE" else "schema_mismatch"
@@ -142,6 +142,25 @@ def handle_metric(metric_name: str, topic: str, payload_dict: Dict[str, Any], db
         log_event(
             logger,
             "WARNING",
+            "value_out_of_range",
+            duration_ms=t.stop_ms(),
+            result="failed",
+            reason=reason,
+            device_id=payload_dict.get("meta", {}).get("device_id"),
+            metric=metric_name,
+            msg_ts=str(payload_dict.get("timestamp")),
+            topic=topic,
+            **to_log_fields(e),  # adds error_type / error_code / details
+        )
+    
+    except MetricOutOfRangeError as e:
+        # Map reason: range issues -> min_max_check; others -> schema_mismatch
+        code = getattr(e, "error_code", "")
+        reason = "min_max_check" if code == "VALUE_OUT_OF_RANGE" else "schema_mismatch"
+
+        log_event(
+            logger,
+            "INFO",
             "value_out_of_range",
             duration_ms=t.stop_ms(),
             result="failed",

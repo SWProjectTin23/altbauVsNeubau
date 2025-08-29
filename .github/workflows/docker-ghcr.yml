@@ -33,5 +33,5 @@ jobs:
 
       - name: Build and push sensor exporter image
         run: |
-          docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest -f ./sensor-exporter/Dockerfile ./sensor-exporter
+          docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest -f ./sensor-exporter/Dockerfile .
           docker push ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest

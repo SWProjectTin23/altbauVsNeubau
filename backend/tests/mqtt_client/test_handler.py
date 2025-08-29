@@ -83,7 +83,7 @@ def test_value_out_of_range(mocker):
     # reason should be min_max_check for out-of-range
     found = False
     for c in mock_log.call_args_list:
-        if c.args[1] == "WARNING" and c.args[2] == "value_out_of_range":
+        if c.args[1] == "INFO" and c.args[2] == "value_out_of_range":
             if c.kwargs.get("reason") == "min_max_check":
                 found = True
                 break

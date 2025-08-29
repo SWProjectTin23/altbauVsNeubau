@@ -189,7 +189,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki/loki-config.yml:/etc/loki/config.yml:ro   # <— dein loki-Ordner
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro  
       - loki-data:/loki
     networks:
       - pg-network
@@ -199,7 +199,7 @@ services:
     image: grafana/promtail:2.9.6
     command: -config.file=/etc/promtail/config.yml
     volumes:
-      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro  # <— dein loki-Ordner
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - promtail-data:/tmp
     depends_on:
@@ -210,7 +210,7 @@ services:
 
 
 
-volumes: # This section must be at the same level as 'services'
+volumes: 
   db_data:
   kuma-data:
   grafana-data:
@@ -220,4 +220,4 @@ volumes: # This section must be at the same level as 'services'
 
 networks: # Definition of networks
   pg-network:
-    driver: bridge # Standard bridge network
+    driver: bridge

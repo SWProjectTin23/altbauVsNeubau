@@ -28,13 +28,15 @@ def test_get_alert_email_exception(mock_get_email, client):
     assert response.json["status"] == "error"
     assert "DB error" in response.json["message"]
 
-@patch("api.alertMail.set_alert_email")
-def test_post_alert_email_success(mock_set_email, client, email_data):
+@patch("api.alertMail.set_alert_email", return_value="sometoken123")
+@patch("api.alertMail.send_mail")
+def test_post_alert_email_confirmation_sent(mock_send_mail, mock_set_email, client, email_data):
     response = client.post("/api/alert_email", json=email_data)
     assert response.status_code == 200
     assert response.json["status"] == "success"
-    assert response.json["message"] == "Alert email saved."
+    assert response.json["message"] == "Confirmation mail sent."
     mock_set_email.assert_called_once_with(email_data["alert_email"])
+    mock_send_mail.assert_called_once()
 
 def test_post_alert_email_missing(client):
     response = client.post("/api/alert_email", json={})

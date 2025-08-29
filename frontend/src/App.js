@@ -4,11 +4,12 @@ import Dashboard from "./pages/Dashboard";
 import Warnings from "./pages/Warnings";
 import "./App.css";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
+import ConfirmEmail from "./pages/ConfirmEmail";
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="font-sans">
+      <div className="font-sans layout-wrapper">
         <header className="custom-header">
           <div className="header-container">
             <h1 className="header-title">Dashboard – Altbau vs Neubau</h1>
@@ -19,10 +20,11 @@ function App() {
         </header>
 
         <AppErrorBoundary>
-          <main>
+          <main className="main-content">
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/warnwerte" element={<Warnings />} />
+              <Route path="/warnings" element={<Warnings />} />
+              <Route path="/confirm-email" element={<ConfirmEmail />} />
             </Routes>
           </main>
         </AppErrorBoundary>

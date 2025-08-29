@@ -25,9 +25,11 @@ export default function () {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
   const [backError, setBackError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState(null);
   const navigate = useNavigate();
   const [alertEmail, setAlertEmail] = useState("");
   const [originalAlertEmail, setOriginalAlertEmail] = useState("");
+  const emailChanged = alertEmail !== (originalAlertEmail ?? "");
 
   // Fetch initial data
   useEffect(() => {
@@ -114,6 +116,9 @@ export default function () {
   const saveThresholds = async () => {
   setSaveError(null);
   setBackError(null);
+  setInfoMessage(null);
+
+  setSaving(true);
 
   // Validate thresholds
   const validationError = validateWarnings(warnings);
@@ -132,20 +137,27 @@ export default function () {
   setSaving(true);
 
   try {
-    // 1. Speichere die E-Mail
-    const emailResult = await api.post("/alert_email", { alert_email: alertEmail });
-    if (emailResult.status !== "success") {
-      setSaveError(emailResult.message || "Fehler beim Speichern der Alert-Mail-Adresse.");
-      setSaving(false);
-      return;
+    if (emailChanged) {
+      const emailResult = await api.post("/alert_email", { alert_email: alertEmail });
+      if (emailResult.status !== "success") {
+        setSaveError(emailResult.message || "Fehler beim Speichern der Alert-Mail-Adresse.");
+        setSaving(false);
+        return;
+      }
+      if (emailResult.message === "Confirmation mail sent.") {
+        setInfoMessage("Bitte bestätige deine E-Mail-Adresse in deinem Postfach, bevor Alerts gesendet werden.");
+        setOriginalWarnings(warnings);
+        setOriginalAlertEmail(alertEmail);
+        setSaving(false);
+        return;
+      }
+      setOriginalAlertEmail(alertEmail); // E-Mail als "gespeichert" markieren
     }
-
-    // 2. Speichere die Warnwerte
+    // Save thresholds
     const payload = { ...mapUiToApi(warnings), alert_email: alertEmail };
     const result = await api.post("/thresholds", payload);
     if (result.status === "success") {
       setOriginalWarnings(warnings);
-      setTimeout(() => navigate("/"), 1200); // Optional: Erfolg anzeigen, dann weiterleiten
     } else {
       setSaveError(result.message || "Fehler beim Speichern der Warnwerte.");
     }
@@ -180,6 +192,7 @@ export default function () {
           handleBack={handleBack}
           saveError={saveError}
           backError={backError}
+          infoMessage={infoMessage}
           alertEmail={alertEmail}
           setAlertEmail={setAlertEmail}
         />

@@ -2,8 +2,8 @@
 
 ## Overview
 
-The alerting system ensures that users are notified via email when sensor values exceed configured thresholds.  
-To prevent spam, a **state-based cooldown** is implemented:  
+The alerting system notifies users via email when sensor values exceed configured thresholds.  
+To prevent spam, a **state-based cooldown** is implemented:
 - Only one alert email is sent while the value remains outside the threshold.
 - The cooldown is reset only when the value returns to the normal range.
 
@@ -18,16 +18,23 @@ To prevent spam, a **state-based cooldown** is implemented:
    - When the value returns to the normal range (i.e., within all thresholds), the alert is reset.
    - The next time the value exceeds a threshold, a new email will be sent.
 
+## Email Confirmation
+
+- **Double-Opt-In:**  
+  Before any alert emails are sent, the user must confirm their email address via a confirmation link sent to their inbox.
+  - When a new email is entered, a confirmation email is sent.
+  - Alerts are only sent to confirmed email addresses.
+
 ## Email Content
 
 - **Subject:**  
-  `[HARD] Alert: Device Altbau - Temperatur`
+  `[HARD] Alert: Device Altbau - Temperature`
 - **Body:**  
   ```
   ALERT (HARD)
 
   Affected Device: Altbau
-  Sensor/Metric: Temperatur
+  Sensor/Metric: Temperature
 
   Current Value: 35 °C
 
@@ -37,7 +44,7 @@ To prevent spam, a **state-based cooldown** is implemented:
     Yellow High: 30°C
     Red High: 32°C
 
-  The current value for Temperatur has exceeded the HARD threshold.
+  The current value for Temperature has exceeded the HARD threshold.
   Please check the air quality and ventilate the rooms or take further action if necessary.
   ```
 
@@ -59,6 +66,8 @@ The backend logs every alert event:
 - When the cooldown is active: `alert_mail.cooldown_active`
 - When the cooldown is reset: `alert_mail.reset`
 - On errors or missing parameters: `alert_mail.missing_parameters`, `alert_mail.unknown_metric`, `alert_mail.process_error`
+- When a confirmation email is sent: `alert_email.confirmation_sent`
+- When an email is confirmed: `alert_email.confirmed`
 
 ---
 
@@ -67,3 +76,4 @@ The backend logs every alert event:
 - The alerting logic is **state-based**, not time-based.
 - The frontend should call `/send_alert_mail` for every value update to ensure correct cooldown handling.
 - All thresholds and alert email addresses can be managed via the API.
+- Alert emails are only sent to confirmed addresses (double-opt-in).

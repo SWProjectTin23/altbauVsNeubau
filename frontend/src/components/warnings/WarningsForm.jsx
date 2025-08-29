@@ -12,6 +12,7 @@ export default function WarningsForm({
   handleBack,
   saveError,
   backError,
+  infoMessage,
   alertEmail,
   setAlertEmail
 }) {
@@ -41,6 +42,12 @@ export default function WarningsForm({
       </div>
       <ErrorMessage message={saveError} />
       <ErrorMessage message={backError} />
+      {infoMessage && (
+        <div className="info-message">
+          <span className="icon">ℹ️</span>
+          {infoMessage}
+        </div>
+      )}
       <div className="button-group">
         <button
           type="button"

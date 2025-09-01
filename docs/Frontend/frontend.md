@@ -1,80 +1,33 @@
-# Frontend Requirements
+# Altbau vs Neubau – Frontend Documentation
 
-## Functional Requirements
+## Overview
 
-1. **Display of Current Measurements**
-   - Show current values for the following metrics:
-     - Temperature  
-     - Humidity  
-     - Pollen load  
-     - Fine dust (particulate matter)
-   - Values are updated at short intervals.
+This React frontend visualizes sensor data and warning thresholds for the "Altbau vs Neubau" project. It provides a dashboard for live and historical metrics, as well as a page for viewing and managing warning values.
 
-   **Rationale:** Users need a quick overview of current environmental conditions to make informed decisions (e.g., close windows, avoid outdoor activities, wear a mask).
+## Structure
 
-2. **Visualization of Historical Data**
-   - Display time series data as line charts.
-   - Select different time ranges (e.g., last hour, 24 h, week, month).
-   - Compare two buildings:
-     - *Old Building* (Marienstraße)
-     - *New Building* (Hanns Voith Campus)
+- **Main Entry:** `src/App.js`
+- **Pages:**
+  - `src/pages/Dashboard.jsx` – Main dashboard with charts and metric selection
+  - `src/pages/Warnings.jsx` – Warning thresholds overview and management
+  - `src/pages/ConfirmEmail.jsx`- Page for email confirmation (Double opt in)
+- **Assets:** Images and static files in `src/assets/`
+- **Components:** Components for Pages in `src/components/`
+- **Styling:** Global styles in `src/App.css` and component-specific classes
 
-   **Rationale:** Time series charts allow users to identify trends, patterns, and differences over time and between buildings.
+## Routing
 
-3. **Customizable Warning Thresholds**
-   - Users can define individual thresholds (e.g., temperature, fine dust).
-   - Exceeding thresholds is visually highlighted (e.g., color change, warning icon).
+Uses [react-router-dom](https://reactrouter.com/) for navigation:
 
-   **Rationale:** This enables users to tailor the app to their personal needs.
+| Path            | Component   | Description                  |
+|-----------------|------------|------------------------------|
+| `/`             | Dashboard  | Main dashboard view          |
+| `/warnings`    | Warnings   | Warning values management    |
+| `/confirm-email`    | ConfirmEmail   | Confirm Email for alerting   |
 
-4. **Local Storage of Settings**
-   - User-defined warning values and time settings are stored in the database.
-   - These are automatically loaded when the application is reopened.
+## Main Features
 
-   **Rationale:** This allows for easy personalization without requiring a user account or authentication.
-
-5. **Error Messages for System Issues**
-   - User-friendly display for:
-     - Application unavailability (e.g., network error, backend not available)
-     - Errors loading current data
-   - Clear indications of the cause and possible solutions.
-
-   **Rationale:** Transparent error communication increases user trust and reduces frustration with technical problems.
-
----
-
-## Technical Requirements
-
-- **Data Visualization:**  
-  Use **Recharts** (preferred over Chart.js) for line chart visualization.
-
-  **Rationale:**
-  - Recharts is natively developed for React and offers a declarative syntax.
-  - Supports dynamic updates and comparative displays.
-
-- **Styling:**  
-  Use **Tailwind CSS** for layout and design.
-
-  **Rationale:**
-  - Promotes consistent, responsive UI design.
-  - Reduces CSS management complexity and avoids naming conflicts.
-
-- **Authentication:**  
-  **No authentication will be implemented.**
-
-  **Rationale:**
-  - The application only displays public, non-personal environmental data.
-  - Users do not store security-relevant or personal information.
-  - Settings are saved but are not relevant across devices.
-  - Authentication would add unnecessary complexity (e.g., login system, token handling) without added value for the application.
-
-- **Performance:**
-  - Fast loading times and smooth switching between time ranges and buildings.
-
----
-
-## Wireframe
-
-![Home](./images/frontend-home.jpg)
-
-![Warnings](./images/frontend-warnings.jpg)
+- **Header:** Displays project title and logo.
+- **Dashboard:** Interactive charts for metrics (temperature, humidity, pollen, particulate matter) with interval selection and per-chart line toggling.
+- **Warnings:** Show and set current warning thresholds.
+- **Footer:** Contains copyright and contact-link

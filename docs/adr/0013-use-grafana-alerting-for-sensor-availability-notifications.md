@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-Continuous monitoring of sensor data availability is essential for system reliability. While Grafana dashboards (see [ADR-12](0012-use-grafana-for-sensor-uptime-monitoring.md)) provide real-time visibility, operators also need **proactive notifications** when sensors go offline or data gaps occur.
+Continuous monitoring of sensor data availability is essential for system reliability. While Grafana dashboards (see [ADR-11](0011-use-grafana-for-sensor-uptime-monitoring.md)) provide real-time visibility, operators also need **proactive notifications** when sensors go offline or data gaps occur.
 
 Several alerting solutions were considered:
 
@@ -32,7 +32,7 @@ We will use **Grafana Unified Alerting** for sensor availability notifications.
 - Integrate alert summaries directly into dashboard panels for context.
 - Provision alerting resources via code for reproducibility and version control.
 
-This approach leverages our existing Grafana deployment (see [ADR-12](0012-use-grafana-for-sensor-uptime-monitoring.md)), minimizes operational overhead, and provides a unified monitoring and alerting experience.
+This approach leverages our existing Grafana deployment (see [ADR-11](0011-use-grafana-for-sensor-uptime-monitoring.md)), minimizes operational overhead, and provides a unified monitoring and alerting experience.
 
 ## Consequences
 

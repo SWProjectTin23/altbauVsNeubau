@@ -83,4 +83,4 @@ CREATE TABLE IF NOT EXISTS thresholds (
 ## Visual Representation of the Database Structure
 To further illustrate the database architecture, you can insert a graphic here that depicts the relationships between the tables. Since I cannot directly generate or embed images, you can use a placeholder here and add the graphic manually.
 
-![Databank schema](./images/db_diagramm.svg)
+![Databank schema](../images/db_diagramm.svg)

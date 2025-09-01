@@ -2,6 +2,7 @@ from psycopg2.extensions import QueryCanceledError
 from psycopg2 import OperationalError
 from psycopg2 import extras
 import psycopg2
+import secrets
 
 from common.logging_setup import setup_logger, log_event, DurationTimer
 from .connection import get_db_connection
@@ -13,7 +14,7 @@ def get_alert_email():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("SELECT email FROM alert_emails LIMIT 1")
+        cur.execute("SELECT email FROM alert_emails WHERE confirmed=TRUE LIMIT 1")
         row = cur.fetchone()
         cur.close()
         return row[0] if row else None
@@ -27,9 +28,14 @@ def get_alert_email():
 def set_alert_email(email):
     conn = get_db_connection()
     cur = conn.cursor()
+    token = secrets.token_urlsafe(32)
     cur.execute("DELETE FROM alert_emails")
-    cur.execute("INSERT INTO alert_emails (email) VALUES (%s)", (email,))
+    cur.execute(
+        "INSERT INTO alert_emails (email, confirmed, confirmation_token) VALUES (%s, %s, %s)",
+        (email, False, token)
+    )
     conn.commit()
     cur.close()
     conn.close()
+    return token
     

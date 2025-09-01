@@ -21,6 +21,7 @@ services:
       - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
       - GF_SMTP_FROM=${GF_SMTP_FROM}
       - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
+      - FRONTEND_URL=${FRONTEND_URL}
 
     depends_on:
       db:

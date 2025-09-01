@@ -10,6 +10,7 @@ from api.comparison import Comparison
 from api.thresholds import Thresholds
 from api.alertMail import AlertEmail
 from api.sendAlertMail import SendAlertMail
+from api.confirm_mail import ConfirmEmail
 
 def create_app():
     app = Flask(__name__)
@@ -34,7 +35,7 @@ def create_app():
     api.add_resource(Thresholds, "/api/thresholds")
     api.add_resource(AlertEmail, "/api/alert_email")
     api.add_resource(SendAlertMail, "/api/send_alert_mail")
-
+    api.add_resource(ConfirmEmail, "/api/confirm_email")
 
     # Health Endpoint
     @app.route('/health', methods=['GET'])

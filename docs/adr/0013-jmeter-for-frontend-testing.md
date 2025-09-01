@@ -1,4 +1,4 @@
-# 13. Use JMeter for Load and Performance Testing
+# Use JMeter for Load and Performance Testing
 
 **Date:** 2025-08-13
 

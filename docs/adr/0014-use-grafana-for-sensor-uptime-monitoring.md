@@ -1,4 +1,4 @@
-# 12. Use Grafana Dashboards for Sensor Data Availability Monitoring
+# Use Grafana Dashboards for Sensor Data Availability Monitoring
 
 **Date:** 2025-08-20
 

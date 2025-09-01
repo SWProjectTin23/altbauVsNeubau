@@ -1,4 +1,4 @@
-# 10. Use Grafana Loki for logging
+# Use Grafana Loki for logging
 
 **Date:** 2025-08-08
 

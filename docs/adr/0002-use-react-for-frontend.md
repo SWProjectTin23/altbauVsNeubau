@@ -1,4 +1,4 @@
-# 2. Use React for Frontend
+# Use React for Frontend
 
 Date: 2025-07-15
 

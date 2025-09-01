@@ -1,4 +1,4 @@
-# 4. GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow
+# GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow
 
 Date: 2025-07-22
 

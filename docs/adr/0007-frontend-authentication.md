@@ -1,4 +1,4 @@
-# 5. No Authentication for the Web Application
+# No Authentication for the Web Application
 
 **Date:** 2025-07-24  
 **Status:** Accepted

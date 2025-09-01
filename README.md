@@ -25,5 +25,5 @@ Tests will be automatically initiated via GitHub Actions with each commit to ens
 ## Documentation
 
 - [Branching Strategy](docs/branchingStrategy.md)  
-- [Requirements](docs/requirements.md)  
+- [Requirements](docs/Softwarequalität/requirements.md)  
 - [CI Workflows](docs/workflows/ci.md) 

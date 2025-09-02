@@ -8,8 +8,8 @@ Accepted
 
 ## Context
 
-In [ADR 0017: Migration to Private Servers with GitHub CI/CD Pipeline for Automated Deployment] we moved our deployment infrastructure from the university server to two privately managed servers.  
-In [ADR 0009: Use MQTT as Communication Protocol] it was decided that all microcontrollers (e.g., Arduino MKR WiFi 1010) communicate with the backend using **MQTT** and a predefined JSON format with externally specified topic structure.  
+In [ADR 0017: Migration to Private Servers with GitHub CI/CD Pipeline for Automated Deployment](./0017-migration-to-private-servers.md) we moved our deployment infrastructure from the university server to two privately managed servers.  
+In [ADR 0009: Use MQTT as Communication Protocol](./0009-use-MQTT-as-communication-protocol.md) it was decided that all microcontrollers (e.g., Arduino MKR WiFi 1010) communicate with the backend using **MQTT** and a predefined JSON format with externally specified topic structure.  
 
 Initially, a single MQTT broker instance was used. While this fulfilled the communication requirements, it introduced a **single point of failure**: if the broker became unavailable, all sensor data transmission and backend communication would stop.  
 

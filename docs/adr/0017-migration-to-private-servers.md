@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-In [ADR 0003: Utilizing University Infrastructure with Docker for Project Deployment] and [ADR 0004: GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow], we initially decided to use the university’s General Informatics server as the central deployment platform, combined with a self-hosted GitHub Actions runner for automated deployments.  
+In [ADR 0003: Utilizing University Infrastructure with Docker for Project Deployment](./0003-utilizing-university-infrastructur-with-docker-for-project-deployment.md) and [ADR 0004: GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow](./0004-github-actions-with-self-hosted-runner-for-automated-deployment-workflow.md), we initially decided to use the university’s General Informatics server as the central deployment platform, combined with a self-hosted GitHub Actions runner for automated deployments.  
 
 This setup served its purpose for consistent, reproducible deployments and seamless integration with GitHub. However, it also introduced constraints:  
 

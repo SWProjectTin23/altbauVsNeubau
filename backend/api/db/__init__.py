@@ -22,6 +22,11 @@ __all__ = [
     "compare_devices_over_time",
     "get_thresholds_from_db",
     "update_thresholds_in_db",
+    "get_alert_email",
+    "set_alert_email",
+    "is_alert_active",
+    "set_alert_active",
+    "reset_alert",
 ]
 
 

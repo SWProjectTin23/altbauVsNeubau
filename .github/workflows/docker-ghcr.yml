@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /altbauvsneubau   
+            cd /altbauVsNeubau   
             git reset --hard
             git pull
 

@@ -1,32 +1,47 @@
 # CD Workflow (Continuous Deployment)
 
-## Docker Compose Deployment
+## Docker Compose Deployment with GHCR Images
 
-**Purpose:**
-This workflow automates the deployment of your Docker Compose application to the designated server using a self-hosted runner. It ensures that the latest version of your application is always running on the server, maintaining consistency and reliability.
+**Purpose:**  
+This workflow automates the deployment of your Docker Compose application using GitHub Actions.  
+It builds and pushes Docker images to the GitHub Container Registry (GHCR) and then deploys the latest version to your production server via SSH.
 
-**Triggers:**
-* **Push to `main` branch:** Automatically deploys the latest code whenever changes are pushed to `main`.
+**Triggers:**  
+* **Push to `main` branch:** Automatically builds, pushes, and deploys the latest code and Docker images whenever changes are pushed to `main`.
 
-**Runner:**
-* **Self-hosted runner:** The workflow executes on a self-hosted runner, located on your target server. This allows direct interaction with Docker and the host file system for efficient deployments.
+**Runner:**  
+* **GitHub-hosted runner:** The workflow runs on GitHub's infrastructure (e.g., `ubuntu-latest`).  
+  The deployment step connects to your server via SSH and executes Docker Compose commands remotely.
 
 ---
 
 ## Workflow Steps Explained
 
-1.  **Checkout Repository:** Fetches the latest code from your GitHub repository onto the self-hosted runner's workspace. This ensures the runner has access to your `docker-compose.yml` and application files.
-2.  **Stop and remove existing Docker Compose setup:** This crucial step gracefully shuts down any previously running Docker Compose services defined in your `docker-compose.yml` and removes their associated containers, networks, and orphan volumes. This ensures a clean slate for the new deployment and prevents conflicts. The `|| true` ensures the step doesn't fail if no services are currently running.
-3.  **Pull latest Docker images:** Pulls the newest versions of all Docker images specified in your `docker-compose.yml` from their respective registries (e.g., Docker Hub). This guarantees that your deployment uses the most up-to-date service components.
-4.  **Start Docker Compose setup:** Initiates your application services by running `docker compose up -d --build`.
-    * `-d`: Starts the services in "detached mode" (in the background).
-    * `--build`: Rebuilds Docker images from their Dockerfiles if changes are detected or if a fresh build is desired. This ensures any local code changes within your backend/frontend Dockerfiles are incorporated.
+1. **Build and Push Docker Images to GHCR:**  
+   On every push to `main`, GitHub Actions builds the Docker images for all services (`backend-api`, `backend-mqtt`, `frontend`, `sensor-exporter`) and pushes them to the GitHub Container Registry (GHCR).  
+   See [`.github/workflows/docker-ghcr.yml`](../../.github/workflows/docker-ghcr.yml) for details.
+
+2. **Deploy to Production Server via SSH:**  
+   After building and pushing, the workflow connects to your server using SSH (`appleboy/ssh-action`).  
+   It pulls the latest code and images, then starts the services using `docker compose -f docker-compose-prod.yml up -d`.
 
 ---
 
 ## Important Notes
 
-* **Manual Execution:** This workflow is currently only triggered automatically by `push` and `pull_request` events on the `main` branch. If manual execution is desired for specific scenarios or branches, a `workflow_dispatch` trigger can be added to the workflow YAML.
-* **Permissions:** Ensure the user running the self-hosted runner has the necessary permissions to execute Docker commands and manage files in its workspace. If `root`-owned files (e.g., from old Docker bind mounts) exist and cause "permission denied" errors, they must be removed by an administrator with `sudo` privileges.
-* **Runner Status:** The self-hosted runner must be running and connected to GitHub (`Listening for Jobs`) for the workflow to be assigned and executed. For continuous operation, configure the runner as a `systemd` service.
-* **`docker-compose.yml` location:** This workflow assumes your `docker-compose.yml` file is located in the **root directory** of your repository.
+* **Persistent Deployment:**  
+  This workflow **does** deploy your application to a permanent server.  
+  Make sure your server is reachable via SSH and has Docker Compose installed.
+
+* **Secrets:**  
+  The workflow uses GitHub Secrets for authentication (`SERVER_HOST`, `SERVER_USER`, `SSH_PRIVATE_KEY`, `GHCR_TOKEN`).  
+  These must be configured in your repository settings.
+
+* **`docker-compose-prod.yml` location:**  
+  The workflow assumes your production Compose file is named `docker-compose-prod.yml` and is located in the project root on your server.
+
+* **Manual Execution:**  
+  The workflow is triggered automatically by pushes to the `main` branch.  
+  For manual execution, add a `workflow_dispatch` trigger to the workflow YAML.
+
+---

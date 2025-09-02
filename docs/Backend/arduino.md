@@ -1,21 +1,21 @@
-# Arduino Code Dokumentation
+# Arduino Code Documentation
 
-Dieses Dokument beschreibt die Struktur und Funktion der Arduino-Skripte im Projekt **altbauVsNeubau**.
+This document describes the structure and functionality of the Arduino scripts in the **altbauVsNeubau** project.
 
-## Übersicht
+## Overview
 
-Die Arduino-Skripte dienen dazu, Sensordaten zu erfassen und per MQTT-Protokoll an das zentrale Backend zu senden.
+The Arduino scripts are responsible for collecting sensor data and sending it to the central backend via the MQTT protocol.
 
-## Hauptfunktionen
+## Main Functions
 
-- **Initialisierung der Sensoren:** Im `setup()`-Block werden alle angeschlossenen Sensoren initialisiert.
-- **WLAN-Verbindung:** Das Board verbindet sich mit dem konfigurierten WLAN.
-- **MQTT-Verbindung:** Aufbau und Aufrechterhaltung einer Verbindung zum MQTT-Broker.
-- **Datenerfassung:** Im `loop()`-Block werden regelmäßig Messwerte von den Sensoren gelesen.
-- **Nachrichtenformat:** Die Messwerte werden als JSON-Objekt formatiert (siehe [ADR 0008](./adr/0008-MQTT-communication-protocol.md)).
-- **Versand:** Die JSON-Nachricht wird auf einem projektspezifischen MQTT-Topic veröffentlicht.
+- **Sensor Initialization:** All connected sensors are initialized in the `setup()` block (`tempsensorStartup()`, `humiditySensorStartup()`).
+- **WiFi Connection:** The board connects to the configured WiFi network.
+- **MQTT Connection:** Establishes and maintains a connection to the MQTT broker.
+- **Data Acquisition:** In the `loop()` block, sensor values are read regularly (fine dust, temperature, humidity).
+- **Message Format:** The sensor values are formatted as a JSON object (see [ADR 0008](../adr/0008-MQTT-communication-protocol.md)).
+- **Publishing:** The JSON message is published to a project-specific MQTT topic.
 
-## Beispiel für eine MQTT-Nachricht
+## Example MQTT Message
 
 ```json
 {
@@ -29,30 +29,31 @@ Die Arduino-Skripte dienen dazu, Sensordaten zu erfassen und per MQTT-Protokoll 
 }
 ```
 
-## Wichtige Dateien
+## Important Files
 
-- `arduino_sensor.ino`: Hauptprogramm, enthält Setup und Loop.
-- `Ikea.cpp`: Konfigurationsdatei für Sensoreinstellungen.
-- `WifiUtils.cpp` und `MQTTUtils.cpp`: für das senden an den MQTT-Broker.
+- `arduino_sensor.ino`: Main program, contains setup and loop logic.
+- `sensor_reader.cpp`: Sensor reading and averaging logic for fine dust, temperature, and humidity.
+- `WifiUtils.cpp` and `MQTTUtils.cpp`: Handle WiFi and MQTT communication.
+- `secrets.h`: Contains credentials for WiFi and MQTT (excluded from the repository via `.gitignore`).
 
-## Hinweise
+## Notes
 
-- Die Zugangsdaten für WLAN und MQTT sollten nicht im Repository veröffentlicht werden.
-->Im gitignore ist deshalb die secrest.h datei
-- Für die Integration neuer Sensoren bitte die bestehenden Strukturen und das Nachrichtenformat beachten.
+- **Credentials:** WiFi and MQTT credentials should never be published in the repository. The `secrets.h` file is excluded via `.gitignore`.
+- **Adding New Sensors:** Please follow the existing structure and message format when integrating new sensors.
 
-secrests.h:
-```
+Example `secrets.h`:
+```cpp
 #ifndef SECRETS_H
 #define SECRETS_H
 
-#define WIFI_SSID     "Wifi_SSID"
-#define WIFI_PASS     "Wifi_pass"
-
-#define MQTT_SERVER   "isd-gerold.de"
-#define MQTT_PORT     1883
-
-
+#define WIFI_SSID "WIFI_SSID"
+#define WIFI_PASS "WIFI_PASS"
+#define MQTT_SERVER "MQTT_SERVER" 
+#define MQTT_PORT "MQTT_PORT"
+#define MQTT_SERVER2 "MQTT_SERVER2"
+#define MQTT_PORT2 "MQTT_PORT2"
+#define DEVICE_ID "DEVICE_ID"
 #endif
+
 ```
 

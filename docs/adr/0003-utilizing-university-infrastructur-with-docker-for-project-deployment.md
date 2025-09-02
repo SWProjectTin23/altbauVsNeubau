@@ -4,7 +4,7 @@ Date: 2025-07-15
 
 ## Status
 
-Accepted
+Expired
 
 ## Context
 

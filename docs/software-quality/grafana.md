@@ -1,4 +1,4 @@
-# 📖 Documentation: Sensor Data Monitoring with Grafana & TimescaleDB
+#  Documentation: Sensor Data Monitoring with Grafana & TimescaleDB
 
 ## 1. Overview
 This project provides a monitoring stack for IoT sensor data. It ingests sensor readings via MQTT, stores them in a TimescaleDB (PostgreSQL with time-series extensions), and visualizes data in Grafana.  

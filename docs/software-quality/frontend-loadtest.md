@@ -93,7 +93,7 @@ The GitHub Actions workflow runs the smoke test:
 | `RAMP`            | Ramp-up time in seconds                           | `30`                      |
 | `TARGET_URL`      | Base URL of frontend                              | `http://hrschmllr.de:3000`|
 | `API_BASE`        | Base URL of API                                   | `http://hrschmllr.de/api` |
-| `COMPOSE_NETWORK` | Docker network name (optional)                    | `frontend_pg-network`     |
+| `COMPOSE_NETWORK` | Docker network name (optional)                    | `pg-network`     |
 
 ---
 

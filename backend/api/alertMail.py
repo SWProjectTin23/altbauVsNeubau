@@ -1,6 +1,6 @@
 import os
 from flask_restful import Resource
-from flask import request, url_for
+from flask import request
 from api.db import get_alert_email, set_alert_email
 from common.logging_setup import setup_logger, log_event
 from api.sendAlertMail import send_mail

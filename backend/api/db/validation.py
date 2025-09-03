@@ -38,6 +38,4 @@ def validate_timestamps_and_range(device_id1, device_id2, start, end):
     log_event(logger, "DEBUG", "db.validate_range.ok", device_id1=device_id1, device_id2=device_id2)
     return True, None
 
-__all__ = ["validate_timestamps_and_range"]
-
 

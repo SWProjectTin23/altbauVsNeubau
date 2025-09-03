@@ -159,6 +159,4 @@ def compare_devices_over_time(device_id1, device_id2, metric=None, start=None, e
         log_event(logger, "ERROR", "db.compare.fail", duration_ms=t.stop_ms(), error_type=e.__class__.__name__)
         raise DatabaseError("database error", details={"op": "compare_devices_over_time"}) from e
 
-__all__ = ["compare_devices_over_time"]
-
 

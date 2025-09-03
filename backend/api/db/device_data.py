@@ -65,6 +65,4 @@ def get_device_data_from_db(device_id, metric=None, start=None, end=None):
     finally:
         conn.close()
 
-__all__ = ["get_device_data_from_db"]
-
 

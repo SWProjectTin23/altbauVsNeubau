@@ -1,5 +1,5 @@
 from flask_restful import Resource
-from flask import jsonify, request
+from flask import request
 import psycopg2  # keep: tests expect us to catch psycopg2.Error
 
 # optional structured logging (doesn't change responses)

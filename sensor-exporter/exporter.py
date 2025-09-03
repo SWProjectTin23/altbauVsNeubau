@@ -1,7 +1,7 @@
 from prometheus_client import Gauge, start_http_server
-from common.logging_setup import setup_logger, log_event, DurationTimer
-from common.exceptions import (
-    MQTTConnectionError, MQTTTimeoutError, PayloadValidationError, to_log_fields
+from backend.common.logging_setup import setup_logger, log_event, DurationTimer
+from backend.common.exceptions import (
+    MQTTConnectionError, PayloadValidationError, to_log_fields
 )
 from dotenv import load_dotenv
 import time
@@ -34,7 +34,7 @@ MQTT_BASE_TOPIC = os.getenv('MQTT_BASE_TOPIC', 'dhbw/ai/si2023/01')
 
 last_seen = {}
 
-def on_connect(client, userdata, flags, rc):
+def on_connect(client, _userdata, _flags, rc):
     try:
         if rc != 0:
             raise MQTTConnectionError("MQTT connect failed", details={"rc": rc, "broker": client._host, "port": client._port})
@@ -46,12 +46,12 @@ def on_connect(client, userdata, flags, rc):
     except MQTTConnectionError as e:
         log_event(logger, "ERROR", "mqtt_connect_error", **to_log_fields(e))
 
-def on_message(client, userdata, msg):
+def on_message(_client, _userdata, msg):
     t = DurationTimer().start()
     try:
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
-        except Exception as e:
+        except Exception:
             raise PayloadValidationError("Invalid JSON payload", details={"topic": msg.topic, "raw": msg.payload[:120]})
 
         meta = payload.get("meta", {})

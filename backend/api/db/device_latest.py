@@ -61,6 +61,4 @@ def get_latest_device_data_from_db(device_id):
     finally:
         conn.close()
 
-__all__ = ["get_latest_device_data_from_db"]
-
 

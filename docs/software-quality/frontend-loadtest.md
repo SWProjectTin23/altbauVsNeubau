@@ -122,6 +122,10 @@ The test checks the **Initial Page TTLB (Time-To-Last-Byte)** and enforces a str
 
 ## Our Test Statistics
 
+The load test was executed with **20 virtual users** over a duration of **30 seconds**.  
+This resulted in about **1,200 requests per endpoint** (≈ 1,233 samples), for a total of **8,646 requests** across the scenario.  
+The overall test runtime was approximately **2 minutes**.
+
 | Label                                | Samples | Errors | Error % | Avg (ms) | Min | Max  | p50  | p90   | p95   | p99    | Throughput/s | KB/sec | Avg. Bytes |
 |--------------------------------------|---------|--------|---------|----------|-----|------|------|-------|-------|--------|--------------|--------|------------|
 | **Total**                            | 8646    | 0      | 0.00%   | 148.24   | 0   | 2581 | 58.0 | 467.0 | 526.0 | 686.53 | 48.31        | 8039.51| 11.95      |

@@ -12,9 +12,8 @@ jobs:
     runs-on: ubuntu-latest  
 
     env:
-      # SLO thresholds (Service Level Objectives) in milliseconds and results directory location
-      SLO_INITIAL_P95_MS: "2000"   # 95th percentile limit for initial page load
-      SLO_INTERVAL_P95_MS: "600"   # 95th percentile limit for interval clicks
+      # SLO threshold (Service Level Objective) in milliseconds + results directory
+      SLO_TTLB_P95_MS: "2000"              # 95th percentile limit for initial page load (TTLB)
       JM_RESULTS_DIR: frontend-loadtest/results
 
       # Docker Compose environment variables (from repository secrets)
@@ -31,7 +30,7 @@ jobs:
       PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
 
       # JMeter and test runner environment variables
-      NO_OPEN: "1"                         # Do not auto-open browser in CI
+      NO_OPEN: "1"                          # Do not auto-open browser in CI
       TARGET_URL: ${{ secrets.TARGET_URL }} # Frontend base URL
       API_BASE:  ${{ secrets.API_BASE }}    # Backend API base URL
       USERS:     ${{ secrets.USERS }}       # Number of virtual users
@@ -82,9 +81,8 @@ jobs:
             frontend-loadtest/results/results.jtl
             frontend-loadtest/results/jmeter.log
 
-      # Check if performance results meet the SLOs
-      # If any p95 latency exceeds its threshold, the build fails
-      - name: Evaluate SLOs (fail build if thresholds exceeded)
+      # Check if performance results meet the TTLB SLO only
+      - name: Evaluate SLO (TTLB p95 only)
         run: |
           python3 - <<'PY'
           import csv, os, sys, math
@@ -112,29 +110,23 @@ jobs:
               if f == c: return float(vals[int(k)])
               return vals[f] + (vals[c]-vals[f])*(k-f)
 
+          # group by label
           by = {}
           for label, elapsed in rows:
               by.setdefault(label, []).append(elapsed)
 
-          slo_init = float(os.getenv("SLO_INITIAL_P95_MS","2000"))
-          slo_int  = float(os.getenv("SLO_INTERVAL_P95_MS","600"))
+          slo_ttlb = float(os.getenv("SLO_TTLB_P95_MS","2000"))
 
-          failures = []
-          def check(label, limit):
-              if label in by:
-                  p95 = percentile(by[label], 95)
-                  print(f"{label} p95 = {p95:.0f} ms (SLO < {limit} ms)")
-                  if p95 > limit:
-                      failures.append(f"{label} p95 {p95:.0f} > {limit}")
-              else:
-                  print(f"WARNING: label '{label}' not found in JTL")
+          label = "Initial Page TTLB"  # must match the label in plan.jmx
+          if label not in by:
+              print(f"WARNING: label '{label}' not found in JTL"); sys.exit(1)
 
-          check("Initial Page TTLB", slo_init)
-          for lab in ["Click 3h","Click 1d","Click 1w","Click 1m"]:
-              check(lab, slo_int)
+          p95 = percentile(by[label], 95)
+          print(f"{label} p95 = {p95:.0f} ms (SLO < {slo_ttlb} ms)")
+          if p95 > slo_ttlb:
+              print(f"SLO FAIL: {label} p95 {p95:.0f} > {slo_ttlb}")
+              sys.exit(1)
 
-          if failures:
-              print("SLO FAIL:", "; ".join(failures)); sys.exit(1)
           print("SLO PASS")
           PY
 

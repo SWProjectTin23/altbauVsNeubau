@@ -36,3 +36,4 @@ venv/
 #Loadtest results
 /frontend-loadtest/results/
 !frontend-loadtest/.env
+/kuma_data/backup/

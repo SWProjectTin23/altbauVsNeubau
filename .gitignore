@@ -40,3 +40,4 @@ venv/
 # Coverage and ADR files
 .coverage
 .adr-dir
+kuma_data/kuma.db

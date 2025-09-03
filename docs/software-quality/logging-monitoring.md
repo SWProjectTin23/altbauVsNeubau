@@ -72,7 +72,7 @@ promtail:
 
 ## Grafana Dashboard: Logging Overview
 
-The provided `logging-overview.json` is a **Grafana dashboard** that visualizes logs from Loki.
+The provided `Logging.json` is a **Grafana dashboard** that visualizes logs from Loki.
 
 ### Features
 - **Log Level Counters:**

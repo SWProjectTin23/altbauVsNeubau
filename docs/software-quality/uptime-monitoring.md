@@ -1,69 +1,73 @@
-# Uptime Monitoring Documentation
+# Uptime Kuma Setup & Monitor Import
+
+
 
 ## Overview
 
-This document describes the current uptime monitoring setup, including which services are being monitored, the tools in use, and the availability of a centralized monitoring dashboard.
+This document explains how to set up Uptime Kuma in an environment where:
+- The database is **not mounted** (data is not persistent).
+- No status page is used.
+- Monitor configuration is restored manually from a JSON backup (`Uptime_Kuma.json`).
 
-## Monitoring Tools
+---
 
-### Uptime Kuma (internal)
-- Self-hosted monitoring tool deployed via Docker.
-- Monitors internal services that are not publicly accessible.
-- Accessible internally via: `http://localhost:3002` (or equivalent internal network address).
-- Status page available at: `http://localhost:3002/status/dashboard`
-- Stores configuration in a local SQLite database (`kuma.db`).
-- **Important:** By default, `kuma.db` is stored inside the container and is not persistent unless explicitly mounted. All configuration and monitoring data will be lost if the container is removed. Regular export is required.
+## Step 1: Start the Container
 
-### Uptime Robot (external)
-- SaaS-based monitoring service.
-- Used to verify availability of publicly exposed endpoints.
+Deploy Uptime Kuma (e.g., via Docker or docker-compose). Since the database is not persisted, each container restart starts with a clean state.
 
-## Monitored Services
+---
 
-| Service                  | Type         | Monitored by       | URL / Host                          |
-|--------------------------|--------------|--------------------|-------------------------------------|
-| Frontend (Web App)       | HTTP         | Kuma | http://localhost:3000  |
-| Backend API              | HTTP         | Kuma | http://localhost:5001  |
-| Database (TimescaleDB)   | TCP          | Kuma               | tcp://localhost:5432               |
-| Uptime Kuma      | HTTP         | Uptime Robot | http://localhost:3002  |
+## Step 2: Create Admin User
 
-> Note: Internal services are only monitored by Uptime Kuma. Kuma is monitored externally by Uptime Robot.
+1. Open the Uptime Kuma web interface (default: `http://localhost:3001` or mapped port).  
+2. On first launch, you will be prompted to **create a new user** (username + password).  
+3. Save these credentials in a secure location (e.g., password manager, team vault).  
+   > Without persistence, this step is required every time you restart the container.
 
-## Dashboard
+---
 
-A web-based dashboard is provided via Uptime Kuma, giving real-time and historical views of:
-- Service availability (up/down)
-- Response time trends
-- Outage history
-- Uptime percentages per service
+## Step 3: Import Monitor Configuration
 
-URL (internal): `http://localhost:3002`  
-Status Page: `http://localhost:3002/status/dashboard`  
-Access is restricted to trusted internal users or secured via reverse proxy authentication if exposed externally.
+1. Log in with the user created above.  
+2. In the left sidebar, click on your **user name**.  
+3. Select **Settings**.  
+4. Open the **Backup** tab.  
+5. Click **Restore Backup**, then upload the JSON file:  
+   - `Uptime_Kuma.json`  
 
+This file contains all defined monitors.
 
-## Exporting the Uptime Kuma Database
+---
 
-To back up or move the internal monitoring configuration and history stored in the `kuma.db` database, run the following command from your host system (replace `uptime-kuma` with your container name if different):
+## Step 4: Verify Monitors
 
-```bash
-docker cp uptime-kuma:/app/data/kuma.db ~/Desktop/kuma.db
+After import, you should see the following monitors in the dashboard:
 
+| Monitor Name  | Type  | Target                        |
+|---------------|-------|-------------------------------|
+| Frontend      | HTTP  | `http://frontend:80`          |
+| Backend-API   | HTTP  | `http://backend-api:5000/`    |
+| Database      | TCP   | `db:5432`                     |
+| MQTT          | TCP   | `isd-gerold.de:1883`          |
+| Grafana       | HTTP  | `http://grafana:3000`         |
+| Prometheus    | HTTP  | `http://prometheus:9090`      |
+| MQTT Backup   | TCP   | `hrschmllr.de:1883`           |
+| Loki          | HTTP  | `http://loki:3100/ready`      |
 
+---
 
-# 1) Folder & Timestamp
-mkdir -p kuma_data/backups
-TS=$(date +%F_%H%M%S)
+## Step 5: Start Monitoring
 
-# 2) Stream the database files from the container and extract locally
-docker exec uptime-kuma sh -lc 'cd /app/data && tar cf - kuma.db kuma.db-wal kuma.db-shm 2>/dev/null' \
-| tar xf - -C kuma_data/backups
+- Once imported, all monitors can be started.  
+- You can view real-time status, uptime history, and response times in the dashboard.  
+- If needed, adjust intervals, retries, or notification settings manually for each monitor.
 
-# 3) Rename cleanly (with timestamp)
-[ -f kuma_data/backups/kuma.db ]     && mv kuma_data/backups/kuma.db     "kuma_data/backups/run-$TS.db"
-[ -f kuma_data/backups/kuma.db-wal ] && mv kuma_data/backups/kuma.db-wal "kuma_data/backups/run-$TS.db-wal"
-[ -f kuma_data/backups/kuma.db-shm ] && mv kuma_data/backups/kuma.db-shm "kuma_data/backups/run-$TS.db-shm"
+---
 
-# 4) Verify result
-ls -lah kuma_data/backups | grep "run-$TS"
+## Notes
 
+- Since the database is not persisted:
+  - User credentials and monitor configuration must be restored after **every restart**.  
+  - Always keep the latest backup JSON available.  
+
+---

@@ -90,6 +90,4 @@ def update_thresholds_in_db(threshold_data):
         if conn:
             conn.close()
 
-__all__ = ["get_thresholds_from_db", "update_thresholds_in_db"]
-
 

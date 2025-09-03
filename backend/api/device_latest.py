@@ -1,5 +1,4 @@
 from flask_restful import Resource
-from flask import jsonify
 from psycopg2 import Error as PsycopgError
 
 # logging

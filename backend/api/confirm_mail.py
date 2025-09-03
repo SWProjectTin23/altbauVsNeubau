@@ -1,6 +1,6 @@
 from flask_restful import Resource
 from flask import request
-from api.db.connection import get_db_connection
+from api.db import get_db_connection
 
 class ConfirmEmail(Resource):
     def post(self):

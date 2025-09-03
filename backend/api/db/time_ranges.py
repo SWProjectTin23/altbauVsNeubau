@@ -47,6 +47,4 @@ def get_all_device_time_ranges_from_db():
     finally:
         conn.close()
 
-__all__ = ["get_all_device_time_ranges_from_db"]
-
 

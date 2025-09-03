@@ -36,6 +36,4 @@ def device_exists(device_id):
     finally:
         conn.close()
 
-__all__ = ["device_exists"]
-
 

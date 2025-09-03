@@ -14,6 +14,4 @@ def serialize_row(row: dict) -> dict:
             result[k] = v
     return result
 
-__all__ = ["serialize_row"]
-
 

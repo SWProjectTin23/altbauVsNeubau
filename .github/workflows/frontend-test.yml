@@ -91,7 +91,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import csv, os, sys, math
-          jtl = os.path.join(os.getenv("JM_RESULTS_DIR","frontend-loadtest/results"), "results.jtl")
+          jtl = os.path.join(os.getenv("JM_RESULTS_DIR"), "results.jtl")
           if not os.path.exists(jtl):
               print("No JTL file found at", jtl); sys.exit(1)
 
@@ -104,45 +104,36 @@ jobs:
                       label   = r.get('label','')
                   except:
                       continue
-                  if elapsed == elapsed and label:
+                  if elapsed == elapsed:  # not NaN
                       rows.append((label, elapsed))
 
-          if not rows:
-              print("No samples found in JTL"); sys.exit(1)
+          def percentile(vals, q):
+              if not vals: return float('nan')
+              vals = sorted(vals)
+              k = (len(vals)-1) * (q/100.0)
+              f = math.floor(k); c = math.ceil(k)
+              if f == c: return float(vals[int(k)])
+              return vals[f] + (vals[c]-vals[f])*(k-f)
 
+          # group by label
           by = {}
           for label, elapsed in rows:
               by.setdefault(label, []).append(elapsed)
 
-          def percentile(vals, q):
-              vals = sorted(vals)
-              k = (len(vals)-1) * (q/100.0)
-              f = int(k); c = f + (k>f)
-              return vals[f] if f==c else vals[f] + (vals[c]-vals[f])*(k-f)
-
-          wanted = os.getenv("SLO_LABEL")
-          if not wanted:
-              if len(by) == 1:
-                  wanted = next(iter(by))
-                  print(f"No SLO_LABEL set; using only label in JTL: '{wanted}'")
-              else:
-                  print("Multiple labels found in JTL:", ", ".join(sorted(by)))
-                  print("Set SLO_LABEL to one of the above (or rename the sampler in plan.jmx).")
-                  sys.exit(1)
-
-          if wanted not in by:
-              print(f"Label '{wanted}' not found in JTL. Available:", ", ".join(sorted(by)))
-              sys.exit(1)
-
           slo_ttlb = float(os.getenv("SLO_TTLB_P95_MS","2000"))
-          p95 = percentile(by[wanted], 95)
-          print(f"{wanted} p95 = {p95:.0f} ms (SLO < {slo_ttlb} ms)")
+
+          label = "Initial Page TTLB"  # must match the label in plan.jmx
+          if label not in by:
+              print(f"WARNING: label '{label}' not found in JTL"); sys.exit(1)
+
+          p95 = percentile(by[label], 95)
+          print(f"{label} p95 = {p95:.0f} ms (SLO < {slo_ttlb} ms)")
           if p95 > slo_ttlb:
-              print(f"SLO FAIL: {wanted} p95 {p95:.0f} > {slo_ttlb}")
+              print(f"SLO FAIL: {label} p95 {p95:.0f} > {slo_ttlb}")
               sys.exit(1)
+
           print("SLO PASS")
           PY
-
 
       # Always display service logs, even if the job failed
       - name: Show logs (always)

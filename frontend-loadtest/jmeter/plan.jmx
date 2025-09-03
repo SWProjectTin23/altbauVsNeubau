@@ -67,7 +67,7 @@
           <boolProp name="TransactionController.parent">true</boolProp>
         </TransactionController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET ${target_url}/" enabled="true">
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Initial Page TTLB" enabled="true">
             <stringProp name="HTTPSampler.method">GET</stringProp>
             <stringProp name="HTTPSampler.path">${target_url}/</stringProp>
             <boolProp name="HTTPSampler.follow_redirects">true</boolProp>

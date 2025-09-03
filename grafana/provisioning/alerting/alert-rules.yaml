@@ -1,12 +1,12 @@
 apiVersion: 1
 groups:
     - orgId: 1
-      name: altbauvsneubau
+      name: sensor-alerts
       folder: main
-      interval: 10s
+      interval: 30s
       rules:
-        - uid: aevh26uxfx2wwb
-          title: Arduino offline
+        - uid: aewe226ek8mioc
+          title: Sensor-offline
           condition: C
           data:
             - refId: A
@@ -15,8 +15,11 @@ groups:
                 to: 0
               datasourceUid: fevdvif8bpb7kc
               model:
+                datasource:
+                    type: prometheus
+                    uid: fevdvif8bpb7kc
                 editorMode: code
-                expr: sensor_seconds_since_last_data{device_id=~".+"}
+                expr: sensor_seconds_since_last_data{device_id=~".+", sensor_type=~".+"}
                 instant: true
                 intervalMs: 1000
                 legendFormat: __auto
@@ -24,15 +27,12 @@ groups:
                 range: false
                 refId: A
             - refId: C
-              relativeTimeRange:
-                from: 600
-                to: 0
               datasourceUid: __expr__
               model:
                 conditions:
                     - evaluator:
                         params:
-                            - 240
+                            - 600
                         type: gt
                       operator:
                         type: and
@@ -54,8 +54,12 @@ groups:
           noDataState: NoData
           execErrState: Error
           annotations:
-            summary: Arduino {{ $labels.device_id }} offline seit {{ $values.A }} Sekunden
+            summary: |-
+                Folgende Sensoren sind offline:
+                {{ range $values.A }}
+                  Gerät: {{ .labels.device_id }}, Sensor: {{ .labels.sensor_type }}, Zeit: {{ .value }} Sekunden
+                {{ end }}
           labels: {}
           isPaused: false
           notification_settings:
-            receiver: grafana-default-email
+            receiver: grafana-arduino-offline-email

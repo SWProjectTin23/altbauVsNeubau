@@ -36,3 +36,8 @@ venv/
 #Loadtest results
 /frontend-loadtest/results/
 !frontend-loadtest/.env
+
+# Coverage and ADR files
+.coverage
+.adr-dir
+kuma_data/kuma.db

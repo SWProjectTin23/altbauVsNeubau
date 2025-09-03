@@ -422,3 +422,114 @@ This endpoint allows you to retrieve and update the soft and hard thresholds for
   "message": "An unexpected error occurred while processing your request."
 }
 ```
+
+## 6. Aler Email Management
+
+### **GET `/alert_email`**
+
+Returns the currently configured alert email address for the thresholds.
+
+**Example:**
+`http://localhost:5001/api/alert_email`
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "email": "your-alert@example.com"
+}
+```
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "No mail found."
+}
+```
+
+---
+
+### **POST `/alert_email`**
+
+Sets or updates the alert email address for thresholds
+
+**Request Body:**
+```json
+{
+  "alert_email": "your-alert@example.com"
+}
+```
+
+**Success Response:**
+```json
+{
+  "status": "success",
+  "message": "Alert email saved."
+}
+```
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Mail is missing."
+}
+```
+
+---
+
+## 7. Send Alert Mail (Threshold Alerting)
+
+### **POST `/send_alert_mail`**
+
+Triggers the alerting logic for a given metric and device.  
+This endpoint is called by the frontend whenever a new sensor value is received.
+
+**Request Body:**
+```json
+{
+  "metric": "Temperatur",
+  "value": 35,
+  "thresholds": {
+    "Temperatur": {
+      "redLow": 10,
+      "yellowLow": 15,
+      "yellowHigh": 30,
+      "redHigh": 32
+    }
+  },
+  "device": "Altbau"
+}
+```
+
+**Success Responses:**
+- If a new alert is triggered:
+  ```json
+  {
+    "status": "success",
+    "message": "hart-Mail sent"
+  }
+  ```
+- If the alert is still active (cooldown):
+  ```json
+  {
+    "status": "success",
+    "message": "hart-Mail already active"
+  }
+  ```
+- If the value is back in the normal range (cooldown reset):
+  ```json
+  {
+    "status": "success",
+    "message": "No Threshold Exceeded"
+  }
+  ```
+
+**Error Response:**
+```json
+{
+  "status": "error",
+  "message": "Missing parameters"
+}
+```
+
+---

@@ -28,6 +28,11 @@ jobs:
       MQTT_PORT_BACKUP: ${{ secrets.MQTT_PORT_BACKUP }}
       PG_ADMIN_EMAIL: ${{ secrets.PG_ADMIN_EMAIL }}
       PG_ADMIN_PASSWORD: ${{ secrets.PG_ADMIN_PASSWORD }}
+      GF_SMTP_HOST: ${{ secrets.GF_SMTP_HOST }}
+      GF_SMTP_USER: ${{ secrets.GF_SMTP_USER }}
+      GF_SMTP_PASSWORD: ${{ secrets.GF_SMTP_PASSWORD }}
+      GF_SMTP_FROM: ${{ secrets.GF_SMTP_FROM }}
+      GF_SMTP_FROM_NAME: ${{ secrets.GF_SMTP_FROM_NAME }}
 
       # JMeter and test runner environment variables
       NO_OPEN: "1"                          # Do not auto-open browser in CI

@@ -16,6 +16,13 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=INFO
+      - GF_SMTP_HOST=${GF_SMTP_HOST}
+      - GF_SMTP_USER=${GF_SMTP_USER}
+      - GF_SMTP_PASSWORD=${GF_SMTP_PASSWORD}
+      - GF_SMTP_FROM=${GF_SMTP_FROM}
+      - GF_SMTP_FROM_NAME=${GF_SMTP_FROM_NAME}
+      - FRONTEND_URL=${FRONTEND_URL}
+
     depends_on:
       db:
         condition: service_healthy
@@ -99,20 +106,6 @@ services:
       retries: 10
       start_period: 60s # Longer start period for the database
 
-  pgadmin: # The name of your pgAdmin service
-    image: dpage/pgadmin4 # The Docker image for pgAdmin
-    container_name: altbau_vs_neubau_pgadmin # a fixed name for the container
-    environment: # Environment variables for pgAdmin
-      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_EMAIL} # Login email for pgAdmin
-      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_PASSWORD} # Login password for pgAdmin
-    ports: # Port mapping from host to container
-      - "5480:80" # pgAdmin is accessible at http://localhost:5480
-    depends_on: # Ensures that the DB starts before pgAdmin
-      - db
-    networks: # Connects the container to the same internal network as the DB
-      - pg-network
-    restart: unless-stopped
-
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
@@ -121,8 +114,6 @@ services:
     restart: unless-stopped
     networks:
       - pg-network
-
-
 
   prometheus: 
     image: prom/prometheus:latest
@@ -170,16 +161,16 @@ services:
 
   sensor-exporter:
     build:
-      context: ./sensor-exporter
+      context: .
+      dockerfile: sensor-exporter/Dockerfile
     container_name: sensor-exporter
     ports:
       - "9100:9100"
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_PORT=${MQTT_PORT}
+      - MQTT_BROKER_BACKUP=${MQTT_BROKER_BACKUP}
+      - MQTT_PORT_BACKUP=${MQTT_PORT_BACKUP}
     networks:
       - pg-network
     depends_on:
@@ -192,7 +183,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki/loki-config.yml:/etc/loki/config.yml:ro   # <— dein loki-Ordner
+      - ./loki/loki-config.yml:/etc/loki/config.yml:ro  
       - loki-data:/loki
     networks:
       - pg-network
@@ -202,7 +193,7 @@ services:
     image: grafana/promtail:2.9.6
     command: -config.file=/etc/promtail/config.yml
     volumes:
-      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro  # <— dein loki-Ordner
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - promtail-data:/tmp
     depends_on:
@@ -213,7 +204,7 @@ services:
 
 
 
-volumes: # This section must be at the same level as 'services'
+volumes: 
   db_data:
   kuma-data:
   grafana-data:
@@ -223,4 +214,4 @@ volumes: # This section must be at the same level as 'services'
 
 networks: # Definition of networks
   pg-network:
-    driver: bridge # Standard bridge network
+    driver: bridge

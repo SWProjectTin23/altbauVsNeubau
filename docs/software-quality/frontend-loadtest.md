@@ -116,6 +116,5 @@ This project includes an automated **smoke test** that runs on every **pull requ
 The test checks the **Initial Page TTLB (Time-To-Last-Byte)** and enforces a strict **Service Level Objective**:
 
 - **p95 latency must stay below 2000 ms (2 seconds)**
-
--If the threshold is exceeded, the workflow fails and the pull request cannot be merged until performance is improved.
+- If the threshold is exceeded, the workflow fails and the pull request cannot be merged until performance is improved.
 ---

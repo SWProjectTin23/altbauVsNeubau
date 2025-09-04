@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and push frontend image
         run: |
-          docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile ./frontend
+          docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile .
           docker push ghcr.io/geroldj/altbauvsneubau/frontend:latest
 
       - name: Build and push sensor exporter image

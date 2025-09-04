@@ -1,4 +1,4 @@
-# 📖 Documentation: Sensor Data Monitoring with Grafana & TimescaleDB
+#  Documentation: Sensor Data Monitoring with Grafana & TimescaleDB
 
 ## 1. Overview
 This project provides a monitoring stack for IoT sensor data. It ingests sensor readings via MQTT, stores them in a TimescaleDB (PostgreSQL with time-series extensions), and visualizes data in Grafana.  
@@ -126,7 +126,6 @@ The dashboard depends on the following **database views** (must be created in SQ
   SELECT create_hypertable('sensor_data', 'ts', if_not_exists => TRUE);
   CREATE INDEX IF NOT EXISTS idx_sensor_ts ON sensor_data (ts DESC);
   ```
-- Use `pgAdmin` at [http://localhost:5480](http://localhost:5480) for manual queries.  
 - Check service health in **Uptime Kuma** at [http://localhost:3002](http://localhost:3002).
 
 ---

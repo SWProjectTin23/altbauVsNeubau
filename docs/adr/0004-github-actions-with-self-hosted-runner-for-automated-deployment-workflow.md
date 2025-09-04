@@ -1,16 +1,16 @@
-# 4. GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow
+# GitHub Actions with Self-Hosted Runner for Automated Deployment Workflow
 
 Date: 2025-07-22
 
 ## Status
 
-Accepted
+Expired
 
 ## Context
 
 Our application (comprising backend, frontend, database) is orchestrated using Docker Compose. To ensure an automated, reliable, and consistent deployment of the application to our local, internal university server whenever code changes are pushed to the main branch, we require a robust CI/CD process. Manual deployment steps are prone to errors and time-consuming.
 
-We use GitHub as our primary platform for code development and version control. The team prefers an integrated CI/CD solution that offers direct control over the deployment environment and minimizes external dependencies, especially given the internal nature of the target server (the university server, as decided in [ADR 0003: Utilizing University Infrastruktur with Docker for Project Deployment].
+We use GitHub as our primary platform for code development and version control. The team prefers an integrated CI/CD solution that offers direct control over the deployment environment and minimizes external dependencies, especially given the internal nature of the target server (the university server, as decided in [ADR 0003: Utilizing University Infrastruktur with Docker for Project Deployment]).
 
 ### Alternatives Considered
 We considered several options for automating deployment:

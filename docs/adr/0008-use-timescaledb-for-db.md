@@ -1,4 +1,4 @@
-# 5. use timescaledb for db
+# use timescaledb for db
 
 Date: 2025-07-22
 

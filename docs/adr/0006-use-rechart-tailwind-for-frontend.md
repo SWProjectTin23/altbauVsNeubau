@@ -1,4 +1,4 @@
-# 4. Use Tailwind CSS and Recharts for Styling and Charting
+# Use Tailwind CSS and Recharts for Styling and Charting
 
 **Date:** 2025-07-24  
 **Status:** Accepted

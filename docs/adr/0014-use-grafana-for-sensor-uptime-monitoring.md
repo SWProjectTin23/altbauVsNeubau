@@ -1,4 +1,4 @@
-# 12. Use Grafana Dashboards for Sensor Data Availability Monitoring
+# Use Grafana Dashboards for Sensor Data Availability Monitoring
 
 **Date:** 2025-08-20
 
@@ -45,5 +45,3 @@ We will implement availability monitoring in **Grafana dashboards**, based on Ti
 * **Low Effort, High Value:** Reuses Grafana, which is already deployed in the stack.
 * **Immediate Visibility:** Operators can quickly see if sensors are dropping data.
 * **Alerting Ready:** Grafana Alerting can be added later to notify when availability falls below thresholds.
-
-

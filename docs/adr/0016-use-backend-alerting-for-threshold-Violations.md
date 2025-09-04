@@ -1,4 +1,4 @@
-# 15. Use Backend-Based Alerting for Sensor Threshold Notifications
+# Use Backend-Based Alerting for Sensor Threshold Notifications
 
 **Date:** 2025-08-28
 

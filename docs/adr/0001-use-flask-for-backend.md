@@ -1,4 +1,4 @@
-# 1. Use Flask for backend
+# Use Flask for backend
 
 Date: 2025-07-15
 

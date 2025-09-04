@@ -1,10 +1,10 @@
-# 3. Utilizing University Infrastruktur with Docker for Project Deployment
+# Utilizing University Infrastructur with Docker for Project Deployment
 
 Date: 2025-07-15
 
 ## Status
 
-Accepted
+Expired
 
 ## Context
 

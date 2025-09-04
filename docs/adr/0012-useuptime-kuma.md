@@ -1,4 +1,4 @@
-# 10. Introduction of Uptime Kuma and Uptime Robot for Service Availability Monitoring
+# Introduction of Uptime Kuma and Uptime Robot for Service Availability Monitoring
 
 **Date:** 2025-08-07
 

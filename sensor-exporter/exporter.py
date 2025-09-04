@@ -118,7 +118,7 @@ if __name__ == '__main__':
             delay = (now - ts).total_seconds()
             if delay < 0:
                 log_event(
-                    logger, "WARNING", "negative_delay",
+                    logger, "INFO", "negative_delay",
                     device_id=device_id,
                     sensor_type=sensor_type,
                     delay=delay,

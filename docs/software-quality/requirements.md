@@ -1,103 +1,103 @@
-# Funktionale Requirements
+# Functional Requirements
 
 - **FR-01:**  
-  Die Software muss alle 10 Sekunden Temperatur- und Feinstaubwerte erfassen und automatisiert an die Datenplattform senden.
+  The software must record temperature and particulate matter values every 10 seconds and automatically send them to the data platform.
 
 - **FR-02:**  
-  Alle Sensordaten müssen einen Zeitstempel und eine genaue Zuordnung zum Standort (Alt- oder Neubau) haben und in einer zentralen Datenbank gespeichert sein, um Zeitreihenvergleiche zwischen den Standorten zu ermöglichen.
+  All sensor data must have a timestamp and a precise assignment to the location (old or new building) and be stored in a central database to enable time series comparisons between locations.
 
 - **FR-03:**  
-  Warnwerte (Temperatur zu hoch, Luftqualität zu schlecht) müssen definiert und berücksichtigt werden.
+  Warning thresholds (temperature too high, poor air quality) must be defined and taken into account.
 
 - **FR-04:**  
-  Die Benutzeroberfläche soll es ermöglichen, die Temperatur- und Feinstaubdaten beider Standorte grafisch darzustellen.
+  The user interface should allow graphical display of temperature and particulate matter data for both locations.
 
 - **FR-05:**  
-  Das System muss automatisch eine Warnung generieren, wenn gemessene Umweltwerte festgelegte Grenzwerte überschreiten.  
-  Die Warnung muss im Dashboard visuell angezeigt werden und der Benutzer soll eine Push-Benachrichtigung erhalten.
+  The system must automatically generate a warning when measured environmental values exceed defined thresholds.  
+  The warning must be visually displayed in the dashboard and the user should receive a push notification.
 
 ---
 
-# Nicht-Funktionale Requirements
+# Non-Functional Requirements
 
-- **NFR-01:** Das System muss sicherstellen, dass mindestens **70,00 %** der Sensordaten pro Tag erfolgreich übertragen und gespeichert werden.  
-  Wenn ein Sensor für mehr als 10 Minuten keine Daten sendet, muss das System dies automatisch erfassen und protokollieren.
+- **NFR-01:** The system must ensure that at least **70.00%** of sensor data per day is successfully transmitted and stored.  
+  If a sensor does not send data for more than 10 minutes, the system must automatically detect and log this.
 
-  ### Messmethode:
-  - **Log-Analyse:**
-      - Hochrechnen, wie viele Messwerte pro Sensor pro Tag erwartet werden (Soll-Werte).
-      - Tatsächlich gespeicherte Werte in TimescaleDB abfragen (Ist-Werte).
-      - `Verfügbarkeit = Ìst/Soll`
-  - **Timeout-Überwachung:**
-      - Backend protokolliert, wenn ein Sensor >10 Minuten keine Daten sendet.
+  ### Measurement Method:
+  - **Log Analysis:**
+      - Calculate how many measurements per sensor per day are expected (target values).
+      - Query actually stored values in TimescaleDB (actual values).
+      - `Availability = actual/target`
+  - **Timeout Monitoring:**
+      - Backend logs when a sensor does not send data for >10 minutes.
 
-- **NFR-02:** Die Weboberfläche muss eine Verfügbarkeit von mindestens **95 %** gewährleisten.  
-  Fehler müssen für Nutzer durch verständliche Fehlermeldungen gekennzeichnet sein.
+- **NFR-02:** The web interface must guarantee an availability of at least **95%**.  
+  Errors must be clearly indicated to users through understandable error messages.
 
-  ### Messmethode:
+  ### Measurement Method:
   - **Monitoring:**
-    - Externes Monitoring-Tool (ggf. selbst gehostet)
+    - External monitoring tool (possibly self-hosted)
   
-- **NFR-03:** Die Visualisierung der Raumqualitätsdaten im Dashboard muss innerhalb von **2 Sekunden** nach Benutzeranfrage vollständig geladen werden, selbst bei gleichzeitiger Nutzung durch bis zu 20 Benutzer.
+- **NFR-03:** Visualization of room quality data in the dashboard must be fully loaded within **2 seconds** after a user request, even with simultaneous use by up to 20 users.
 
-  ### Messmethode:
+  ### Measurement Method:
   - **Monitoring:**
-    - Externes Monitoring-Tool (ggf. selbst gehostet)
-    - Lasttest mit 20 parallelen Nutzern
+    - External monitoring tool (possibly self-hosted)
+    - Load test with 20 parallel users
 
-- **NFR-04:** Der Quellcode des Systems muss modular aufgebaut und dokumentiert sein, sodass Änderungen an einzelnen Komponenten (z. B. Sensorprotokoll, Visualisierung) ohne Auswirkungen auf andere Teile vorgenommen werden können. Zusätzlich muss für jede Hauptkomponente mindestens ein automatisierter Komponententest vorhanden sein.
+- **NFR-04:** The system's source code must be modular and documented so that changes to individual components (e.g., sensor protocol, visualization) can be made without affecting other parts. Additionally, there must be at least one automated component test for each main component.
 
-  ### Messmethode:
-  - **Backend-Struktur in Flask**
-      -`mqtt/` (MQTT-Handler)
-      -`storage/`(DB-Zugriff)
-      -`api/`(REST-Endpunkte)
-      -`test/`(Unit- und Integrationstests)
+  ### Measurement Method:
+  - **Backend structure in Flask**
+      -`mqtt/` (MQTT handler)
+      -`storage/`(DB access)
+      -`api/`(REST endpoints)
+      -`test/`(Unit and integration tests)
   - **GitHub Actions CI/CD**
-      - Automatischer Testlauf bei jedem Pull Request auf `main`
+      - Automatic test run for every pull request to `main`
 
-  - **Dokumentation**
-      - OpenAPI-Schema für REST
-      - README + kurze Entwicklerdoku
+  - **Documentation**
+      - OpenAPI schema for REST
+      - README + short developer documentation
         
-- **NFR-05:** Das System muss so ausgelegt sein, dass es bei Ausfall eines Sensors oder Verbindungsabbrüchen weiterhin lauffähig bleibt und automatisch einen Wiederverbindungsversuch innerhalb von **5 Sekunden** unternimmt.  
-  Fehlgeschlagene Datenübertragungen dürfen nicht zum Systemabsturz führen, sondern müssen protokolliert und ggf. in einer Warteschlange zwischengespeichert werden.
+- **NFR-05:** The system must be designed so that it remains operational in the event of sensor failures or connection interruptions and automatically attempts to reconnect within **5 seconds**.  
+  Failed data transmissions must not cause a system crash but must be logged and, if necessary, temporarily stored in a queue.
 
-  ### Messmethode:
-  - **MQTT-Client in Flask**
-    - Reconnect-Logik alle 5 Sekunden bei Brokerverlust
-  - **System bleibt lauffähig** auch ohne alle Sensoren --> Frontend zeigt "Sensor offline"
+  ### Measurement Method:
+  - **MQTT client in Flask**
+    - Reconnect logic every 5 seconds if broker is lost
+  - **System remains operational** even without all sensors --> Frontend shows "Sensor offline"
  
-- **NFR-06:** Die Software-Komponenten müssen containerisiert (z. B. mittels Docker) bereitgestellt werden, um einen einfachen Plattformwechsel (z. B. von einem lokalen Server zu einer Cloud-VM) ohne Anpassung des Codes zu ermöglichen. Zusätzlich muss das System auf mindestens zwei unterschiedlichen Betriebssystemen (z. B. Linux und Windows) erfolgreich installiert und betrieben werden können.
+- **NFR-06:** The software components must be provided in containers (e.g., using Docker) to enable easy platform switching (e.g., from a local server to a cloud VM) without code changes. Additionally, the system must be successfully installed and operated on at least two different operating systems (e.g., Linux and Windows).
 
-  ### Messmethode:
-  - Docker-Setup mit:
+  ### Measurement Method:
+  - Docker setup with:
       -`flask-backend`
       -`react-frontend`
       -`timescaledb`
-  - Docker Compose für lokale Entwicklung + Deployment
-  - CI/CD-Test auf Linux + Windows via Github Actions
-  - Environment Variables für alle Pfade und Secrets statt Hardcoding
+  - Docker Compose for local development + deployment
+  - CI/CD test on Linux + Windows via Github Actions
+  - Environment variables for all paths and secrets instead of hardcoding
 
 
 ---
 
 
-| **Systemelement**        | **Funktion**                                | **Fehlermöglichkeit**                       | **Ursache**                                | **Auswirkung**                             |
-|--------------------------|---------------------------------------------|---------------------------------------------|---------------------------------------------|---------------------------------------------|
-| Arduino                  | Erfassen von Sensordaten                    | Sensor liefert keine Daten                  | Sensor defekt, Kabelbruch, Stromversorgung  | Keine Daten in DB / auf Website, Beinflussung anderer Sensor |
-| Temperatursensor         | Messen der Temperatur                       | Temperatur wird nicht korrekt gemessen      | Sensor falsch kalibriert / beschädigt       | Falsche Anzeige auf Website                 |
-| Luftqualitätssensor      | Messen der Luftqualität                     | Keine oder falsche Messwerte                | Sensor falsch kalibriert / beschädigt       | Falsche Anzeige auf Website             |
-| MQTT-Verbindung          | Übertragen der Daten vom Arduino zum Server | Verbindung bricht ab                        | Netzwerkausfall, Broker nicht erreichbar    | Datenverlust / keine Anzeige                |
-| MQTT-Broker              | Empfang der Messdaten                       | Broker ist nicht erreichbar                 | Serverausfall                               | Daten gehen verloren, System nicht nutzbar  |
-| Datenbank                | Speichern der Daten                         | Daten werden nicht gespeichert              | Datenbankserver nicht erreichbar / fehlerhaft     | Keine Historie / Anzeige auf Website        |
-| Website                  | Anzeigen der Messdaten                      | Seite ist nicht verfügbar Verbindung zum Backend nicht möglich                   | Server down, DNS-Probleme, Backendfehler    | Nutzer kann Daten nicht sehen               |
-| Webserver                | Hosten der Website                          | Webserver ist offline                       | Stromausfall, Hosting-Probleme              | Keine Datenanzeige                          |
+| **System Element**        | **Function**                                | **Possible Failure**                       | **Cause**                                | **Impact**                             |
+|--------------------------|---------------------------------------------|--------------------------------------------|------------------------------------------|----------------------------------------|
+| Arduino                  | Collect sensor data                         | Sensor does not provide data               | Sensor defective, cable break, power loss| No data in DB / on website, affects other sensors |
+| Temperature sensor       | Measure temperature                         | Temperature not measured correctly         | Sensor miscalibrated / damaged           | Incorrect display on website           |
+| Air quality sensor       | Measure air quality                         | No or incorrect measurements               | Sensor miscalibrated / damaged           | Incorrect display on website           |
+| MQTT connection          | Transmit data from Arduino to server        | Connection drops                           | Network failure, broker unreachable      | Data loss / no display                 |
+| MQTT broker              | Receive measurement data                    | Broker unreachable                         | Server failure                           | Data lost, system unusable             |
+| Database                 | Store data                                  | Data not stored                            | Database server unreachable / faulty      | No history / display on website        |
+| Website                  | Display measurement data                    | Site unavailable, connection to backend fails| Server down, DNS issues, backend error   | User cannot see data                   |
+| Web server               | Host website                                | Web server offline                         | Power outage, hosting issues             | No data display                        |
 
-_Stand: 14.08.2025_
+_Last updated: 14.08.2025_
 
 ---
-# Qualitätsmerkmale 
-- Zuverlässigkeit
-- Fehlertoleranz
+# Quality Attributes 
+- Reliability
+- Fault tolerance
 - Performance

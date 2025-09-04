@@ -35,7 +35,7 @@ Tests will be automatically initiated via GitHub Actions with each commit to ens
 ### Clone the Repository
 
 ```sh
-git clone https://github.com/dein-org/altbauVsNeubau.git
+git clone https://github.com/SWProjectTin23/altbauVsNeubau.git
 cd altbauVsNeubau
 ```
 

@@ -80,7 +80,7 @@ To ensure the functionality and reliability of the system, targeted test coverag
 Tests will be automatically initiated via GitHub Actions with each commit to ensure code quality and stability.
 
 ## Architecture
-![Architecture](./docs/images/ArchitecturDiagramm.svg)
+![Architecture](/docs/images/ArchitecturDiagramm.svg)
 
 ---
 
@@ -1902,7 +1902,7 @@ Backend tests live under [`backend/tests/`](../../backend/tests/). See also [`do
 - Backend API notes: [`docs/Backend/api.md`](./api.md)
 - MQTT ingestion: [`docs/Backend/mqtt.md`](./mqtt.md)
 - Alerts and thresholds: [`docs/Backend/alerts.md`](./alerts.md), [`docs/Backend/thresholds_alerting.md`](./thresholds_alerting.md)
-- Architecture diagrams: [`docs/architecture/`](../architecture/), images under [`docs/images/`](../images/)
+- Architecture diagrams: [`docs/architecture/`](../architecture/), images under [`docs/images/`](/docs/images/)
 - ADRs (decisions): [`docs/adr/`](../adr/)
 
 
@@ -2299,7 +2299,7 @@ Re-running the container will **not** apply changes from `init.sql` unless the d
 
 ## Visual Representation of the Database Structure
 
-![Database schema](../images/db_diagramm.svg)
+![Database schema](/docs/images/db_diagramm.svg)
 
 ## Summary of Docker Compose Integration
 
@@ -2370,8 +2370,8 @@ Uses [react-router-dom](https://reactrouter.com/) for navigation:
 
 ## Screenshots
 
-![Dashboard Screenshot](../images/dashboard_screenshot.jpeg)
-![Warnings Page Screenshot](../images/warnings_screenshot.jpeg)
+![Dashboard Screenshot](/docs/images/dashboard_screenshot.jpeg)
+![Warnings Page Screenshot](/docs/images/warnings_screenshot.jpeg)
 
 ## Development Notes
 
@@ -2589,10 +2589,10 @@ For more details on the frontend structure, see [frontend.md](./frontend.md).
 ## Wireframe
 
 ### Home screen
-![Home](../images/frontend-home.jpg)
+![Home](/docs/images/frontend-home.jpg)
 
 ### Threshold screen
-![Warnings](../images/frontend-warnings.jpg)
+![Warnings](/docs/images/frontend-warnings.jpg)
 
 
 
@@ -3776,7 +3776,7 @@ Use domain-specific fields (no HTTP status code):
       - Calculate how many measurements per sensor per day are expected (target values).
       - Query actually stored values in TimescaleDB (actual values).
       - `Availability = actual/target`
-      ![sensor availability](../images/sensor_availability.png)
+      ![sensor availability](/docs/images/sensor_availability.png)
   - **Timeout Monitoring:**
       - Backend logs when a sensor does not send data for >10 minutes.
 
@@ -3786,7 +3786,7 @@ Use domain-specific fields (no HTTP status code):
   ### Measurement Method:
   - **Monitoring:**
     - External monitoring tool (possibly self-hosted)
-    ![frontend availability](../images/frontend_availability.png)
+    ![frontend availability](/docs/images/frontend_availability.png)
   
 - **NFR-03:** Visualization of room quality data in the dashboard must be fully loaded within **2 seconds** after a user request, even with simultaneous use by up to 20 users.
 

@@ -5,13 +5,17 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+COPY /frontend/package*.json ./
 
 # Install npm dependencies
 RUN npm install
 
 # Copy the entire application source code
-COPY . .
+COPY ./frontend .
+
+COPY ../docs/docs_full.md /app/public/docs/docs_full.md
+
+COPY ../docs/images /app/public/docs/images
 
 RUN ls -l /app/src/utils/api.js
 

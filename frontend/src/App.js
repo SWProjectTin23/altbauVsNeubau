@@ -5,6 +5,7 @@ import Warnings from "./pages/Warnings";
 import "./App.css";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import ConfirmEmail from "./pages/ConfirmEmail";
+import DocsFullPage from "./pages/DocsFullPage";
 
 function App() {
   return (
@@ -25,6 +26,8 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/warnings" element={<Warnings />} />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
+              <Route path="/docs" element={<DocsFullPage />} />
+
             </Routes>
           </main>
         </AppErrorBoundary>
@@ -36,6 +39,8 @@ function App() {
             </p>
             <div style={{ marginTop: "0.5rem" }}>
               <a href="mailto:altbauvsneubau@hrschmllr.de" style={{ color: "#fff" }}>Kontakt</a>
+              {" | "}
+              <Link to="/docs" style={{ color: "#fff" }}>Dokumentation</Link>
             </div>
           </div>
         </footer>

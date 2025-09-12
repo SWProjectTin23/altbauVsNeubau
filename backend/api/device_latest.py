@@ -14,12 +14,14 @@ from common.exceptions import (
 
 # db ops
 from api.db import get_latest_device_data_from_db, device_exists
+from auth import token_required
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="device_latest")
 
 
 class DeviceLatest(Resource):
+    method_decorators = [token_required]
     def get(self, device_id: int):
         timer = DurationTimer().start()
         log_event(logger, "INFO", "device_latest.start", device_id=device_id)

@@ -12,6 +12,8 @@ COPY --chown=nodeuser:nodegroup ./frontend .
 COPY --chown=nodeuser:nodegroup ../docs/docs_full.md /app/public/docs/docs_full.md
 COPY --chown=nodeuser:nodegroup ../docs/images /app/public/docs/images
 
+
+RUN chown -R nodeuser:nodegroup /app
 USER nodeuser
 RUN npm run build
 

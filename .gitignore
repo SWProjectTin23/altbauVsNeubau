@@ -41,3 +41,5 @@ venv/
 .coverage
 .adr-dir
 kuma_data/kuma.db
+
+.direnv

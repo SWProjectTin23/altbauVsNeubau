@@ -18,8 +18,6 @@ RUN npm run build
 # Runtime: Tag seems pretty
 FROM nginx:1.29.1-alpine
 
-RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001 -G appgroup
-
 RUN rm /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/nginx/nginx.conf /etc/nginx/conf.d/default.conf
@@ -27,9 +25,5 @@ COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
 
-RUN chown -R appuser:appgroup /var/cache/nginx /var/run /usr/share/nginx/html
-USER appuser
-
-
-# Start Nginx in the foreground.
+# Start Nginx in the foreground. => Ran in root due to it being port<1028 => https://unix.stackexchange.com/questions/134301/why-does-nginx-starts-process-as-root
 CMD ["nginx", "-g", "daemon off;"]

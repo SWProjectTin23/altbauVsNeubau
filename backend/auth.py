@@ -7,6 +7,7 @@ from functools import wraps
 JWKS_URL = f"{os.getenv('JWKS_URL')}"
 CLIENT_ID = f"{os.getenv('CLIENT_ID')}"
 
+print(JWKS_URL)
 jwks = requests.get(JWKS_URL).json()
 
 def get_public_key(token):

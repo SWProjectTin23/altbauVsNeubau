@@ -1,5 +1,5 @@
 {
-  description = "Datenkraken";
+  description = "Altbau vs Neubau";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -18,6 +18,7 @@
     {
       devShells.x86_64-linux.default = pkgs.mkShell {
         packages = with pkgs;[
+          mosquitto
           uv
           pre-commit
           platformio

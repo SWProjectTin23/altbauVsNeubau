@@ -27,6 +27,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - pg-network
     healthcheck:

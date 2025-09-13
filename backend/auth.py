@@ -8,11 +8,11 @@ JWKS_URL = f"{os.getenv('JWKS_URL')}"
 CLIENT_ID = f"{os.getenv('CLIENT_ID')}"
 
 print(JWKS_URL)
-jwks = requests.get(JWKS_URL).json()
 
 def get_public_key(token):
     header = jwt.get_unverified_header(token)
     kid = header['kid']
+    jwks = requests.get(JWKS_URL).json()
     for key in jwks['keys']:
         if key['kid'] == kid:
             return jwt.algorithms.RSAAlgorithm.from_jwk(key)
@@ -33,6 +33,6 @@ def token_required(f):
             decoded = jwt.decode(token, public_key, algorithms=['RS256'], audience=CLIENT_ID)
             request.user = decoded
         except Exception as e:
-            return jsonify({"message": "Token is invalid", "error": str(e)}), 401
+            return {"message": "Token is invalid", "error": str(e)}, 401
         return f(*args, **kwargs)
     return decorated

@@ -27,6 +27,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_started
     networks:
       - pg-network
     healthcheck:
@@ -215,6 +217,8 @@ services:
       POSTGRES_DB: ${KC_POSTGRES_DB}
       POSTGRES_USER: ${KC_POSTGRES_USER}
       POSTGRES_PASSWORD: ${KC_POSTGRES_PASSWORD}
+    networks:
+      - pg-network
     ports:
       - "5444:5432"
     volumes:
@@ -229,6 +233,8 @@ services:
       KC_DB_URL: ${KC_DB_URL}
       KC_DB_USERNAME: ${KC_DB_USERNAME}
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+    networks:
+      - pg-network
     ports:
       - "8844:8080"
     depends_on:

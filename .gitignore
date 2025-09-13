@@ -43,3 +43,4 @@ venv/
 kuma_data/kuma.db
 
 .direnv
+passwd

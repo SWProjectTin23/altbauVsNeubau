@@ -43,3 +43,4 @@ venv/
 kuma_data/kuma.db
 
 /keycloak-export/export/timsicher-users-*.json
+.direnv

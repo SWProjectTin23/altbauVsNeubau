@@ -28,8 +28,12 @@ SENSOR_MAP = {
 
 MQTT_BROKER = os.getenv('MQTT_BROKER', 'localhost')
 MQTT_PORT = int(os.getenv('MQTT_PORT', '1883'))
+MQTT_USER = os.getenv('MQTT_USER')
+MQTT_PASS = os.getenv('MQTT_PASS')
 MQTT_BROKER_BACKUP = os.getenv('MQTT_BROKER_BACKUP', 'localhost')
 MQTT_PORT_BACKUP = int(os.getenv('MQTT_PORT_BACKUP', '1884'))
+MQTT_USER_BACKUP = os.getenv('MQTT_USER_BACKUP')
+MQTT_PASS_BACKUP = os.getenv('MQTT_PASS_BACKUP')
 MQTT_BASE_TOPIC = os.getenv('MQTT_BASE_TOPIC', 'dhbw/ai/si2023/01')
 
 last_seen = {}
@@ -96,9 +100,10 @@ def on_message(_client, _userdata, msg):
             error_msg=str(e)[:120]
         )
 
-def mqtt_loop(broker, port):
+def mqtt_loop(broker, port, broker_username, broker_password):
     try:
         client = mqtt.Client()
+        client.username_pw_set(broker_username, broker_password)
         client.on_connect = on_connect
         client.on_message = on_message
         client.connect(broker, port, 60)
@@ -109,8 +114,8 @@ def mqtt_loop(broker, port):
 if __name__ == '__main__':
     start_http_server(9100)
     log_event(logger, "INFO", "exporter_started", port=9100)
-    threading.Thread(target=mqtt_loop, args=(MQTT_BROKER, MQTT_PORT), daemon=True).start()
-    threading.Thread(target=mqtt_loop, args=(MQTT_BROKER_BACKUP, MQTT_PORT_BACKUP), daemon=True).start()
+    threading.Thread(target=mqtt_loop, args=(MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASS), daemon=True).start()
+    threading.Thread(target=mqtt_loop, args=(MQTT_BROKER_BACKUP, MQTT_PORT_BACKUP, MQTT_USER_BACKUP, MQTT_PASS_BACKUP), daemon=True).start()
 
     while True:
         now = datetime.now(timezone.utc)

@@ -1,8 +1,10 @@
 from flask_restful import Resource
 from flask import request
 from api.db import get_db_connection
+from auth import token_required
 
 class ConfirmEmail(Resource):
+    method_decorators = [token_required]
     def post(self):
         data = request.get_json(force=True)
         token = data.get("token")

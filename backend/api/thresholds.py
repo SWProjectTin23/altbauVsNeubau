@@ -7,11 +7,13 @@ from common.logging_setup import setup_logger, log_event, DurationTimer
 
 # db ops
 from api.db import get_thresholds_from_db, update_thresholds_in_db
+from auth import token_required
 
 logger = setup_logger(service="api", module="thresholds")
 
 
 class Thresholds(Resource):
+    method_decorators = [token_required]
     def get(self):
         t = DurationTimer().start()
         log_event(logger, "INFO", "thresholds.get.start")

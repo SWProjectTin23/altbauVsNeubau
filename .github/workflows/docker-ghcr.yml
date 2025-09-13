@@ -13,27 +13,43 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
+      - name: Generate tag by latest commit sha by seven digits
+        id: commit_metadata
+        run: |
+          COMMIT_SHA_7=${GITHUB_SHA::7}
+          echo "tag=${COMMIT_SHA_7}" >> $GITHUB_OUTPUT
+          echo "Image tag: ${COMMIT_SHA_7}"
+
       - name: Log in to GitHub Container Registry
         run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build and push backend-api image
         run: |
+          docker build -t ghcr.io/geroldj/altbauvsneubau/backend-api:${{ steps.commit_metadata.outputs.tag }} -f ./backend/Dockerfile.api ./backend
           docker build -t ghcr.io/geroldj/altbauvsneubau/backend-api:latest -f ./backend/Dockerfile.api ./backend
+          docker push ghcr.io/geroldj/altbauvsneubau/backend-api:${{ steps.commit_metadata.outputs.tag }}
           docker push ghcr.io/geroldj/altbauvsneubau/backend-api:latest
 
       - name: Build and push backend-mqtt image
         run: |
+          docker build -t ghcr.io/geroldj/altbauvsneubau/backend-mqtt:${{ steps.commit_metadata.outputs.tag }} -f ./backend/Dockerfile.mqtt ./backend
           docker build -t ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest -f ./backend/Dockerfile.mqtt ./backend
+          docker push ghcr.io/geroldj/altbauvsneubau/backend-mqtt:${{ steps.commit_metadata.outputs.tag }}
           docker push ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest
 
       - name: Build and push frontend image
         run: |
+          docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:${{ steps.commit_metadata.outputs.tag }} -f ./frontend/Dockerfile .
           docker build -t ghcr.io/geroldj/altbauvsneubau/frontend:latest -f ./frontend/Dockerfile .
+          docker push ghcr.io/geroldj/altbauvsneubau/frontend:${{ steps.commit_metadata.outputs.tag }}
           docker push ghcr.io/geroldj/altbauvsneubau/frontend:latest
+
 
       - name: Build and push sensor exporter image
         run: |
+          docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:${{ steps.commit_metadata.outputs.tag }} -f ./sensor-exporter/Dockerfile .
           docker build -t ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest -f ./sensor-exporter/Dockerfile .
+          docker push ghcr.io/geroldj/altbauvsneubau/sensor-exporter:${{ steps.commit_metadata.outputs.tag }}
           docker push ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest
   deploy:
     runs-on: ubuntu-latest

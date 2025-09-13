@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y curl && apt-get upgrade -y \
 RUN groupadd -r appgroup && useradd -r -g appgroup -u 1001 appuser
 
 WORKDIR /app
-COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
 
 COPY --chown=appuser:appgroup --from=builder /build/ /app/
 

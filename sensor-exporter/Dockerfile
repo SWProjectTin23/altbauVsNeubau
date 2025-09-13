@@ -25,7 +25,7 @@ RUN groupadd -r appgroup && useradd -r -g appgroup -u 1001 appuser
 WORKDIR /app
 
 # Since no project management tool was used, the packages are installed in the default python user folder which is /home/<user>/.local 
-COPY --from=builder /root/.local /home/appuser/.local
+COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
 
 COPY --chown=appuser:appgroup sensor-exporter/exporter.py /app/
 COPY --chown=appuser:appgroup ../backend/common /app/backend/common/

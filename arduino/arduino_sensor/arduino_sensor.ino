@@ -1,6 +1,6 @@
 #include "data_sender.h"
 #include "sensor_reader.h"
-#include "WiFiUtils.h"
+#include "WifiUtils.h"
 #include "MQTTUtils.h"
 #include "secrets.h"
 #include "TimeUtils.h"
@@ -43,9 +43,3 @@ void loop() {
     lastAverageTime = millis();
   }
 }
-
-
-
-
-
-

@@ -69,5 +69,5 @@ jobs:
             git reset --hard
             git pull
 
-            IMAGE_TAG=${{jobs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml pull
-            IMAGE_TAG=${{jobs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml up -d
+            IMAGE_TAG=${{ needs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml pull
+            IMAGE_TAG=${{ needs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml up -d

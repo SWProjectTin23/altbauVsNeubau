@@ -8,6 +8,8 @@ on:
 jobs:
   build_and_push:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.commit_metadata.outputs.tag }}
 
     steps:
       - name: Checkout Repo
@@ -67,5 +69,5 @@ jobs:
             git reset --hard
             git pull
 
-            IMAGE_TAG=${{steps.commit_metadata.outputs.tag }} docker compose -f docker-compose-prod.yml pull
-            IMAGE_TAG=${{steps.commit_metadata.outputs.tag }} docker compose -f docker-compose-prod.yml up -d
+            IMAGE_TAG=${{jobs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml pull
+            IMAGE_TAG=${{jobs.build_and_push.outputs.tag }} docker compose -f docker-compose-prod.yml up -d

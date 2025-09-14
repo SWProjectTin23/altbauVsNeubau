@@ -33,6 +33,19 @@ jobs:
       GF_SMTP_PASSWORD: ${{ secrets.GF_SMTP_PASSWORD }}
       GF_SMTP_FROM: ${{ secrets.GF_SMTP_FROM }}
       GF_SMTP_FROM_NAME: ${{ secrets.GF_SMTP_FROM_NAME }}
+      
+      KC_POSTGRES_DB: ${{secrets.KC_POSTGRES_DB}}
+      KC_POSTGRES_USER: ${{secrets.KC_POSTGRES_USER}}
+      KC_POSTGRES_PASSWORD: ${{secrets.KC_POSTGRES_PASSWORD}}
+      # Keycloak
+      KEYCLOAK_ADMIN: ${{secrets.KEYCLOAK_ADMIN}}
+      KEYCLOAK_ADMIN_PASSWORD: ${{secrets.KEYCLOAK_ADMIN_PASSWORD}}
+      KC_DB: ${{secrets.KC_DB}}
+      KC_DB_URL: ${{secrets.KC_DB_URL}}
+      KC_DB_USERNAME: ${{secrets.KC_DB_USERNAME}}
+      KC_DB_PASSWORD: ${{secrets.KC_DB_PASSWORD}}
+      JWKS_URL: ${{secrets.JWKS_URL}}
+      CLIENT_ID: ${{secrets.CLIENT_ID}}
 
       # JMeter and test runner environment variables
       NO_OPEN: "1"                          # Do not auto-open browser in CI
@@ -150,3 +163,4 @@ jobs:
       - name: Tear down
         if: always()
         run: docker compose down -v --remove-orphans
+

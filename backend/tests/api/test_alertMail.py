@@ -1,11 +1,15 @@
 import pytest
 from unittest.mock import patch
 
+def mock_token_required(f):
+    return f
+
 @pytest.fixture
 def email_data():
     return {"alert_email": "test@example.com"}
 
 @patch("api.alertMail.get_alert_email", return_value="test@example.com")
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_get_alert_email_success(mock_get_email, client):
     response = client.get("/api/alert_email")
     assert response.status_code == 200
@@ -14,6 +18,7 @@ def test_get_alert_email_success(mock_get_email, client):
     mock_get_email.assert_called_once()
 
 @patch("api.alertMail.get_alert_email", return_value=None)
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_get_alert_email_not_found(mock_get_email, client):
     response = client.get("/api/alert_email")
     assert response.status_code == 404
@@ -22,6 +27,7 @@ def test_get_alert_email_not_found(mock_get_email, client):
     mock_get_email.assert_called_once()
 
 @patch("api.alertMail.get_alert_email", side_effect=Exception("DB error"))
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_get_alert_email_exception(mock_get_email, client):
     response = client.get("/api/alert_email")
     assert response.status_code == 500
@@ -30,6 +36,7 @@ def test_get_alert_email_exception(mock_get_email, client):
 
 @patch("api.alertMail.set_alert_email", return_value="sometoken123")
 @patch("api.alertMail.send_mail")
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_post_alert_email_confirmation_sent(mock_send_mail, mock_set_email, client, email_data):
     response = client.post("/api/alert_email", json=email_data)
     assert response.status_code == 200
@@ -38,6 +45,7 @@ def test_post_alert_email_confirmation_sent(mock_send_mail, mock_set_email, clie
     mock_set_email.assert_called_once_with(email_data["alert_email"])
     mock_send_mail.assert_called_once()
 
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_post_alert_email_missing(client):
     response = client.post("/api/alert_email", json={})
     assert response.status_code == 400
@@ -45,6 +53,7 @@ def test_post_alert_email_missing(client):
     assert response.json["message"] == "Mail is missing."
 
 @patch("api.alertMail.set_alert_email", side_effect=Exception("DB write error"))
+@patch("api.alertMail.AlertEmail.method_decorators", [mock_token_required])
 def test_post_alert_email_exception(mock_set_email, client, email_data):
     response = client.post("/api/alert_email", json=email_data)
     assert response.status_code == 500

@@ -1,6 +1,11 @@
 import psycopg2
 from common.exceptions import DatabaseError, DatabaseOperationalError, DatabaseQueryTimeoutError
+from unittest.mock import patch
 
+def mock_token_required(f):
+    return f
+
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_basic(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -14,6 +19,7 @@ def test_device_latest_basic(client, mocker):
     assert json_data['data']['value'] == 42
     assert ("INFO", "device_latest.ok") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_missing_device(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=False)
@@ -25,6 +31,7 @@ def test_device_latest_missing_device(client, mocker):
     assert json_data['message'] == 'Device with ID 999 does not exist.'
     assert ("WARNING", "device_latest.not_found") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_no_data(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -38,6 +45,7 @@ def test_device_latest_no_data(client, mocker):
     assert json_data['message'] == 'No data available for device 1.'
     assert ("INFO", "device_latest.empty") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_database_error(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -50,6 +58,7 @@ def test_device_latest_database_error(client, mocker):
     assert json_data['message'] == 'A database error occurred while processing your request.'
     assert ("ERROR", "device_latest.db_psycopg2_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_value_error(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -62,6 +71,7 @@ def test_device_latest_value_error(client, mocker):
     assert json_data['message'] == 'Invalid value'
     assert ("WARNING", "device_latest.bad_request") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_unexpected_error(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -74,7 +84,7 @@ def test_device_latest_unexpected_error(client, mocker):
     assert json_data['message'] == 'An unexpected error occurred while processing your request.'
     assert ("ERROR", "device_latest.unhandled_exception") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_db_timeout_maps_504_and_logs(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -84,7 +94,7 @@ def test_device_latest_db_timeout_maps_504_and_logs(client, mocker):
     assert resp.get_json()['message'] == 'database query timeout'
     assert ("ERROR", "device_latest.db_query_timeout") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_db_operational_maps_503_and_logs(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)
@@ -94,7 +104,7 @@ def test_device_latest_db_operational_maps_503_and_logs(client, mocker):
     assert resp.get_json()['message'] == 'database temporarily unavailable'
     assert ("ERROR", "device_latest.db_operational_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.device_latest.DeviceLatest.method_decorators", [mock_token_required])
 def test_device_latest_db_generic_maps_500_and_logs(client, mocker):
     mock_log = mocker.patch('api.device_latest.log_event')
     mocker.patch('api.device_latest.device_exists', return_value=True)

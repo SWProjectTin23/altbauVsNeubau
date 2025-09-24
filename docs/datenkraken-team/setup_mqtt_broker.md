@@ -6,4 +6,7 @@ touch passwd
 ```
 Write the username and the password to the file
 ```
-mosquitto_passwd -b passwd myuser mypassword```
+mosquitto_passwd -b passwd myuser mypassword
+```
+
+To deploy this you might need to adjust the network settings of the container.

@@ -1,6 +1,11 @@
 import psycopg2
 from common.exceptions import DatabaseError, DatabaseOperationalError, DatabaseQueryTimeoutError
+from unittest.mock import patch
 
+def mock_token_required(f):
+    return f
+
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_basic(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', return_value=[
@@ -15,6 +20,7 @@ def test_time_range_basic(client, mocker):
     assert len(json_data['data']) == 2
     assert ("INFO", "time_range.ok") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_no_data(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', return_value=[])
@@ -27,6 +33,7 @@ def test_time_range_no_data(client, mocker):
     assert json_data['data'] == []
     assert ("INFO", "time_range.empty") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_database_error(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=psycopg2.Error("Database error"))
@@ -38,6 +45,7 @@ def test_time_range_database_error(client, mocker):
     assert json_data['message'] == 'A database error occurred while processing your request.'
     assert ("ERROR", "range.db_psycopg2_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_unexpected_error(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=Exception("Unexpected error"))
@@ -49,7 +57,7 @@ def test_time_range_unexpected_error(client, mocker):
     assert json_data['message'] == 'An unexpected error occurred.'
     assert ("ERROR", "time_range.unhandled_exception") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_db_timeout_maps_504_and_logs(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=DatabaseQueryTimeoutError('timeout'))
@@ -58,7 +66,7 @@ def test_time_range_db_timeout_maps_504_and_logs(client, mocker):
     assert resp.get_json()['message'] == 'database query timeout'
     assert ("ERROR", "time_range.db_query_timeout") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_db_operational_maps_503_and_logs(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=DatabaseOperationalError('down'))
@@ -67,7 +75,7 @@ def test_time_range_db_operational_maps_503_and_logs(client, mocker):
     assert resp.get_json()['message'] == 'database temporarily unavailable'
     assert ("ERROR", "time_range.db_operational_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.range.TimeRange.method_decorators", [mock_token_required])
 def test_time_range_db_generic_maps_500_and_logs(client, mocker):
     mock_log = mocker.patch('api.range.log_event')
     mocker.patch('api.range.get_all_device_time_ranges_from_db', side_effect=DatabaseError('db'))

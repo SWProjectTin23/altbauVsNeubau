@@ -5,6 +5,7 @@ from psycopg2 import Error as PsycopgError
 
 # logging
 from common.logging_setup import setup_logger, log_event, DurationTimer
+from auth import token_required
 
 # unified app exceptions (no direct psycopg2 usage here)
 from common.exceptions import (
@@ -22,6 +23,7 @@ logger = setup_logger(service="api", module="comparison")
 
 
 class Comparison(Resource):
+    method_decorators = [token_required]
     def get(self):
         timer = DurationTimer().start()
 

@@ -1,42 +1,31 @@
-# Use a node image to build the frontend application
-FROM node:20-alpine AS build
+# Build
+FROM node:24-alpine AS build
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# copy package.json and package-lock.json to the working directory
-COPY /frontend/package*.json ./
+RUN addgroup -g 1001 -S nodegroup && adduser -S nodeuser -u 1001 -G nodegroup
 
-# Install npm dependencies
-RUN npm install
+COPY --chown=nodeuser:nodegroup /frontend/package*.json ./
+RUN npm ci
 
-# Copy the entire application source code
-COPY ./frontend .
+COPY --chown=nodeuser:nodegroup ./frontend .
+COPY --chown=nodeuser:nodegroup ../docs/docs_full.md /app/public/docs/docs_full.md
+COPY --chown=nodeuser:nodegroup ../docs/images /app/public/docs/images
 
-COPY ../docs/docs_full.md /app/public/docs/docs_full.md
 
-COPY ../docs/images /app/public/docs/images
-
-RUN ls -l /app/src/utils/api.js
-
-# Build the application for production.
-# NOTE: This is where the VITE_API_URL is compiled into the static assets.
+RUN chown -R nodeuser:nodegroup /app
+USER nodeuser
 RUN npm run build
 
-# Use a very slim Nginx image to serve the static files.
-FROM nginx:alpine
+# Runtime: Tag seems pretty
+FROM nginx:1.29.1-alpine
 
-# Remove the default Nginx configuration
 RUN rm /etc/nginx/conf.d/default.conf
 
-# Copy your custom Nginx configuration that you created
 COPY --from=build /app/nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy the built static files into the Nginx web server folder.
-# IMPORTANT: Changed path from /app/dist to /app/build!
 COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
 
-# Start Nginx in the foreground.
+# Start Nginx in the foreground. => Ran in root due to it being port<1028 => https://unix.stackexchange.com/questions/134301/why-does-nginx-starts-process-as-root
 CMD ["nginx", "-g", "daemon off;"]

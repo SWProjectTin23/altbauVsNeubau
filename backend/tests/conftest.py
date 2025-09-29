@@ -1,5 +1,8 @@
 import pytest
 from api import create_app
+import os
+from unittest.mock import patch
+
 
 @pytest.fixture
 def app():
@@ -14,3 +17,9 @@ def app():
 def client(app):
     """A test client for the app."""
     return app.test_client()
+
+@pytest.fixture(autouse=True)
+def set_test_environment():
+    os.environ["TESTING"] = "True"
+
+

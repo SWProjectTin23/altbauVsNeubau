@@ -1,30 +1,48 @@
-# backend/Dockerfile
-FROM python:3.13-slim
+# Builder
+FROM python:3.13-slim as builder
 
-# Set working directory
-WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Install curl for health checks
-RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
+WORKDIR /build
 
 # Copy requirements file
 COPY requirements.txt .
-
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code (including your 'app' folder and 'run.py')
+RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
+
+# Runtime
+FROM python:3.13-slim as runtime
+
+# Update in order to minimize attack vectors
+RUN apt-get update && apt-get install -y curl && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+
+# Since UID 500 - 1000 taken for new users => 1001 for the appuser (best practice as seen online => )
+RUN groupadd -r appgroup && useradd -r -g appgroup -u 1001 appuser
+
+WORKDIR /app
+COPY --from=builder --chown=appuser:appgroup /root/.local /home/appuser/.local
+
+COPY --chown=appuser:appgroup --from=builder /build/ /app/
 
 # Expose port (default Flask port, as defined in run.py)
 EXPOSE 5000
 
+ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+USER appuser
+
 # Set environment variables
 ENV FLASK_APP=api:create_app
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_ENV=development
 
-# Start Flask app
+# Start Flask app => Not a production wsgi server. Out of scope for team datenkraken! X)
 CMD ["flask", "run"]

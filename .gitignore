@@ -44,3 +44,4 @@ kuma_data/kuma.db
 
 .direnv
 passwd
+/keycloak-export/export/timsicher-users-*.json

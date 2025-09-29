@@ -14,12 +14,14 @@ from common.exceptions import (
 
 # db ops
 from api.db import get_all_device_time_ranges_from_db
+from auth import token_required
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="range")
 
 
 class TimeRange(Resource):
+    method_decorators = [token_required]
     def get(self):
         timer = DurationTimer().start()
         log_event(logger, "INFO", "time_range.start")

@@ -4,9 +4,12 @@ from flask import request
 from api.db import get_alert_email, set_alert_email
 from common.logging_setup import setup_logger, log_event
 from api.sendAlertMail import send_mail
+from auth import token_required
+
 logger = setup_logger(service="api", module="alertMail")
 
 class AlertEmail(Resource):
+    method_decorators = [token_required]
     def get(self):
         try:
             email = get_alert_email()

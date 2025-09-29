@@ -1,5 +1,6 @@
 import { feLogger } from "../logging/logger";
 import { ApiError, NetworkError } from "../errors";
+import keycloak from "../keycloak";
 
 // Determine API base URL at runtime
 const RUNTIME_API =
@@ -23,7 +24,10 @@ async function request(method, path, body) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
   const init = {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+            Authorization: `Bearer ${keycloak.token}`,
+            "Content-Type": "application/json"
+    },
     body: body ? JSON.stringify(body) : undefined,
   };
 

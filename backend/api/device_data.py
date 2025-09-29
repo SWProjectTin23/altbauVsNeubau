@@ -14,12 +14,15 @@ from common.exceptions import (
 
 # db ops
 from api.db import get_device_data_from_db, device_exists
+from auth import token_required
+
 
 # each module registers its own logger
 logger = setup_logger(service="api", module="device_data")
 
 
 class DeviceData(Resource):
+    method_decorators = [token_required]
     def get(self, device_id: int):
         timer = DurationTimer().start()
 

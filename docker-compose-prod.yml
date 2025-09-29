@@ -1,7 +1,7 @@
 services:
   backend-api:
     container_name: altbau_vs_neubau_api # A fixed name for the container
-    image: ghcr.io/geroldj/altbauvsneubau/backend-api:latest
+    image: ghcr.io/geroldj/altbauvsneubau/backend-api:${IMAGE_TAG}
     ports:
       - "5001:5000" # Exposes 5001 on the host, forwards to 5000 in the container
     environment:
@@ -36,7 +36,7 @@ services:
 
   backend-mqtt:
     container_name: altbau_vs_neubau_mqtt
-    image: ghcr.io/geroldj/altbauvsneubau/backend-mqtt:latest
+    image: ghcr.io/geroldj/altbauvsneubau/backend-mqtt:${IMAGE_TAG}
     depends_on:
       db:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
 
   frontend:
     container_name: altbau_vs_neubau_frontend # a fixed name for the container
-    image: ghcr.io/geroldj/altbauvsneubau/frontend:latest
+    image: ghcr.io/geroldj/altbauvsneubau/frontend:${IMAGE_TAG}
     ports:
       - "3000:80"
     environment:
@@ -157,7 +157,7 @@ services:
     restart: unless-stopped
 
   sensor-exporter:
-    image: ghcr.io/geroldj/altbauvsneubau/sensor-exporter:latest
+    image: ghcr.io/geroldj/altbauvsneubau/sensor-exporter:${IMAGE_TAG}
     container_name: sensor-exporter
     ports:
       - "9100:9100"

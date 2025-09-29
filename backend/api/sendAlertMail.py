@@ -5,6 +5,7 @@ from api.db import get_alert_email, is_alert_active, set_alert_active, reset_ale
 import smtplib
 from email.mime.text import MIMEText
 from common.logging_setup import setup_logger, log_event
+from auth import token_required
 
 logger = setup_logger(service="api", module="sendAlertMail")
 
@@ -40,6 +41,7 @@ def send_mail(email, subject, body):
         server.sendmail(msg["From"], [msg["To"]], msg.as_string())
 
 class SendAlertMail(Resource):
+    method_decorators = [token_required]
     def post(self):
         data = request.get_json(force=True)
         metric = data.get("metric")

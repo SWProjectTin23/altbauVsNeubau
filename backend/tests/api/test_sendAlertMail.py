@@ -3,6 +3,9 @@ from unittest.mock import patch, MagicMock
 from flask import Flask
 from api.sendAlertMail import SendAlertMail
 
+def mock_token_required(f):
+    return f
+
 @pytest.fixture
 def client():
     app = Flask(__name__)
@@ -16,8 +19,7 @@ def client():
 @patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
 @patch("api.sendAlertMail.is_alert_active", return_value=False)
 @patch("api.sendAlertMail.set_alert_active")
-
-
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_hart_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_send_mail, client):
     payload = {
         "metric": "Temperatur",
@@ -44,6 +46,7 @@ def test_hart_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_
 @patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
 @patch("api.sendAlertMail.is_alert_active", return_value=False)
 @patch("api.sendAlertMail.set_alert_active")
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_soft_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_send_mail, client):
     payload = {
         "metric": "Temperatur",
@@ -67,6 +70,7 @@ def test_soft_alert(mock_set_alert_active, mock_is_active, mock_get_email, mock_
 @patch("api.sendAlertMail.send_mail")
 @patch("api.sendAlertMail.get_alert_email")
 @patch("api.sendAlertMail.is_alert_active", return_value=True)
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_alert_already_active(mock_is_active, mock_get_email, mock_send_mail, client):
     payload = {
         "metric": "Temperatur",
@@ -89,6 +93,7 @@ def test_alert_already_active(mock_is_active, mock_get_email, mock_send_mail, cl
 
 # ---- Normal range -> reset alert ----
 @patch("api.sendAlertMail.reset_alert")
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_reset_alert_on_normal_value(mock_reset_alert, client):
     payload = {
         "metric": "Temperatur",
@@ -110,6 +115,7 @@ def test_reset_alert_on_normal_value(mock_reset_alert, client):
 
 
 # ---- Missing parameter ----
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_missing_parameters(client):
     payload = {
         "value": 25,
@@ -122,6 +128,7 @@ def test_missing_parameters(client):
 
 
 # ---- Unknown metric ----
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_unknown_metric(client):
     payload = {
         "metric": "Unbekannt",
@@ -141,6 +148,7 @@ def test_unknown_metric(client):
 @patch("api.sendAlertMail.send_mail", side_effect=Exception("SMTP failed"))
 @patch("api.sendAlertMail.get_alert_email", return_value="test@example.com")
 @patch("api.sendAlertMail.is_alert_active", return_value=False)
+@patch("api.sendAlertMail.SendAlertMail.method_decorators", [mock_token_required])
 def test_send_mail_exception(mock_is_active, mock_get_email, mock_send_mail, client):
     payload = {
         "metric": "Temperatur",

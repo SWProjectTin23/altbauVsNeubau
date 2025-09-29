@@ -1,7 +1,12 @@
 import json
 import psycopg2
 from common.exceptions import DatabaseError
+from unittest.mock import patch
 
+def mock_token_required(f):
+    return f
+
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_get_thresholds_success(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -25,6 +30,7 @@ def test_get_thresholds_success(client, mocker):
     assert data['message'] == "Thresholds retrieved successfully."
     assert ("INFO", "thresholds.get.ok") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_get_thresholds_no_data(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -39,6 +45,7 @@ def test_get_thresholds_no_data(client, mocker):
     assert data['message'] == 'No thresholds available.'
     assert ("INFO", "thresholds.get.empty") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_get_thresholds_database_error(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -52,6 +59,7 @@ def test_get_thresholds_database_error(client, mocker):
     assert data['message'] == 'A database error occurred while processing your request.'
     assert ("ERROR", "thresholds.get.db_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_get_thresholds_unexpected_error(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -65,6 +73,7 @@ def test_get_thresholds_unexpected_error(client, mocker):
     assert data['message'] == 'An unexpected error occurred while processing your request.'
     assert ("ERROR", "thresholds.get.unhandled_exception") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_post_thresholds_success(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -98,6 +107,7 @@ def test_post_thresholds_success(client, mocker):
     assert data['message'] == "Thresholds updated successfully."
     assert ("INFO", "thresholds.post.ok") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_post_thresholds_validation_error(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -132,6 +142,7 @@ def test_post_thresholds_validation_error(client, mocker):
     # One of the validation log events should be present
     assert any(c.args[2].startswith("thresholds.post.") and c.args[1] == "WARNING" for c in mock_log.call_args_list)
 
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_post_thresholds_hard_soft_error(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     """
@@ -163,7 +174,7 @@ def test_post_thresholds_hard_soft_error(client, mocker):
     assert data['message'] == "'temperature_min_hard' must be less than 'temperature_min_soft'."
     assert any(c.args[2].startswith("thresholds.post.") and c.args[1] == "WARNING" for c in mock_log.call_args_list)
 
-
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_post_thresholds_db_error_maps_500_and_logs(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     threshold_data = {
@@ -190,7 +201,7 @@ def test_post_thresholds_db_error_maps_500_and_logs(client, mocker):
     assert resp.get_json()['message'] == 'A database error occurred while processing your request.'
     assert ("ERROR", "thresholds.post.db_error") in [(c.args[1], c.args[2]) for c in mock_log.call_args_list]
 
-
+@patch("api.thresholds.Thresholds.method_decorators", [mock_token_required])
 def test_post_thresholds_unexpected_error_maps_500_and_logs(client, mocker):
     mock_log = mocker.patch('api.thresholds.log_event')
     threshold_data = {

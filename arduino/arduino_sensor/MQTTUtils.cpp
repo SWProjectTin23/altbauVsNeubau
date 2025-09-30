@@ -21,11 +21,11 @@ void mqttSetup() {
 #endif
 }
 
-bool mqttReconnect(PubSubClient& client, const char* clientName, unsigned long& next_retry) {
+bool mqttReconnect(PubSubClient& client, const char* clientName, unsigned long& next_retry, const char* mqttUsername, const char* mqttPassword) {
   if (client.connected()) return true;
   unsigned long now = millis();
   if (now < next_retry) return false; // Noch nicht wieder versuchen
-  bool ok = client.connect(clientName);
+  bool ok = client.connect(clientName, mqttUsername, mqttPassword);
   if (!ok) next_retry = now + MQTT_RETRY_INTERVAL;
   else next_retry = 0;
   return ok;
@@ -35,7 +35,7 @@ void mqttPublish(const char* topic, const char* payload) {
   // Sende an ersten Server
   bool sent1 = false;
   if (!client1.connected()) {
-    mqttReconnect(client1, "MKRWiFi1010Client1", mqtt1_next_retry);
+    mqttReconnect(client1, "MKRWiFi1010Client1", mqtt1_next_retry, MQTT_USER1, MQTT_PASS1);
   }
   if (client1.connected()) {
     sent1 = client1.publish(topic, payload);
@@ -51,7 +51,7 @@ void mqttPublish(const char* topic, const char* payload) {
   // Sende an zweiten Server
   bool sent2 = false;
   if (!client2.connected()) {
-    mqttReconnect(client2, "MKRWiFi1010Client2", mqtt2_next_retry);
+    mqttReconnect(client2, "MKRWiFi1010Client2", mqtt2_next_retry, MQTT_USER2, MQTT_PASS2);
   }
   if (client2.connected()) {
     sent2 = client2.publish(topic, payload);
